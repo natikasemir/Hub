@@ -399,7 +399,71 @@
    ================================================================ */
 
 /* A4 Hoch -------------------------------------------------------- */
-.getraenkekarte.format-a4p { }
+/* ================================================================
+   A4 HOCH — kbw.-Design
+   ================================================================ */
+
+/* Innerer Bereich: weniger unten da Allergen-Text */
+.format-a4p .gk-inner-a4p {
+  top: 5%; left: 5%; right: 5%; bottom: 2%;
+}
+
+/* Titel: größer */
+.format-a4p .gk-title {
+  letter-spacing: 0.06em;
+}
+
+/* Kategorie: kein Unterstrich, nur Whitespace darunter */
+.format-a4p .a4p-cat-title::after {
+  display: none;
+}
+
+.format-a4p .a4p-cat-title {
+  margin-bottom: 0.5em;
+  margin-top: 0.9em;
+}
+
+.format-a4p .a4p-category:first-child .a4p-cat-title {
+  margin-top: 0;
+}
+
+/* Item: kein Dots-Platzhalter */
+.format-a4p .a4p-item {
+  justify-content: space-between;
+}
+
+/* Trennlinie zwischen Getränken */
+.format-a4p .gk-item-separator {
+  height: 0;
+  border-bottom: 1px dotted var(--gray-200);
+  border-radius: 2px;
+  margin: 0.3em 0 0.35em;
+}
+
+/* Letzte Trennlinie pro Kategorie ausblenden */
+.format-a4p .gk-category > .gk-item-separator:last-child {
+  display: none;
+}
+
+/* Beschreibung: nicht kursiv, kleiner, direkt unter Name */
+.format-a4p .a4p-desc {
+  font-style: normal !important;
+  margin-top: -0.15em;
+  margin-bottom: 0;
+  color: var(--gray-500);
+}
+
+/* Allergen-Text: ganz unten, volle Breite */
+.format-a4p .gk-allergen {
+  font-size: 7px;
+  color: var(--gray-400);
+  line-height: 1.4;
+  margin-top: auto;
+  padding-top: 1.5%;
+  border-top: 0.5px solid var(--gray-200);
+  flex-shrink: 0;
+}
+
 
 /* A4 Quer -------------------------------------------------------- */
 .getraenkekarte.format-a4l { }

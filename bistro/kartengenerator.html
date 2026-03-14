@@ -77,11 +77,90 @@ aside { background: white; border-right: 1px solid var(--gray-200); padding: 18p
 main { display: flex; align-items: center; justify-content: center; padding: 28px; overflow: hidden; background: repeating-conic-gradient(#ddd 0% 25%, #e8e8e8 0% 50%) 0 0/18px 18px; }
 .card-wrap { transform-origin: center center; transition: transform 0.25s; filter: drop-shadow(0 6px 32px rgba(0,0,0,0.2)); }
 
-/* Karten-CSS → menu-drinks.css */
+/* ── GETRÄNKEKARTE ── */
+.getraenkekarte {
+  background: white;
+  position: relative;
+  font-family: 'Source Sans 3', Arial, sans-serif;
+  overflow: hidden;
+}
 
+.gk-inner {
+  position: absolute;
+  top: 5%; left: 5%; right: 5%; bottom: 5%;
+  display: flex;
+  flex-direction: column;
+}
 
+/* Header area */
+.gk-header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  padding-bottom: 3%;
+  border-bottom: 2px solid var(--ci);
+  margin-bottom: 4%;
+  flex-shrink: 0;
+}
+.gk-title { font-family: 'Source Sans 3', Arial, sans-serif; font-weight: 800; letter-spacing: 0.04em; text-transform: uppercase; color: var(--ci); line-height: 1; }
+.gk-subtitle { font-size: 0.55em; font-weight: 700; letter-spacing: 0.12em; color: var(--accent); display: block; margin-bottom: 0.2em; }
+.gk-logo { object-fit: contain; opacity: 0.9; }
 
+/* Body = columns */
+.gk-body { flex: 1; overflow: hidden; }
+.gk-columns { display: grid; gap: 5%; height: 100%; }
 
+/* Category */
+.gk-category { overflow: hidden; }
+.gk-cat-title { font-family: 'Source Sans 3', Arial, sans-serif; font-weight: 800; text-transform: uppercase; letter-spacing: 0.06em; color: var(--ci); border-bottom: 1.5px solid var(--ci); padding-bottom: 0.3em; margin-bottom: 0.6em; line-height: 1; }
+
+/* Item */
+.gk-item { display: flex; align-items: baseline; gap: 0; margin-bottom: 0.35em; }
+.gk-item-name { font-weight: 700; color: #111; flex-shrink: 0; }
+.gk-item-variant { font-weight: 400; color: #555; margin-left: 0.25em; flex-shrink: 0; }
+.gk-item-desc { font-weight: 400; color: var(--gray-700); font-style: italic; display: block; margin-top: 0.05em; }
+.gk-item-dots { flex: 1; border-bottom: 1px dotted var(--gray-400); margin: 0 0.4em 0.2em; min-width: 8px; }
+.gk-item-price { font-weight: 700; color: #111; flex-shrink: 0; white-space: nowrap; }
+.gk-item-price.hidden { display: none; }
+
+/* Footer */
+.gk-footer { flex-shrink: 0; margin-top: 3%; padding-top: 2%; border-top: 1px solid var(--gray-200); display: flex; align-items: center; justify-content: center; }
+.gk-footer-logo { object-fit: contain; opacity: 0.7; }
+
+/* Schema colours */
+.schema-pe  { --ci: var(--pe-blue);     font-family: 'URW DIN', 'Source Sans 3', Arial, sans-serif; }
+.schema-kbw { --ci: var(--kbw-magenta); font-family: 'Source Sans 3', Arial, sans-serif; }
+
+/* ── 16:9 SCREEN-MODUS ── */
+.format-screen .getraenkekarte {
+  background: #000 !important;
+}
+.format-screen .gk-header::after,
+.format-screen .gk-cat-title::after,
+.format-screen .gk-footer::before {
+  background: rgba(255,255,255,0.4) !important;
+}
+.format-screen .gk-title,
+.format-screen .gk-subtitle,
+.format-screen .gk-cat-title { color: #fff !important; }
+.format-screen .gk-item-name  { color: #fff !important; }
+.format-screen .gk-item-variant { color: rgba(255,255,255,0.65) !important; }
+.format-screen .gk-item-desc  { color: rgba(255,255,255,0.55) !important; }
+.format-screen .gk-item-price { color: #fff !important; }
+.format-screen .gk-item-dots {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='6' height='2'%3E%3Ccircle cx='1' cy='1' r='1' fill='rgba(255,255,255,0.35)'/%3E%3C/svg%3E") !important;
+}
+/* Logo invertieren: weißes SVG via CSS-Filter */
+.format-screen .gk-logo,
+.format-screen .gk-footer-logo {
+  filter: brightness(0) invert(1) !important;
+  opacity: 1 !important;
+}
+
+/* Empty state */
+.empty-state { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; gap: 12px; color: var(--gray-500); text-align: center; }
+.empty-state .big-icon { font-size: 48px; opacity: 0.3; }
+.empty-state p { font-size: 13px; max-width: 260px; line-height: 1.5; }
 
 /* ── PRINT ── */
 @media print {
@@ -431,80 +510,163 @@ function getFilteredData() {
   return cats;
 }
 
-function buildCard() {
-  const fmt   = FORMATS[state.format];
-  const cats  = getFilteredData();
-  const catKeys = Object.keys(cats);
+// ── ALLERGEN-TEXT (fest) ──
+const ALLERGEN_TEXT = '1-Farbstoff, 2-Aroma, 16-Alkohol, 3-Antioxidationsmittel, 11-Koffein, 2-Konservierungsstoff, 9-Süßungsmittel, 10-enthält eine Phenylalaninquelle, 13-Taurin, a-Gluten';
 
-  // Font sizes relative to card width, minimum 9.5px enforced
-  const W = fmt.w;
+// ── GEMEINSAME HILFSFUNKTIONEN ──
+
+function calcSizes(W) {
   const clamp = (val, min) => Math.max(Math.round(val), min);
-  const titleSz    = clamp(W * 0.038, 18);
-  const catTitleSz = clamp(W * 0.022, 11);
-  const itemSz     = clamp(W * 0.016, 9.5);
-  const descSz     = clamp(W * 0.013, 9.5);
-  const logoH      = Math.round(W * 0.05);
-  const headerLogoH = Math.round(W * 0.055);
+  return {
+    clamp,
+    titleSz:    clamp(W * 0.038, 18),
+    catTitleSz: clamp(W * 0.022, 11),
+    itemSz:     clamp(W * 0.016, 9.5),
+    descSz:     clamp(W * 0.013, 9.5),
+    logoH:      Math.round(W * 0.05),
+    headerLogoH: Math.round(W * 0.055),
+  };
+}
 
+function buildEmptyState() {
+  return '<div class="empty-state"><div class="big-icon">🍹</div><p>Keine Einträge für diese Kartenvariante gefunden.</p></div>';
+}
+
+// Standard-Item-HTML (alle Formate außer A4P)
+function buildItemHTML(row, sizes, showPrices) {
+  const name    = row['Name']         || '';
+  const variant = row['Variante']     || '';
+  const desc    = row['Beschreibung'] || '';
+  const price   = row['Preis']        || '';
+  const dotsEl  = showPrices ? `<span class="gk-item-dots"></span>` : `<span style="flex:1"></span>`;
+  const priceEl = showPrices ? `<span class="gk-item-price">${price}</span>` : '';
+  const descEl  = desc ? `<span class="gk-item-desc" style="font-size:${sizes.descSz}px">${desc}</span>` : '';
+  return `
+    <div class="gk-item" style="font-size:${sizes.itemSz}px;">
+      <span class="gk-item-name">${name}</span>
+      ${variant ? `<span class="gk-item-variant">${variant}</span>` : ''}
+      ${dotsEl}
+      ${priceEl}
+    </div>${descEl}`;
+}
+
+// Standard-Spalten-HTML
+function buildColumnsHTML(cats, fmt, sizes, showPrices) {
+  const catKeys = Object.keys(cats);
+  if (catKeys.length === 0) return buildEmptyState();
+  const colCount = Math.min(fmt.cols, catKeys.length);
+  let html = `<div class="gk-columns" style="grid-template-columns:repeat(${colCount},1fr);">`;
+  catKeys.forEach(catName => {
+    let itemsHTML = '';
+    cats[catName].forEach(row => { itemsHTML += buildItemHTML(row, sizes, showPrices); });
+    html += `<div class="gk-category"><div class="gk-cat-title" style="font-size:${sizes.catTitleSz}px;">${catName}</div>${itemsHTML}</div>`;
+  });
+  return html + '</div>';
+}
+
+// ── ROUTER: Welches Template? ──
+function buildCard() {
+  switch(state.format) {
+    case 'A4P': return buildCard_A4P();
+    default:    return buildCard_default();
+  }
+}
+
+// ── TEMPLATE: A4 HOCH (kbw.-Design) ──
+function buildCard_A4P() {
+  const fmt  = FORMATS[state.format];
+  const cats = getFilteredData();
+  const W    = fmt.w;
+  const s    = calcSizes(W);
+  const logoSrc = LOGOS[state.schema];
+  const label   = VARIANT_LABELS[state.variant];
+  const subtitle = label.includes('·') ? label.split('·')[1].trim() : '';
+
+  // A4P: 2 Spalten, Item-spezifisches HTML
+  const catKeys = Object.keys(cats);
   let columnsHTML = '';
   if (catKeys.length === 0) {
-    columnsHTML = '<div class="empty-state"><div class="big-icon">🍹</div><p>Keine Einträge für diese Kartenvariante gefunden.</p></div>';
+    columnsHTML = buildEmptyState();
   } else {
-    const colCount = Math.min(fmt.cols, catKeys.length);
-    columnsHTML = `<div class="gk-columns" style="grid-template-columns:repeat(${colCount},1fr);">`;
+    columnsHTML = `<div class="gk-columns" style="grid-template-columns:repeat(2,1fr);">`;
     catKeys.forEach(catName => {
-      const items = cats[catName];
       let itemsHTML = '';
-      items.forEach(row => {
-        const name    = row['Name']        || '';
-        const variant = row['Variante']    || '';
-        const desc    = row['Beschreibung']|| '';
-        const price   = row['Preis']       || '';
-        const dotsEl  = state.showPrices ? `<span class="gk-item-dots"></span>` : `<span style="flex:1"></span>`;
-        const priceEl = state.showPrices  ? `<span class="gk-item-price">${price}</span>` : '';
-        const descEl  = desc ? `<span class="gk-item-desc" style="font-size:${descSz}px">${desc}</span>` : '';
+      cats[catName].forEach(row => {
+        const name    = row['Name']         || '';
+        const variant = row['Variante']     || '';
+        const desc    = row['Beschreibung'] || '';
+        const price   = row['Preis']        || '';
+        // A4P: kein Dots-Platzhalter, Beschreibung nicht kursiv, direkt unter Name
+        const priceEl = state.showPrices ? `<span class="gk-item-price">${price}</span>` : '';
+        const descEl  = desc ? `<div class="gk-item-desc a4p-desc" style="font-size:${s.descSz}px">${desc}</div>` : '';
         itemsHTML += `
-          <div class="gk-item" style="font-size:${itemSz}px;">
+          <div class="gk-item a4p-item" style="font-size:${s.itemSz}px;">
             <span class="gk-item-name">${name}</span>
             ${variant ? `<span class="gk-item-variant">${variant}</span>` : ''}
-            ${dotsEl}
+            <span style="flex:1"></span>
             ${priceEl}
           </div>
-          ${descEl}`;
+          ${descEl}
+          <div class="gk-item-separator"></div>`;
       });
-
-      columnsHTML += `
-        <div class="gk-category">
-          <div class="gk-cat-title" style="font-size:${catTitleSz}px;">${catName}</div>
-          ${itemsHTML}
-        </div>`;
+      // A4P: kein Unterstrich bei Kategorie, nur Whitespace
+      html_cat = `<div class="gk-category a4p-category">
+        <div class="gk-cat-title a4p-cat-title" style="font-size:${s.catTitleSz}px;">${catName}</div>
+        ${itemsHTML}
+      </div>`;
+      columnsHTML += html_cat;
     });
     columnsHTML += '</div>';
   }
 
+  // Titelgröße A4P: etwas größer
+  const titleSzA4P = Math.max(Math.round(W * 0.052), 24);
+
+  return `
+    <div class="gk-inner gk-inner-a4p">
+      <div class="gk-header">
+        <div>
+          <span class="gk-subtitle" style="font-size:${Math.round(titleSzA4P*0.4)}px;">${subtitle}</span>
+          <div class="gk-title" style="font-size:${titleSzA4P}px;">Getränke</div>
+        </div>
+        <img class="gk-logo" src="${logoSrc}" alt="Logo" style="height:${s.headerLogoH}px;max-width:${Math.round(W*0.2)}px;">
+      </div>
+      <div class="gk-body">${columnsHTML}</div>
+      <div class="gk-allergen">${ALLERGEN_TEXT}</div>
+    </div>`;
+}
+
+// ── TEMPLATE: Standard (alle anderen Formate) ──
+function buildCard_default() {
+  const fmt  = FORMATS[state.format];
+  const cats = getFilteredData();
+  const W    = fmt.w;
+  const s    = calcSizes(W);
   const logoSrc = LOGOS[state.schema];
-  const label = VARIANT_LABELS[state.variant];
+  const label   = VARIANT_LABELS[state.variant];
+  const subtitle = label.includes('·') ? label.split('·')[1].trim() : '';
+
+  const columnsHTML = buildColumnsHTML(cats, fmt, s, state.showPrices);
 
   return `
     <div class="gk-inner">
       <div class="gk-header">
         <div>
-          <span class="gk-subtitle" style="font-size:${Math.round(titleSz*0.4)}px;">${label.includes('·') ? label.split('·')[1].trim() : ''}</span>
-          <div class="gk-title" style="font-size:${titleSz}px;">Getränke</div>
+          <span class="gk-subtitle" style="font-size:${Math.round(s.titleSz*0.4)}px;">${subtitle}</span>
+          <div class="gk-title" style="font-size:${s.titleSz}px;">Getränke</div>
         </div>
-        <img class="gk-logo" src="${logoSrc}" alt="Logo" style="height:${headerLogoH}px;max-width:${Math.round(W*0.2)}px;">
+        <img class="gk-logo" src="${logoSrc}" alt="Logo" style="height:${s.headerLogoH}px;max-width:${Math.round(W*0.2)}px;">
       </div>
       <div class="gk-body">${columnsHTML}</div>
       <div class="gk-footer">
-        <img class="gk-footer-logo" src="${logoSrc}" alt="Logo" style="height:${logoH}px;">
+        <img class="gk-footer-logo" src="${logoSrc}" alt="Logo" style="height:${s.logoH}px;">
       </div>
     </div>`;
 }
 
 function renderCard() {
   const card = document.getElementById('card');
-  // Format-Klasse für format-spezifisches CSS
-  card.className = `getraenkekarte schema-${state.schema} format-${state.format.toLowerCase()}`;
+  card.className = 'getraenkekarte schema-' + state.schema;
   card.innerHTML = buildCard();
   applyDimensions();
 }

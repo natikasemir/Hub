@@ -165,46 +165,32 @@ main { display: flex; align-items: center; justify-content: center; padding: 28p
 /* ── PRINT ── */
 @media print {
   * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
-  html, body { margin: 0 !important; padding: 0 !important; }
+  html, body { margin: 0; padding: 0; width: 100%; height: 100%; }
   body, .app { height: auto !important; overflow: visible !important; }
   aside, header { display: none !important; }
-
   main {
     display: block !important;
     padding: 0 !important;
-    margin: 0 !important;
     background: white !important;
-    width: 100% !important;
-    height: 100% !important;
-    overflow: visible !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    overflow: hidden !important;
   }
-
   .card-wrap {
     transform: none !important;
     filter: none !important;
-    margin: 0 !important;
-    padding: 0 !important;
-    width: 100% !important;
-    height: 100% !important;
-    display: block !important;
-  }
-
-  /* Karte füllt exakt die Seite */
-  .getraenkekarte {
-    position: fixed !important;
-    top: 0 !important; left: 0 !important;
     width: 100vw !important;
     height: 100vh !important;
-    margin: 0 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
   }
-
-  /* @page Größen pro Format */
-  @page { margin: 0; }
-}
-
-/* Format-spezifische Seitengrößen — werden per JS gesetzt (siehe doPrint) */
-@media print and (orientation: portrait) {
-  @page { size: auto; }
+  .getraenkekarte {
+    /* Stretch to fill the printed page */
+    width: 100vw !important;
+    height: 100vh !important;
+  }
+  @page { margin: 0; size: auto; }
 }
 </style>
 </head>
@@ -291,7 +277,7 @@ main { display: flex; align-items: center; justify-content: center; padding: 28p
   </div>
 
   <div class="actions">
-    <button class="btn btn-primary" id="btnPrint" onclick="doPrint()" disabled>🖨️ Drucken</button>
+    <button class="btn btn-primary" id="btnPrint" onclick="window.print()" disabled>🖨️ Drucken</button>
     <button class="btn btn-secondary" id="btnPDF" onclick="doPDF()" disabled>↓ Als PDF speichern</button>
     <button class="btn btn-secondary" id="btnJPEG" onclick="doJPEG()" disabled>↓ Als JPEG speichern</button>
   </div>
@@ -372,15 +358,8 @@ function setPrices(v, btn) {
 function setFormat(f, btn) {
   state.format = f;
   clearActive('.format-btn'); btn.classList.add('active');
-  // Screen-Modus: schwarzer Hintergrund
-  const wrap = document.getElementById('cardWrap');
-  if (FORMATS[f].screen) {
-    wrap.classList.add('format-screen');
-  } else {
-    wrap.classList.remove('format-screen');
-  }
   applyDimensions();
-  renderCard();
+  renderCard(); // renderCard setzt jetzt alle Klassen korrekt
 }
 
 // ── PFLICHTFELDER ──
@@ -680,7 +659,8 @@ function buildCard_default() {
 
 function renderCard() {
   const card = document.getElementById('card');
-  card.className = 'getraenkekarte schema-' + state.schema;
+  const formatClass = 'format-' + state.format.toLowerCase();
+  card.className = `getraenkekarte schema-${state.schema} ${formatClass}`;
   card.innerHTML = buildCard();
   applyDimensions();
 }
@@ -701,36 +681,11 @@ function applyDimensions() {
   wrap.style.transform = `scale(${scale})`;
 }
 
-// Papiergrößen in mm
-const PAGE_SIZES = {
-  A4P:     { w: 210, h: 297, orientation: 'portrait' },
-  A4L:     { w: 297, h: 210, orientation: 'landscape' },
-  A3P:     { w: 297, h: 420, orientation: 'portrait' },
-  A3L:     { w: 420, h: 297, orientation: 'landscape' },
-  DINLANG: { w: 99,  h: 210, orientation: 'portrait' },
-  SCREEN:  { w: 297, h: 167, orientation: 'landscape' }, // 16:9 annähernd
-};
-
-function doPrint() {
-  const page = PAGE_SIZES[state.format];
-
-  // @page size dynamisch per Style-Tag setzen
-  let styleEl = document.getElementById('print-page-style');
-  if (!styleEl) {
-    styleEl = document.createElement('style');
-    styleEl.id = 'print-page-style';
-    document.head.appendChild(styleEl);
-  }
-  styleEl.textContent = `@page { margin: 0; size: ${page.w}mm ${page.h}mm ${page.orientation}; }`;
-
+function doPDF() {
   const orig = document.title;
   document.title = `Getraenkekarte_${state.variant}_${state.format}`;
   window.print();
   document.title = orig;
-}
-
-function doPDF() {
-  doPrint();
 }
 
 async function doJPEG() {
@@ -744,10 +699,8 @@ async function doJPEG() {
   wrap.style.transformOrigin = 'top left';
 
   try {
-    // scale: 2 → doppelte Auflösung für scharfe JPEGs
-    const pixelRatio = FORMATS[state.format].format === 'SCREEN' ? 1 : 2;
     const canvas = await html2canvas(card, {
-      scale: 2,
+      scale: 1,
       useCORS: true,
       allowTaint: true,
       backgroundColor: FORMATS[state.format].screen ? '#000000' : '#ffffff',

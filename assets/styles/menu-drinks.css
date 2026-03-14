@@ -1,14 +1,12 @@
 /* ============================================================
    PETER EDEL – Toolbox · Getränkekarte
    menu-drinks.css
-   Einbinden via: <link rel="stylesheet" href="../menu-drinks.css">
-   Benötigt: pe-toolbox.css (muss zuerst geladen werden)
    ============================================================ */
 
 
-/* ── CI-SCHEMA: Akzentfarbe als Custom Property ── */
-.schema-pe  { --ci: var(--pe-blue); }
-.schema-kbw { --ci: var(--kbw-magenta); }
+/* ── CI-SCHEMA ── */
+.schema-pe  { --ci: var(--pe-blue);     font-family: 'URW DIN', 'Source Sans 3', Arial, sans-serif; }
+.schema-kbw { --ci: var(--kbw-magenta); font-family: 'Source Sans 3', Arial, sans-serif; }
 
 
 /* ── KARTEN-VORSCHAU (Wrap) ── */
@@ -19,191 +17,10 @@
 }
 
 
-/* ── GETRÄNKEKARTE (Druckbereich) ── */
-.getraenkekarte {
-  background: white;
-  position: relative;
-  font-family: 'Source Sans 3', Arial, sans-serif;
-  overflow: hidden;
-}
-
-/* Innerer Bereich mit 5% Rand rundum */
-.gk-inner {
-  position: absolute;
-  top: 5%; left: 5%; right: 5%; bottom: 5%;
-  display: flex;
-  flex-direction: column;
-}
-
-
-/* ── KARTEN-HEADER ── */
-.gk-header {
-  display: flex;
-  align-items: flex-end;
-  justify-content: space-between;
-  padding-bottom: 3%;
-  border-bottom: 2px solid var(--ci);
-  margin-bottom: 4%;
-  flex-shrink: 0;
-}
-
-.gk-title {
-  font-family: 'Source Sans 3', Arial, sans-serif;
-  font-weight: 800;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  color: var(--ci);
-  line-height: 1;
-}
-
-.gk-subtitle {
-  font-size: 0.55em;
-  font-weight: 700;
-  letter-spacing: 0.12em;
-  color: var(--accent);
-  display: block;
-  margin-bottom: 0.2em;
-}
-
-.gk-logo {
-  object-fit: contain;
-  opacity: 0.9;
-}
-
-
-/* ── KARTEN-BODY: Spalten ── */
-.gk-body {
-  flex: 1;
-  overflow: hidden;
-}
-
-.gk-columns {
-  display: grid;
-  gap: 5%;
-  height: 100%;
-}
-
-
-/* ── KATEGORIE ── */
-.gk-category {
-  overflow: hidden;
-}
-
-.gk-cat-title {
-  font-family: 'Source Sans 3', Arial, sans-serif;
-  font-weight: 800;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  color: var(--ci);
-  border-bottom: 1.5px solid var(--ci);
-  padding-bottom: 0.3em;
-  margin-bottom: 0.6em;
-  line-height: 1;
-}
-
-
-/* ── GETRÄNK-ZEILE ── */
-.gk-item {
-  display: flex;
-  align-items: baseline;
-  gap: 0;
-  margin-bottom: 0.35em;
-}
-
-.gk-item-name {
-  font-weight: 700;
-  color: #111;
-  flex-shrink: 0;
-}
-
-.gk-item-variant {
-  font-weight: 400;
-  color: #555;
-  margin-left: 0.25em;
-  flex-shrink: 0;
-}
-
-.gk-item-desc {
-  font-weight: 400;
-  color: var(--gray-700);
-  font-style: italic;
-  display: block;
-  margin-top: 0.05em;
-}
-
-/* Punktlinie zwischen Name und Preis */
-.gk-item-dots {
-  flex: 1;
-  border-bottom: 1px dotted var(--gray-400);
-  margin: 0 0.4em 0.2em;
-  min-width: 8px;
-}
-
-.gk-item-price {
-  font-weight: 700;
-  color: #111;
-  flex-shrink: 0;
-  white-space: nowrap;
-}
-
-.gk-item-price.hidden { display: none; }
-
-
-/* ── KARTEN-FOOTER ── */
-.gk-footer {
-  flex-shrink: 0;
-  margin-top: 3%;
-  padding-top: 2%;
-  border-top: 1px solid var(--gray-200);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.gk-footer-logo {
-  object-fit: contain;
-  opacity: 0.7;
-}
-
-
-/* ── EMPTY STATE (noch keine Daten geladen) ── */
-.empty-state {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  height: 100%;
-  gap: 12px;
-  color: var(--gray-500);
-  text-align: center;
-}
-
-.empty-state .big-icon {
-  font-size: 48px;
-  opacity: 0.3;
-}
-
-.empty-state p {
-  font-size: 13px;
-  max-width: 260px;
-  line-height: 1.5;
-}
-
-
-/* ── DRUCK ── */
-@media print {
-  .card-wrap { transform: none !important; filter: none; }
-  .getraenkekarte { width: 100% !important; height: 100% !important; }
-}
-
 /* ================================================================
-   FORMAT-SPEZIFISCHE KARTEN-STYLES
-   Jedes Format bekommt seine eigene Klasse auf .getraenkekarte:
-   .format-a4p | .format-a4l | .format-a3p | .format-a3l
-   .format-dinlang | .format-screen
+   GETRÄNKEKARTE BASIS
    ================================================================ */
 
-/* ── GETRÄNKEKARTE: Basis ── */
 .getraenkekarte {
   background: white;
   position: relative;
@@ -217,7 +34,7 @@
   flex-direction: column;
 }
 
-/* ── KARTEN-HEADER ── */
+/* ── HEADER ── */
 .gk-header {
   display: flex;
   align-items: flex-end;
@@ -255,27 +72,15 @@
   margin-bottom: 0.2em;
 }
 
-.gk-logo {
-  object-fit: contain;
-  opacity: 0.9;
-}
+.gk-logo { object-fit: contain; opacity: 0.9; }
 
-/* ── KARTEN-BODY ── */
-.gk-body {
-  flex: 1;
-  overflow: hidden;
-}
+/* ── BODY ── */
+.gk-body { flex: 1; overflow: hidden; }
 
-.gk-columns {
-  display: grid;
-  gap: 5%;
-  height: 100%;
-}
+.gk-columns { display: grid; gap: 5%; height: 100%; }
 
 /* ── KATEGORIE ── */
-.gk-category {
-  overflow: hidden;
-}
+.gk-category { overflow: hidden; }
 
 .gk-cat-title {
   font-family: inherit;
@@ -325,7 +130,7 @@
 .gk-item-price { font-weight: 700; color: #111; flex-shrink: 0; white-space: nowrap; }
 .gk-item-price.hidden { display: none; }
 
-/* ── KARTEN-FOOTER ── */
+/* ── FOOTER ── */
 .gk-footer {
   flex-shrink: 0;
   margin-top: 3%;
@@ -347,10 +152,6 @@
 
 .gk-footer-logo { object-fit: contain; opacity: 0.7; }
 
-/* ── CI-SCHEMAS ── */
-.schema-pe  { --ci: var(--pe-blue);     font-family: 'URW DIN', 'Source Sans 3', Arial, sans-serif; }
-.schema-kbw { --ci: var(--kbw-magenta); font-family: 'Source Sans 3', Arial, sans-serif; }
-
 /* ── EMPTY STATE ── */
 .empty-state {
   display: flex;
@@ -369,6 +170,7 @@
 /* ================================================================
    16:9 SCREEN-MODUS
    ================================================================ */
+
 .format-screen .getraenkekarte { background: #000 !important; }
 
 .format-screen .gk-header::after,
@@ -377,11 +179,11 @@
 
 .format-screen .gk-title,
 .format-screen .gk-subtitle,
-.format-screen .gk-cat-title  { color: #fff !important; }
-.format-screen .gk-item-name  { color: #fff !important; }
+.format-screen .gk-cat-title { color: #fff !important; }
+.format-screen .gk-item-name    { color: #fff !important; }
 .format-screen .gk-item-variant { color: rgba(255,255,255,0.65) !important; }
-.format-screen .gk-item-desc  { color: rgba(255,255,255,0.55) !important; }
-.format-screen .gk-item-price { color: #fff !important; }
+.format-screen .gk-item-desc    { color: rgba(255,255,255,0.55) !important; }
+.format-screen .gk-item-price   { color: #fff !important; }
 
 .format-screen .gk-item-dots {
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='6' height='2'%3E%3Ccircle cx='1' cy='1' r='1' fill='rgba(255,255,255,0.35)'/%3E%3C/svg%3E") !important;
@@ -395,49 +197,45 @@
 
 
 /* ================================================================
-   FORMAT-PLATZHALTER — hier kommen deine Designs rein
-   ================================================================ */
-
-/* A4 Hoch -------------------------------------------------------- */
-/* ================================================================
    A4 HOCH — kbw.-Design
    ================================================================ */
 
-/* Innerer Bereich: weniger unten da Allergen-Text */
 .format-a4p .gk-inner-a4p {
   top: 5%; left: 5%; right: 5%; bottom: 2%;
 }
 
-/* Titel: größer */
 .format-a4p .gk-title {
   letter-spacing: 0.06em;
 }
 
-/* Kategorie: kein Unterstrich, nur Whitespace darunter */
-.format-a4p .a4p-cat-title::after {
-  display: none;
+/* Kategorie: kein Unterstrich */
+.format-a4p .a4p-cat-title {
+  position: relative;
+  margin-top: 0.9em;
+  margin-bottom: 0.5em;
+  border-bottom: none !important;
 }
 
-.format-a4p .a4p-cat-title {
-  margin-bottom: 0.5em;
-  margin-top: 0.9em;
+.format-a4p .a4p-cat-title::after {
+  display: none !important;
 }
 
 .format-a4p .a4p-category:first-child .a4p-cat-title {
   margin-top: 0;
 }
 
-/* Item: kein Dots-Platzhalter */
+/* Item */
 .format-a4p .a4p-item {
   justify-content: space-between;
+  margin-bottom: 0;
 }
 
 /* Trennlinie zwischen Getränken */
 .format-a4p .gk-item-separator {
   height: 0;
+  border: none;
   border-bottom: 1px dotted var(--gray-200);
-  border-radius: 2px;
-  margin: 0.3em 0 0.35em;
+  margin: 0.3em 0;
 }
 
 /* Letzte Trennlinie pro Kategorie ausblenden */
@@ -445,25 +243,37 @@
   display: none;
 }
 
-/* Beschreibung: nicht kursiv, kleiner, direkt unter Name */
+/* Beschreibung: nicht kursiv */
 .format-a4p .a4p-desc {
   font-style: normal !important;
-  margin-top: -0.15em;
-  margin-bottom: 0;
+  margin-top: -0.1em;
+  margin-bottom: 0.1em;
   color: var(--gray-500);
 }
 
-/* Allergen-Text: ganz unten, volle Breite */
+/* Allergen-Text */
 .format-a4p .gk-allergen {
   font-size: 7px;
   color: var(--gray-400);
-  line-height: 1.4;
-  margin-top: auto;
+  line-height: 1.5;
   padding-top: 1.5%;
-  border-top: 0.5px solid var(--gray-200);
+  margin-top: auto;
   flex-shrink: 0;
+  position: relative;
 }
 
+.format-a4p .gk-allergen::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 0.5px;
+  background: var(--gray-200);
+}
+
+
+/* ================================================================
+   FORMAT-PLATZHALTER
+   ================================================================ */
 
 /* A4 Quer -------------------------------------------------------- */
 .getraenkekarte.format-a4l { }
@@ -476,3 +286,10 @@
 
 /* DIN LANG ------------------------------------------------------- */
 .getraenkekarte.format-dinlang { }
+
+
+/* ── DRUCK ── */
+@media print {
+  .card-wrap { transform: none !important; filter: none; }
+  .getraenkekarte { width: 100% !important; height: 100% !important; }
+}

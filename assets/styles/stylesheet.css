@@ -1,7 +1,22 @@
-/* ── 0. LOCAL FONTS: URW DIN ──
+/* ── 0. LOCAL FONTS ──
    Dateien liegen in: assets/fonts/
    Pfad relativ zu stylesheet.css (assets/styles/)
    ── */
+
+/* Source Sans 3 — Variable Font (deckt alle Gewichte 200–900 ab) */
+@font-face {
+  font-family: 'Source Sans 3';
+  src: url('../assets/fonts/SourceSans3-VariableFont_wght.ttf') format('truetype');
+  font-weight: 200 900;
+  font-style: normal;
+}
+@font-face {
+  font-family: 'Source Sans 3';
+  src: url('../assets/fonts/SourceSans3-Italic-VariableFont_wght.ttf') format('truetype');
+  font-weight: 200 900;
+  font-style: italic;
+}
+
 
 /* Thin: 100 */
 @font-face {

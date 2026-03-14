@@ -684,6 +684,7 @@ body.landingpage {
 
 .tool-card.coming-soon {
   opacity: 0.55;
+  background: #b6b6cb;
   pointer-events: none;
 }
 
@@ -713,7 +714,6 @@ body.landingpage {
 .tool-card:nth-child(2) .tool-icon-area { background: var(--kbw-magenta); }
 .tool-card:nth-child(3) .tool-icon-area { background: #b6b6cb; }
 .tool-card.placeholder   .tool-icon-area { background: var(--lp-gray-200); }
-.tool-card.feedback   .tool-icon-area { background: #b6b6cb; }
 
 .tool-icon-area::before {
   content: '';

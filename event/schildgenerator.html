@@ -4,75 +4,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>PETER EDEL Schild-Generator</title>
+<link rel="stylesheet" href="pe-toolbox.css">
 <link href="https://fonts.googleapis.com/css2?family=Source+Sans+3:wght@300;400;600;700&display=swap" rel="stylesheet">
-<style>
-  :root {
-    --pe-blue: #173557;
-    --kbw-magenta: #8c084d;
-    --accent: #EB5E50;
-    --gray-100: #f4f4f4;
-    --gray-200: #e4e4e4;
-    --gray-500: #999;
-    --radius-ui: 4px;
-  }
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { font-family: 'Source Sans 3', Arial, sans-serif; background: var(--gray-100); color: #222; height: 100vh; overflow: hidden; }
-  .app { display: grid; grid-template-columns: 320px 1fr; grid-template-rows: 56px 1fr; height: 100vh; }
-  header { grid-column: 1 / -1; background: var(--pe-blue); display: flex; align-items: center; padding: 0 24px; gap: 12px; }
-  header h1 { color: white; font-size: 13px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; }
-  .accent-dot { width: 7px; height: 7px; background: var(--accent); border-radius: 50%; }
-  aside { background: white; border-right: 1px solid var(--gray-200); padding: 20px 18px; overflow-y: auto; display: flex; flex-direction: column; gap: 18px; }
-  .section-label { font-size: 9.5px; font-weight: 700; letter-spacing: 0.13em; text-transform: uppercase; color: var(--gray-500); margin-bottom: 7px; }
-  .schema-switcher { display: grid; grid-template-columns: 1fr 1fr; gap: 7px; }
-  .schema-btn { border: 2px solid var(--gray-200); background: white; border-radius: var(--radius-ui); padding: 9px 6px; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 5px; font-size: 11px; font-weight: 600; color: #555; transition: all 0.15s; }
-  .schema-btn .swatch { width: 24px; height: 24px; border-radius: 50%; }
-  .schema-btn.active { border-color: var(--accent); color: var(--accent); }
-  .format-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 5px; }
-  .format-btn { border: 2px solid var(--gray-200); background: white; border-radius: var(--radius-ui); padding: 7px 3px; cursor: pointer; font-size: 11px; font-weight: 700; color: #555; display: flex; flex-direction: column; align-items: center; gap: 4px; transition: all 0.15s; }
-  .format-btn .fmt-icon { background: var(--gray-200); border-radius: 2px; transition: background 0.15s; }
-  .format-btn.active { border-color: var(--accent); color: var(--accent); }
-  .format-btn.active .fmt-icon { background: var(--accent); opacity: 0.35; }
-  .orient-toggle, .mode-toggle { display: flex; background: var(--gray-100); border-radius: var(--radius-ui); padding: 3px; gap: 3px; }
-  .orient-btn, .mode-btn { flex: 1; border: none; background: transparent; border-radius: 3px; padding: 7px 4px; font-size: 11px; font-weight: 600; cursor: pointer; color: var(--gray-500); transition: all 0.15s; display: flex; flex-direction: column; align-items: center; gap: 4px; font-family: inherit; }
-  .orient-btn.active, .mode-btn.active { background: white; color: #222; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
-  .orient-icon { background: var(--gray-200); border-radius: 1px; }
-  .field { display: flex; flex-direction: column; gap: 5px; }
-  label { font-size: 11px; font-weight: 600; color: #555; }
-  input[type="text"], textarea { border: 1.5px solid var(--gray-200); border-radius: var(--radius-ui); padding: 8px 10px; font-family: inherit; font-size: 13px; color: #222; resize: vertical; outline: none; transition: border-color 0.15s; }
-  input[type="text"]:focus, textarea:focus { border-color: var(--accent); }
-  .actions { display: flex; flex-direction: column; gap: 7px; margin-top: auto; padding-top: 4px; }
-  .btn { display: flex; align-items: center; justify-content: center; gap: 8px; border: none; border-radius: var(--radius-ui); padding: 10px 14px; font-family: inherit; font-size: 12px; font-weight: 600; cursor: pointer; transition: all 0.15s; }
-  .btn-primary { background: var(--accent); color: white; }
-  .btn-primary:hover { background: #d4473a; }
-  .btn-secondary { background: var(--gray-100); color: #333; border: 1.5px solid var(--gray-200); }
-  .btn-secondary:hover { background: var(--gray-200); }
-  main { display: flex; align-items: center; justify-content: center; padding: 32px; overflow: hidden; background: repeating-conic-gradient(#ddd 0% 25%, #e8e8e8 0% 50%) 0 0 / 18px 18px; }
-  .poster-wrap { transform-origin: center center; transition: transform 0.25s ease; filter: drop-shadow(0 6px 32px rgba(0,0,0,0.22)); }
-  /* THE POSTER */
-  .poster { background: white; position: relative; overflow: hidden; }
-  .poster-frame { position: absolute; top: 2.5%; left: 2.5%; right: 2.5%; bottom: 2.5%; border: 1.5px solid currentColor; pointer-events: none; z-index: 10; }
-  .poster.schema-pe .poster-frame { color: var(--pe-blue); border-radius: 0; }
-  .poster.schema-kbw .poster-frame { color: var(--kbw-magenta); border-radius: 12% 0 12% 0; }
-  .poster-content { position: absolute; top: 2.5%; left: 2.5%; right: 2.5%; bottom: 2.5%; display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 8% 10%; text-align: center; }
-  .poster-headline { line-height: 1.1; font-weight: 700; margin-bottom: 0.4em; word-break: break-word; }
-  .poster-bodytext { line-height: 1.6; font-weight: 400; word-break: break-word; }
-  .poster.schema-pe .poster-headline { color: var(--pe-blue); font-family: 'URW DIN', 'Source Sans 3', Arial, sans-serif; }
-  .poster.schema-pe .poster-bodytext { color: #222; font-family: 'URW DIN', 'Source Sans 3', Arial, sans-serif; }
-  .poster.schema-kbw .poster-headline { color: var(--kbw-magenta); }
-  .poster.schema-kbw .poster-bodytext { color: #222; }
-  /* Logo sits on the bottom frame line, centered */
-  .poster-logo-wrap { position: absolute; bottom: 2.5%; left: 0; right: 0; display: flex; justify-content: center; transform: translateY(50%); z-index: 20; }
-  .poster-logo-bg { background: white; padding: 0 16px; display: flex; align-items: center; }
-  .poster-logo { display: block; object-fit: contain; }
-  @media print {
-    body, .app { height: auto; overflow: visible; }
-    aside, header { display: none !important; }
-    main { display: flex; padding: 0; background: white; width: 100vw; height: 100vh; }
-    .poster-wrap { transform: none !important; filter: none; }
-    .poster { width: 100% !important; height: 100% !important; }
-    @page { margin: 0; size: auto; }
-  }
-</style>
 </head>
 <body>
 <div class="app">

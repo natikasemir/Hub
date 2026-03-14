@@ -584,7 +584,7 @@ body.landingpage {
 }
 
 .hero-title {
-  font-family: 'Barlow Condensed', sans-serif;
+  font-family: 'Source Sans 3', sans-serif;
   font-weight: 900;
   font-size: clamp(52px, 7vw, 88px);
   color: white;
@@ -636,7 +636,7 @@ body.landingpage {
 }
 
 .tools-header h2 {
-  font-family: 'Barlow Condensed', sans-serif;
+  font-family: 'Source Sans 3', sans-serif;
   font-weight: 800;
   font-size: 13px;
   letter-spacing: 0.18em;
@@ -775,7 +775,7 @@ body.landingpage {
 .tool-tag.tag-soon   { background: #f2eef0; color: var(--kbw-magenta); opacity: 0.7; }
 
 .tool-name {
-  font-family: 'Barlow Condensed', sans-serif;
+  font-family: 'Source Sans 3', sans-serif;
   font-weight: 800;
   font-size: 22px;
   color: var(--lp-text);

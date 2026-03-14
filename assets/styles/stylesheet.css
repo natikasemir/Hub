@@ -133,9 +133,10 @@
 /* ── 1. CUSTOM PROPERTIES ── */
 :root {
   /* Markenfarben */
-  --pe-blue:       #173557;
-  --kbw-magenta:   #8c084d;
-  --accent:        #EB5E50;
+  --pe-blue:        #173557;
+  --kbw-magenta:    #8c084d;
+  --kbw-light-lilac: #b6b6cb;
+  --accent:         #EB5E50;
   --accent-hover:  #d4473a;
 
   /* Graustufen */
@@ -684,7 +685,6 @@ body.landingpage {
 
 .tool-card.coming-soon {
   opacity: 0.55;
-  background: #b6b6cb;
   pointer-events: none;
 }
 
@@ -739,10 +739,11 @@ body.landingpage {
   overflow: hidden;
 }
 
-.tool-card:nth-child(1) .tool-icon-area { background: var(--pe-blue); }
-.tool-card:nth-child(2) .tool-icon-area { background: var(--kbw-magenta); }
-.tool-card:nth-child(3) .tool-icon-area { background: #b6b6cb; }
-.tool-card.placeholder   .tool-icon-area { background: var(--lp-gray-200); }
+/* Icon-Farben per expliziter Klasse — robust gegen Kartenreihenfolge */
+.tool-card.icon-blue    .tool-icon-area { background: var(--pe-blue); }
+.tool-card.icon-magenta .tool-icon-area { background: var(--kbw-magenta); }
+.tool-card.icon-lilac   .tool-icon-area { background: var(--kbw-light-lilac); }
+.tool-card.placeholder  .tool-icon-area { background: var(--lp-gray-200); }
 
 .tool-icon-area::before {
   content: '';

@@ -358,15 +358,8 @@ function setPrices(v, btn) {
 function setFormat(f, btn) {
   state.format = f;
   clearActive('.format-btn'); btn.classList.add('active');
-  // Screen-Modus: schwarzer Hintergrund
-  const wrap = document.getElementById('cardWrap');
-  if (FORMATS[f].screen) {
-    wrap.classList.add('format-screen');
-  } else {
-    wrap.classList.remove('format-screen');
-  }
   applyDimensions();
-  renderCard();
+  renderCard(); // renderCard setzt jetzt alle Klassen korrekt
 }
 
 // ── PFLICHTFELDER ──
@@ -522,7 +515,7 @@ function calcSizes(W) {
     titleSz:    clamp(W * 0.038, 18),
     catTitleSz: clamp(W * 0.022, 11),
     itemSz:     clamp(W * 0.016, 9.5),
-    descSz:     clamp(W * 0.011, 8.5),  // kleiner als itemSz
+    descSz:     clamp(W * 0.013, 9.5),
     logoH:      Math.round(W * 0.05),
     headerLogoH: Math.round(W * 0.055),
   };
@@ -619,19 +612,17 @@ function buildCard_A4P() {
     columnsHTML += '</div>';
   }
 
-  // Logo-Höhe bestimmt Titel-Höhe — beide gleich groß
-  const logoH_A4P   = Math.round(W * 0.09);   // Logo-Höhe
-  const titleSzA4P  = Math.round(logoH_A4P * 0.75); // Titel passt dazu
-  const subtitleSzA4P = Math.round(titleSzA4P * 0.35);
+  // Titelgröße A4P: etwas größer
+  const titleSzA4P = Math.max(Math.round(W * 0.052), 24);
 
   return `
     <div class="gk-inner gk-inner-a4p">
-      <div class="gk-header a4p-header">
-        <div class="a4p-title-wrap" style="height:${logoH_A4P}px;">
-          <span class="gk-subtitle" style="font-size:${subtitleSzA4P}px;">${subtitle}</span>
-          <div class="gk-title" style="font-size:${titleSzA4P}px; line-height:1;">Getränke</div>
+      <div class="gk-header">
+        <div>
+          <span class="gk-subtitle" style="font-size:${Math.round(titleSzA4P*0.4)}px;">${subtitle}</span>
+          <div class="gk-title" style="font-size:${titleSzA4P}px;">Getränke</div>
         </div>
-        <img class="gk-logo" src="${logoSrc}" alt="Logo" style="height:${logoH_A4P}px; max-width:${Math.round(W*0.25)}px; object-fit:contain;">
+        <img class="gk-logo" src="${logoSrc}" alt="Logo" style="height:${s.headerLogoH}px;max-width:${Math.round(W*0.2)}px;">
       </div>
       <div class="gk-body">${columnsHTML}</div>
       <div class="gk-allergen">${ALLERGEN_TEXT}</div>
@@ -668,7 +659,8 @@ function buildCard_default() {
 
 function renderCard() {
   const card = document.getElementById('card');
-  card.className = 'getraenkekarte schema-' + state.schema;
+  const formatClass = 'format-' + state.format.toLowerCase();
+  card.className = `getraenkekarte schema-${state.schema} ${formatClass}`;
   card.innerHTML = buildCard();
   applyDimensions();
 }

@@ -58,7 +58,8 @@ aside { background: white; border-right: 1px solid var(--gray-200); padding: 18p
 .upload-zone .upload-icon { font-size: 22px; margin-bottom: 5px; }
 .upload-zone p { font-size: 11px; color: var(--gray-500); line-height: 1.4; }
 .upload-zone strong { color: #333; font-size: 12px; }
-.upload-status { font-size: 11px; color: #2a9d5c; font-weight: 600; display: none; padding: 4px 0; }
+.upload-status { font-size: 11px; color: #2a9d5c; font-weight: 600; display: none; padding: 4px 0; line-height: 1.5; }
+.upload-status.error { color: var(--accent); }
 
 /* Template download */
 .template-link { font-size: 11px; color: var(--accent); cursor: pointer; text-decoration: underline; background: none; border: none; font-family: inherit; padding: 0; }
@@ -368,6 +369,17 @@ function setFormat(f, btn) {
   renderCard();
 }
 
+// ── PFLICHTFELDER ──
+const REQUIRED_COLUMNS = ['Kategorie', 'Name', 'Kartenvariante'];
+const EXPECTED_COLUMNS = ['Kategorie', 'Name', 'Variante', 'Beschreibung', 'Preis', 'Kartenvariante'];
+
+function showStatus(msg, isError = false) {
+  const el = document.getElementById('uploadStatus');
+  el.style.display = 'block';
+  el.textContent = msg;
+  el.className = isError ? 'upload-status error' : 'upload-status';
+}
+
 // ── FILE HANDLING ──
 function handleFile(e) {
   const file = e.target.files[0];
@@ -377,43 +389,86 @@ function handleFile(e) {
   reader.onload = function(ev) {
     try {
       let rows = [];
-      if (file.name.endsWith('.csv')) {
+      if (file.name.match(/\.csv$/i)) {
         rows = parseCSV(ev.target.result);
       } else {
         const wb = XLSX.read(ev.target.result, { type: 'binary' });
         const ws = wb.Sheets[wb.SheetNames[0]];
         rows = XLSX.utils.sheet_to_json(ws, { defval: '' });
+        // Leere Zeilen ohne Name entfernen
+        rows = rows.filter(r => r['Name'] && r['Name'].toString().trim() !== '');
       }
+
+      // Pflichtfelder prüfen
+      if (rows.length > 0) {
+        const missing = REQUIRED_COLUMNS.filter(col => !(col in rows[0]));
+        if (missing.length > 0) {
+          showStatus(`✗ Fehlende Spalten: ${missing.join(', ')}\nErwartet: ${EXPECTED_COLUMNS.join(', ')}`, true);
+          return;
+        }
+      }
+
+      // Warnungen für Zeilen ohne Kartenvariante
+      const noVariant = rows.filter(r => !r['Kartenvariante'] || r['Kartenvariante'].trim() === '').length;
+
       state.data = rows;
-      document.getElementById('uploadStatus').style.display = 'block';
-      document.getElementById('uploadStatus').textContent = `✓ ${rows.length} Einträge geladen`;
+
+      let statusMsg = `✓ ${rows.length} Getränke geladen`;
+      if (noVariant > 0) statusMsg += ` · ⚠ ${noVariant} ohne Kartenvariante`;
+      showStatus(statusMsg);
+
       document.getElementById('btnPrint').disabled = false;
       document.getElementById('btnPDF').disabled = false;
       document.getElementById('btnJPEG').disabled = false;
       renderCard();
     } catch(err) {
-      alert('Fehler beim Lesen der Datei: ' + err.message);
+      showStatus(`✗ Fehler beim Lesen: ${err.message}`, true);
     }
   };
-  if (file.name.endsWith('.csv')) reader.readAsText(file, 'UTF-8');
+  if (file.name.match(/\.csv$/i)) reader.readAsText(file, 'UTF-8');
   else reader.readAsBinaryString(file);
 }
 
 function parseCSV(text) {
   const lines = text.trim().split(/\r?\n/);
-  if (lines.length < 2) return [];
-  // Auto-detect: Tab oder Semikolon
-  const delim = lines[0].includes('\t') ? '\t' : ';';
-  const headers = lines[0].split(delim).map(h => h.trim().replace(/^"|"$/g,''));
-  return lines.slice(1)
+  if (lines.length < 2) throw new Error('Die Datei enthält keine Daten.');
+
+  // Trennzeichen erkennen: Tab, Semikolon oder Komma
+  const firstLine = lines[0];
+  let delim;
+  if (firstLine.includes('\t'))      delim = '\t';
+  else if (firstLine.includes(';'))  delim = ';';
+  else if (firstLine.includes(','))  delim = ',';
+  else throw new Error(
+    'Trennzeichen nicht erkannt. Bitte Tab, Semikolon (;) oder Komma (,) verwenden.\n' +
+    `Erste Zeile: "${firstLine.substring(0, 80)}"`
+  );
+
+  const headers = firstLine.split(delim).map(h => h.trim().replace(/^"|"$/g, '').replace(/^\uFEFF/, ''));
+
+  // Pflichtfelder direkt beim Parsen prüfen
+  const missing = REQUIRED_COLUMNS.filter(col => !headers.includes(col));
+  if (missing.length > 0) {
+    throw new Error(
+      `Fehlende Spalten: ${missing.join(', ')}\n` +
+      `Gefundene Spalten: ${headers.join(', ')}\n` +
+      `Erwartet: ${EXPECTED_COLUMNS.join(', ')}`
+    );
+  }
+
+  const rows = lines.slice(1)
     .filter(line => line.trim() !== '')
     .map(line => {
-      const vals = line.split(delim).map(v => v.trim().replace(/^"|"$/g,''));
+      const vals = line.split(delim).map(v => v.trim().replace(/^"|"$/g, ''));
       const obj = {};
       headers.forEach((h, i) => obj[h] = vals[i] || '');
       return obj;
     })
     .filter(row => row['Name'] && row['Name'].trim() !== '');
+
+  if (rows.length === 0) throw new Error('Keine gültigen Datenzeilen gefunden.');
+
+  return rows;
 }
 
 // Expected CSV columns: Kategorie; Name; Variante; Beschreibung; Preis; Kartenvariante

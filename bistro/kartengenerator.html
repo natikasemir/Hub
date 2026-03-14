@@ -97,20 +97,11 @@ main { display: flex; align-items: center; justify-content: center; padding: 28p
   align-items: flex-end;
   justify-content: space-between;
   padding-bottom: 3%;
+  border-bottom: 2px solid var(--ci);
   margin-bottom: 4%;
   flex-shrink: 0;
-  position: relative;
 }
-/* Abgerundete Linie unter Header */
-.gk-header::after {
-  content: '';
-  position: absolute;
-  bottom: 0; left: 0; right: 0;
-  height: 2px;
-  background: var(--ci);
-  border-radius: 2px;
-}
-.gk-title { font-family: inherit; font-weight: 800; letter-spacing: 0.04em; text-transform: uppercase; color: var(--ci); line-height: 1; }
+.gk-title { font-family: 'Source Sans 3', Arial, sans-serif; font-weight: 800; letter-spacing: 0.04em; text-transform: uppercase; color: var(--ci); line-height: 1; }
 .gk-subtitle { font-size: 0.55em; font-weight: 700; letter-spacing: 0.12em; color: var(--accent); display: block; margin-bottom: 0.2em; }
 .gk-logo { object-fit: contain; opacity: 0.9; }
 
@@ -120,73 +111,50 @@ main { display: flex; align-items: center; justify-content: center; padding: 28p
 
 /* Category */
 .gk-category { overflow: hidden; }
-.gk-cat-title {
-  font-family: inherit;
-  font-weight: 800;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  color: var(--ci);
-  padding-bottom: 0.3em;
-  margin-bottom: 0.6em;
-  line-height: 1;
-  position: relative;
-}
-.gk-cat-title::after {
-  content: '';
-  position: absolute;
-  bottom: 0; left: 0; right: 0;
-  height: 1.5px;
-  background: var(--ci);
-  border-radius: 2px;
-}
+.gk-cat-title { font-family: 'Source Sans 3', Arial, sans-serif; font-weight: 800; text-transform: uppercase; letter-spacing: 0.06em; color: var(--ci); border-bottom: 1.5px solid var(--ci); padding-bottom: 0.3em; margin-bottom: 0.6em; line-height: 1; }
 
 /* Item */
 .gk-item { display: flex; align-items: baseline; gap: 0; margin-bottom: 0.35em; }
 .gk-item-name { font-weight: 700; color: #111; flex-shrink: 0; }
 .gk-item-variant { font-weight: 400; color: #555; margin-left: 0.25em; flex-shrink: 0; }
 .gk-item-desc { font-weight: 400; color: var(--gray-700); font-style: italic; display: block; margin-top: 0.05em; }
-.gk-item-dots {
-  flex: 1;
-  margin: 0 0.4em 0.2em;
-  min-width: 8px;
-  /* Gepunktete Linie mit runden Punkten via SVG background */
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='6' height='2'%3E%3Ccircle cx='1' cy='1' r='1' fill='%23bbbbbb'/%3E%3C/svg%3E");
-  background-repeat: repeat-x;
-  background-position: left center;
-  background-size: 6px 2px;
-  height: 1px;
-  align-self: center;
-  margin-bottom: 0.1em;
-}
+.gk-item-dots { flex: 1; border-bottom: 1px dotted var(--gray-400); margin: 0 0.4em 0.2em; min-width: 8px; }
 .gk-item-price { font-weight: 700; color: #111; flex-shrink: 0; white-space: nowrap; }
 .gk-item-price.hidden { display: none; }
 
 /* Footer */
-.gk-footer {
-  flex-shrink: 0;
-  margin-top: 3%;
-  padding-top: 2%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  position: relative;
-}
-.gk-footer::before {
-  content: '';
-  position: absolute;
-  top: 0; left: 0; right: 0;
-  height: 1px;
-  background: var(--gray-200);
-  border-radius: 2px;
-}
+.gk-footer { flex-shrink: 0; margin-top: 3%; padding-top: 2%; border-top: 1px solid var(--gray-200); display: flex; align-items: center; justify-content: center; }
 .gk-footer-logo { object-fit: contain; opacity: 0.7; }
 
 /* Schema colours */
 .schema-pe  { --ci: var(--pe-blue);     font-family: 'URW DIN', 'Source Sans 3', Arial, sans-serif; }
 .schema-kbw { --ci: var(--kbw-magenta); font-family: 'Source Sans 3', Arial, sans-serif; }
-/* Subtitle immer in Akzentfarbe, erbt Schrift vom Schema */
-.schema-pe  .gk-subtitle { font-family: 'URW DIN', 'Source Sans 3', Arial, sans-serif; }
-.schema-kbw .gk-subtitle { font-family: 'Source Sans 3', Arial, sans-serif; }
+
+/* ── 16:9 SCREEN-MODUS ── */
+.format-screen .getraenkekarte {
+  background: #000 !important;
+}
+.format-screen .gk-header::after,
+.format-screen .gk-cat-title::after,
+.format-screen .gk-footer::before {
+  background: rgba(255,255,255,0.4) !important;
+}
+.format-screen .gk-title,
+.format-screen .gk-subtitle,
+.format-screen .gk-cat-title { color: #fff !important; }
+.format-screen .gk-item-name  { color: #fff !important; }
+.format-screen .gk-item-variant { color: rgba(255,255,255,0.65) !important; }
+.format-screen .gk-item-desc  { color: rgba(255,255,255,0.55) !important; }
+.format-screen .gk-item-price { color: #fff !important; }
+.format-screen .gk-item-dots {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='6' height='2'%3E%3Ccircle cx='1' cy='1' r='1' fill='rgba(255,255,255,0.35)'/%3E%3C/svg%3E") !important;
+}
+/* Logo invertieren: weißes SVG via CSS-Filter */
+.format-screen .gk-logo,
+.format-screen .gk-footer-logo {
+  filter: brightness(0) invert(1) !important;
+  opacity: 1 !important;
+}
 
 /* Empty state */
 .empty-state { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; gap: 12px; color: var(--gray-500); text-align: center; }
@@ -256,6 +224,7 @@ main { display: flex; align-items: center; justify-content: center; padding: 28p
       <button class="toggle-btn" style="flex:none;padding:6px 8px;" onclick="setVariant('bistro-spezial',this)">Bistro SPEZIAL</button>
       <button class="toggle-btn" style="flex:none;padding:6px 8px;" onclick="setVariant('bar-normal',this)">Bar NORMAL</button>
       <button class="toggle-btn" style="flex:none;padding:6px 8px;" onclick="setVariant('bar-spezial',this)">Bar SPEZIAL</button>
+      <button class="toggle-btn" style="flex:none;padding:6px 8px;" onclick="setVariant('screen',this)">16:9 Screen</button>
     </div>
   </div>
 
@@ -287,6 +256,9 @@ main { display: flex; align-items: center; justify-content: center; padding: 28p
       <button class="format-btn" onclick="setFormat('DINLANG',this)">
         <div class="fmt-icon" style="width:13px;height:28px;"></div>DIN<br>LANG
       </button>
+      <button class="format-btn" onclick="setFormat('SCREEN',this)">
+        <div class="fmt-icon" style="width:28px;height:16px;"></div>16:9<br>4K
+      </button>
     </div>
   </div>
 
@@ -306,6 +278,7 @@ main { display: flex; align-items: center; justify-content: center; padding: 28p
   <div class="actions">
     <button class="btn btn-primary" id="btnPrint" onclick="window.print()" disabled>🖨️ Drucken</button>
     <button class="btn btn-secondary" id="btnPDF" onclick="doPDF()" disabled>↓ Als PDF speichern</button>
+    <button class="btn btn-secondary" id="btnJPEG" onclick="doJPEG()" disabled>↓ Als JPEG speichern</button>
   </div>
 
 </aside>
@@ -326,6 +299,7 @@ main { display: flex; align-items: center; justify-content: center; padding: 28p
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script>
 // ── LOGOS (injected) ──
 const LOGOS = {
@@ -335,21 +309,23 @@ const LOGOS = {
 
 // ── FORMAT DIMENSIONS (px at 96dpi) ──
 const FORMATS = {
-  A4P:    { w: 595,  h: 842,  cols: 2 },
-  A4L:    { w: 842,  h: 595,  cols: 3 },
-  A3P:    { w: 842,  h: 1191, cols: 3 },
-  A3L:    { w: 1191, h: 842,  cols: 4 },
-  DINLANG:{ w: 297,  h: 630,  cols: 1 }
+  A4P:    { w: 595,  h: 842,  cols: 2, screen: false },
+  A4L:    { w: 842,  h: 595,  cols: 3, screen: false },
+  A3P:    { w: 842,  h: 1191, cols: 3, screen: false },
+  A3L:    { w: 1191, h: 842,  cols: 4, screen: false },
+  DINLANG:{ w: 297,  h: 630,  cols: 1, screen: false },
+  SCREEN: { w: 3840, h: 2160, cols: 4, screen: true  }  // 4K UHD 16:9
 };
 
 // ── VARIANTEN-KEYS (müssen mit der CSV-Spalte 'Kartenvariante' übereinstimmen) ──
-const VARIANT_KEYS = ['bistro-normal', 'bistro-spezial', 'bar-normal', 'bar-spezial'];
+const VARIANT_KEYS = ['bistro-normal', 'bistro-spezial', 'bar-normal', 'bar-spezial', 'screen'];
 
 const VARIANT_LABELS = {
   'bistro-normal':  'Bistro',
   'bistro-spezial': 'Bistro · Spezial',
   'bar-normal':     'Bar',
-  'bar-spezial':    'Bar · Spezial'
+  'bar-spezial':    'Bar · Spezial',
+  'screen':         'Getränke'
 };
 
 const state = {
@@ -381,6 +357,13 @@ function setPrices(v, btn) {
 function setFormat(f, btn) {
   state.format = f;
   clearActive('.format-btn'); btn.classList.add('active');
+  // Screen-Modus: schwarzer Hintergrund
+  const wrap = document.getElementById('cardWrap');
+  if (FORMATS[f].screen) {
+    wrap.classList.add('format-screen');
+  } else {
+    wrap.classList.remove('format-screen');
+  }
   applyDimensions();
   renderCard();
 }
@@ -406,6 +389,7 @@ function handleFile(e) {
       document.getElementById('uploadStatus').textContent = `✓ ${rows.length} Einträge geladen`;
       document.getElementById('btnPrint').disabled = false;
       document.getElementById('btnPDF').disabled = false;
+      document.getElementById('btnJPEG').disabled = false;
       renderCard();
     } catch(err) {
       alert('Fehler beim Lesen der Datei: ' + err.message);
@@ -416,20 +400,15 @@ function handleFile(e) {
 }
 
 function parseCSV(text) {
-  const lines = text.trim().split(/\r?\n/);
+  const lines = text.trim().split('\n');
   if (lines.length < 2) return [];
-  // Auto-detect: Tab oder Semikolon als Trennzeichen
-  const delim = lines[0].includes('\t') ? '\t' : ';';
-  const headers = lines[0].split(delim).map(h => h.trim().replace(/^"|"$/g,''));
-  return lines.slice(1)
-    .filter(line => line.trim() !== '')   // Leere Zeilen überspringen
-    .map(line => {
-      const vals = line.split(delim).map(v => v.trim().replace(/^"|"$/g,''));
-      const obj = {};
-      headers.forEach((h, i) => obj[h] = vals[i] || '');
-      return obj;
-    })
-    .filter(row => row['Name'] && row['Name'].trim() !== ''); // Zeilen ohne Name ignorieren
+  const headers = lines[0].split(';').map(h => h.trim().replace(/^"|"$/g,''));
+  return lines.slice(1).map(line => {
+    const vals = line.split(';').map(v => v.trim().replace(/^"|"$/g,''));
+    const obj = {};
+    headers.forEach((h,i) => obj[h] = vals[i] || '');
+    return obj;
+  });
 }
 
 // Expected CSV columns: Kategorie; Name; Variante; Beschreibung; Preis; Kartenvariante
@@ -569,6 +548,41 @@ function doPDF() {
   document.title = `Getraenkekarte_${state.variant}_${state.format}`;
   window.print();
   document.title = orig;
+}
+
+async function doJPEG() {
+  const card = document.getElementById('card');
+  const fmt  = FORMATS[state.format];
+
+  // Kurz die transform-Scale entfernen damit html2canvas die Originalgröße rendert
+  const wrap = document.getElementById('cardWrap');
+  const prevTransform = wrap.style.transform;
+  wrap.style.transform = 'scale(1)';
+  wrap.style.transformOrigin = 'top left';
+
+  try {
+    const canvas = await html2canvas(card, {
+      scale: 1,
+      useCORS: true,
+      allowTaint: true,
+      backgroundColor: FORMATS[state.format].screen ? '#000000' : '#ffffff',
+      width:  fmt.w,
+      height: fmt.h,
+      logging: false
+    });
+
+    // Als JPEG herunterladen
+    const link = document.createElement('a');
+    link.download = `Getraenkekarte_${state.variant}_${state.format}.jpg`;
+    link.href = canvas.toDataURL('image/jpeg', 0.95);
+    link.click();
+  } catch(err) {
+    alert('JPEG-Export fehlgeschlagen: ' + err.message);
+  } finally {
+    // transform wiederherstellen
+    wrap.style.transform = prevTransform;
+    wrap.style.transformOrigin = 'center center';
+  }
 }
 
 // Drag & drop on upload zone

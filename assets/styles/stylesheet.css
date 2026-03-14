@@ -1,12 +1,18 @@
+/* ── 0. LOCAL FONTS ──
+   Dateien liegen in: assets/fonts/
+   Absoluter Pfad für GitHub Pages (Repo: Hub)
+   ── */
+
+/* Source Sans 3 — Variable Font (deckt alle Gewichte 200–900 ab) */
 @font-face {
   font-family: 'Source Sans 3';
-  src: url('assets/fonts/SourceSans3-VariableFont_wght.ttf') format('truetype');
+  src: url('/Hub/assets/fonts/SourceSans3-VariableFont_wght.ttf') format('truetype');
   font-weight: 200 900;
   font-style: normal;
 }
 @font-face {
   font-family: 'Source Sans 3';
-  src: url('assets/fonts/SourceSans3-Italic-VariableFont_wght.ttf') format('truetype');
+  src: url('/Hub/assets/fonts/SourceSans3-Italic-VariableFont_wght.ttf') format('truetype');
   font-weight: 200 900;
   font-style: italic;
 }
@@ -15,13 +21,13 @@
 /* Thin: 100 */
 @font-face {
   font-family: 'URW DIN';
-  src: url('assets/fonts/URWDIN-Thin.ttf') format('truetype');
+  src: url('/Hub/assets/fonts/URWDIN-Thin.ttf') format('truetype');
   font-weight: 100;
   font-style: normal;
 }
 @font-face {
   font-family: 'URW DIN';
-  src: url('assets/fonts/URWDIN-ThinItalic.ttf') format('truetype');
+  src: url('/Hub/assets/fonts/URWDIN-ThinItalic.ttf') format('truetype');
   font-weight: 100;
   font-style: italic;
 }
@@ -29,13 +35,13 @@
 /* XLight: 150 */
 @font-face {
   font-family: 'URW DIN';
-  src: url('assets/fonts/URWDIN-XLight.ttf') format('truetype');
+  src: url('/Hub/assets/fonts/URWDIN-XLight.ttf') format('truetype');
   font-weight: 150;
   font-style: normal;
 }
 @font-face {
   font-family: 'URW DIN';
-  src: url('assets/fonts/URWDIN-XLightItalic.ttf') format('truetype');
+  src: url('/Hub/assets/fonts/URWDIN-XLightItalic.ttf') format('truetype');
   font-weight: 150;
   font-style: italic;
 }
@@ -43,13 +49,13 @@
 /* Light: 300 */
 @font-face {
   font-family: 'URW DIN';
-  src: url('assets/fonts/URWDIN-Light.ttf') format('truetype');
+  src: url('/Hub/assets/fonts/URWDIN-Light.ttf') format('truetype');
   font-weight: 300;
   font-style: normal;
 }
 @font-face {
   font-family: 'URW DIN';
-  src: url('assets/fonts/URWDIN-LightItalic.ttf') format('truetype');
+  src: url('/Hub/assets/fonts/URWDIN-LightItalic.ttf') format('truetype');
   font-weight: 300;
   font-style: italic;
 }
@@ -57,13 +63,13 @@
 /* Regular: 400 */
 @font-face {
   font-family: 'URW DIN';
-  src: url('assets/fonts/URWDIN-Regular.ttf') format('truetype');
+  src: url('/Hub/assets/fonts/URWDIN-Regular.ttf') format('truetype');
   font-weight: 400;
   font-style: normal;
 }
 @font-face {
   font-family: 'URW DIN';
-  src: url('assets/fonts/URWDIN-Italic.ttf') format('truetype');
+  src: url('/Hub/assets/fonts/URWDIN-Italic.ttf') format('truetype');
   font-weight: 400;
   font-style: italic;
 }
@@ -71,13 +77,13 @@
 /* Medium: 500 */
 @font-face {
   font-family: 'URW DIN';
-  src: url('assets/fonts/URWDIN-Medium.ttf') format('truetype');
+  src: url('/Hub/assets/fonts/URWDIN-Medium.ttf') format('truetype');
   font-weight: 500;
   font-style: normal;
 }
 @font-face {
   font-family: 'URW DIN';
-  src: url('assets/fonts/URWDIN-MediumItalic.ttf') format('truetype');
+  src: url('/Hub/assets/fonts/URWDIN-MediumItalic.ttf') format('truetype');
   font-weight: 500;
   font-style: italic;
 }
@@ -85,13 +91,13 @@
 /* Demi (SemiBold): 600 */
 @font-face {
   font-family: 'URW DIN';
-  src: url('assets/fonts/URWDIN-Demi.ttf') format('truetype');
+  src: url('/Hub/assets/fonts/URWDIN-Demi.ttf') format('truetype');
   font-weight: 600;
   font-style: normal;
 }
 @font-face {
   font-family: 'URW DIN';
-  src: url('assets/fonts/URWDIN-DemiItalic.ttf') format('truetype');
+  src: url('/Hub/assets/fonts/URWDIN-DemiItalic.ttf') format('truetype');
   font-weight: 600;
   font-style: italic;
 }
@@ -99,13 +105,13 @@
 /* Bold: 700 */
 @font-face {
   font-family: 'URW DIN';
-  src: url('assets/fonts/URWDIN-Bold.ttf') format('truetype');
+  src: url('/Hub/assets/fonts/URWDIN-Bold.ttf') format('truetype');
   font-weight: 700;
   font-style: normal;
 }
 @font-face {
   font-family: 'URW DIN';
-  src: url('assets/fonts/URWDIN-BoldItalic.ttf') format('truetype');
+  src: url('/Hub/assets/fonts/URWDIN-BoldItalic.ttf') format('truetype');
   font-weight: 700;
   font-style: italic;
 }
@@ -113,13 +119,13 @@
 /* Black: 900 */
 @font-face {
   font-family: 'URW DIN';
-  src: url('assets/fonts/URWDIN-Black.ttf') format('truetype');
+  src: url('/Hub/assets/fonts/URWDIN-Black.ttf') format('truetype');
   font-weight: 900;
   font-style: normal;
 }
 @font-face {
   font-family: 'URW DIN';
-  src: url('assets/fonts/URWDIN-BlackItalic.ttf') format('truetype');
+  src: url('/Hub/assets/fonts/URWDIN-BlackItalic.ttf') format('truetype');
   font-weight: 900;
   font-style: italic;
 }

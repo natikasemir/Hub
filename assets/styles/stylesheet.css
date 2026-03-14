@@ -711,8 +711,9 @@ body.landingpage {
 
 .tool-card:nth-child(1) .tool-icon-area { background: var(--pe-blue); }
 .tool-card:nth-child(2) .tool-icon-area { background: var(--kbw-magenta); }
-.tool-card:nth-child(3) .tool-icon-area { background: #1a3a2a; }
+.tool-card:nth-child(3) .tool-icon-area { background: #b6b6cb; }
 .tool-card.placeholder   .tool-icon-area { background: var(--lp-gray-200); }
+.tool-card.feedback   .tool-icon-area { background: #b6b6cb; }
 
 .tool-icon-area::before {
   content: '';

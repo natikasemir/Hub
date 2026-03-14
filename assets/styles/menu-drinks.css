@@ -200,63 +200,79 @@
    A4 HOCH — kbw.-Design
    ================================================================ */
 
+/* Innerer Bereich: oben/seitlich 5%, unten 2% für Allergen-Text */
 .format-a4p .gk-inner-a4p {
   top: 5%; left: 5%; right: 5%; bottom: 2%;
+}
+
+/* Header: Titel und Logo auf gleicher Höhe ausrichten */
+.format-a4p .a4p-header {
+  align-items: center;
+}
+
+.format-a4p .a4p-title-wrap {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
 }
 
 .format-a4p .gk-title {
   letter-spacing: 0.06em;
 }
 
-/* Kategorie: kein Unterstrich */
+/* ── Kategorie: NUR Whitespace, kein Unterstrich ── */
 .format-a4p .a4p-cat-title {
-  position: relative;
-  margin-top: 0.9em;
-  margin-bottom: 0.5em;
+  margin-top: 1em;
+  margin-bottom: 0.4em;
+  padding-bottom: 0;
   border-bottom: none !important;
 }
 
+/* ::after-Linie ausblenden */
 .format-a4p .a4p-cat-title::after {
   display: none !important;
 }
 
+/* Erste Kategorie: kein Extra-Abstand oben */
 .format-a4p .a4p-category:first-child .a4p-cat-title {
   margin-top: 0;
 }
 
-/* Item */
+/* ── Getränk-Zeile: kein Dots-Platzhalter ── */
 .format-a4p .a4p-item {
   justify-content: space-between;
   margin-bottom: 0;
+  align-items: baseline;
 }
 
-/* Trennlinie zwischen Getränken */
+/* ── Trennlinie zwischen Getränken ── */
 .format-a4p .gk-item-separator {
   height: 0;
   border: none;
-  border-bottom: 1px dotted var(--gray-200);
-  margin: 0.3em 0;
+  border-bottom: 1px dotted var(--gray-300, #ccc);
+  margin: 0.25em 0;
 }
 
-/* Letzte Trennlinie pro Kategorie ausblenden */
+/* Letzte Trennlinie pro Kategorie unsichtbar */
 .format-a4p .gk-category > .gk-item-separator:last-child {
   display: none;
 }
 
-/* Beschreibung: nicht kursiv */
+/* ── Beschreibung: nicht kursiv, direkt unter Name ── */
 .format-a4p .a4p-desc {
   font-style: normal !important;
-  margin-top: -0.1em;
-  margin-bottom: 0.1em;
   color: var(--gray-500);
+  margin-top: -0.05em;
+  margin-bottom: 0;
+  display: block;
 }
 
-/* Allergen-Text */
+/* ── Allergen-Text: ganz unten, 6.5pt ── */
 .format-a4p .gk-allergen {
-  font-size: 7px;
+  font-size: 8.67px; /* 6.5pt = 6.5 × 1.333 = 8.67px */
   color: var(--gray-400);
-  line-height: 1.5;
-  padding-top: 1.5%;
+  line-height: 1.4;
+  padding-top: 1%;
   margin-top: auto;
   flex-shrink: 0;
   position: relative;
@@ -268,6 +284,7 @@
   top: 0; left: 0; right: 0;
   height: 0.5px;
   background: var(--gray-200);
+  border-radius: 1px;
 }
 
 

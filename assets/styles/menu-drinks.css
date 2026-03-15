@@ -50,8 +50,7 @@
   position: absolute;
   bottom: 0; left: 0; right: 0;
   height: 1px;
-  background: var(--ci);
-  border-radius: 1px;
+  background: linear-gradient(to right, var(--ci) 0%, var(--ci) 55%, transparent 100%);
 }
 
 .gk-title {
@@ -223,7 +222,7 @@
   font-size: 0.6em;
   vertical-align: super;
   font-weight: 400;
-  color: var(--ci);
+  color: var(--gray-700);
   margin-left: 0.1em;
   line-height: 0;
 }
@@ -297,8 +296,8 @@
 
 /* ── Allergen-Text: ganz unten, 6.5pt ── */
 .getraenkekarte.format-a4p .gk-allergen {
-  font-size: 8.67px; /* 6.5pt = 6.5 × 1.333 = 8.67px */
-  color: var(--gray-400);
+  font-size: 10.67px; /* 8pt = 8 × 1.333 = 10.67px */
+  color: var(--gray-700);
   line-height: 1.4;
   padding-top: 1%;
   margin-top: auto;

@@ -50,7 +50,8 @@
   position: absolute;
   bottom: 0; left: 0; right: 0;
   height: 1px;
-  background: linear-gradient(to right, var(--ci) 0%, var(--ci) 60%, transparent 100%);
+  background: var(--ci);
+  border-radius: 1px;
 }
 
 .gk-title {
@@ -214,7 +215,17 @@
   display: flex;
   flex-direction: column;
   justify-content: flex-end;
-  padding-top: 0.5em;
+  padding-top: 0.7em;
+}
+
+/* ── Allergen-Superscripts ── */
+.gk-allergen-sup {
+  font-size: 0.6em;
+  vertical-align: super;
+  font-weight: 400;
+  color: var(--ci);
+  margin-left: 0.1em;
+  line-height: 0;
 }
 
 .getraenkekarte.format-a4p .gk-title {
@@ -234,24 +245,22 @@
   display: none !important;
 }
 
-/* Erste Kategorie: kein Extra-Abstand oben */
-.getraenkekarte.format-a4p .a4p-category:first-child .a4p-cat-title {
-  margin-top: 0;
-}
+
 
 /* ── Masonry-Layout: CSS columns ── */
 .getraenkekarte.format-a4p .a4p-masonry {
   columns: 2;
   column-gap: 5%;
   height: 100%;
-  display: block;
+  display: block;          /* überschreibt grid vom Standard */
 }
 
 .getraenkekarte.format-a4p .a4p-category {
-  break-inside: avoid;
+  break-inside: avoid;     /* Kategorie nie mitten durchbrechen */
   display: block;
 }
 
+/* Spacer am Ende jeder Kategorie für optischen Abstand */
 .getraenkekarte.format-a4p .a4p-cat-spacer {
   height: 0.6em;
   display: block;
@@ -328,13 +337,4 @@
 @media print {
   .card-wrap { transform: none !important; filter: none; }
   .getraenkekarte { width: 100% !important; height: 100% !important; }
-}
-/* ── Allergen-Superscripts ── */
-.gk-allergen-sup {
-  font-size: 0.6em;
-  vertical-align: super;
-  font-weight: 400;
-  color: var(--gray-700);
-  margin-left: 0.1em;
-  line-height: 0;
 }

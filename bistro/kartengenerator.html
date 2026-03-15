@@ -7,19 +7,22 @@
 <link rel="stylesheet" href="../assets/styles/stylesheet.css">
 <link rel="stylesheet" href="../assets/styles/menu-drinks.css">
 <style>
+/* ── CSS-VARIABLEN ── */
 :root {
-  --pe-blue: #173557;
-  --kbw-magenta: #8c084d;
-  --accent: #EB5E50;
-  --gray-50: #fafafa;
-  --gray-100: #f4f4f4;
-  --gray-200: #e4e4e4;
-  --gray-400: #bbb;
-  --gray-500: #999;
-  --gray-700: #444;
+  --pe-blue:         #173557;
+  --kbw-magenta:     #8c084d;
+  --kbw-light-lilac: #b6b6cb;
+  --accent:          #EB5E50;
+  --accent-hover:    #d4473a;
+  --gray-50:   #fafafa;
+  --gray-100:  #f4f4f4;
+  --gray-200:  #e4e4e4;
+  --gray-400:  #bbb;
+  --gray-500:  #999;
+  --gray-700:  #444;
   --radius-ui: 4px;
-  --ci: var(--pe-blue);
 }
+
 * { box-sizing: border-box; margin: 0; padding: 0; }
 body { font-family: 'Source Sans 3', Arial, sans-serif; background: var(--gray-100); color: #222; height: 100vh; overflow: hidden; }
 
@@ -28,12 +31,12 @@ body { font-family: 'Source Sans 3', Arial, sans-serif; background: var(--gray-1
 
 header { grid-column: 1/-1; background: var(--pe-blue); display: flex; align-items: center; padding: 0 24px; gap: 12px; }
 header h1 { color: white; font-size: 13px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; }
-.accent-dot { width: 7px; height: 7px; background: var(--accent); border-radius: 50%; flex-shrink:0; }
+.accent-dot { width: 7px; height: 7px; background: var(--accent); border-radius: 50%; flex-shrink: 0; }
 
 aside { background: white; border-right: 1px solid var(--gray-200); padding: 18px 16px; overflow-y: auto; display: flex; flex-direction: column; gap: 16px; }
 .section-label { font-size: 9.5px; font-weight: 700; letter-spacing: 0.13em; text-transform: uppercase; color: var(--gray-500); margin-bottom: 6px; }
 
-/* Schema */
+/* Schema-Switcher */
 .schema-switcher { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
 .schema-btn { border: 2px solid var(--gray-200); background: white; border-radius: var(--radius-ui); padding: 8px 5px; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 4px; font-size: 11px; font-weight: 600; color: #555; transition: all 0.15s; font-family: inherit; }
 .schema-btn .swatch { width: 22px; height: 22px; border-radius: 50%; }
@@ -44,14 +47,14 @@ aside { background: white; border-right: 1px solid var(--gray-200); padding: 18p
 .toggle-btn { flex: 1; border: none; background: transparent; border-radius: 3px; padding: 6px 3px; font-size: 10.5px; font-weight: 600; cursor: pointer; color: var(--gray-500); transition: all 0.15s; font-family: inherit; white-space: nowrap; }
 .toggle-btn.active { background: white; color: #222; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
 
-/* Format grid */
+/* Format-Grid */
 .format-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 5px; }
-.format-btn { border: 2px solid var(--gray-200); background: white; border-radius: var(--radius-ui); padding: 7px 3px; cursor: pointer; font-size: 10px; font-weight: 700; color: #555; display: flex; flex-direction: column; align-items: center; gap: 3px; transition: all 0.15s; font-family: inherit; line-height:1.2; text-align:center; }
+.format-btn { border: 2px solid var(--gray-200); background: white; border-radius: var(--radius-ui); padding: 7px 3px; cursor: pointer; font-size: 10px; font-weight: 700; color: #555; display: flex; flex-direction: column; align-items: center; gap: 3px; transition: all 0.15s; font-family: inherit; line-height: 1.2; text-align: center; }
 .format-btn .fmt-icon { background: var(--gray-200); border-radius: 2px; transition: background 0.15s; }
 .format-btn.active { border-color: var(--accent); color: var(--accent); }
 .format-btn.active .fmt-icon { background: var(--accent); opacity: 0.35; }
 
-/* Upload zone */
+/* Upload-Zone */
 .upload-zone { border: 2px dashed var(--gray-200); border-radius: var(--radius-ui); padding: 16px 12px; text-align: center; cursor: pointer; transition: all 0.15s; background: var(--gray-50); }
 .upload-zone:hover { border-color: var(--accent); background: #fff8f7; }
 .upload-zone input { display: none; }
@@ -61,106 +64,20 @@ aside { background: white; border-right: 1px solid var(--gray-200); padding: 18p
 .upload-status { font-size: 11px; color: #2a9d5c; font-weight: 600; display: none; padding: 4px 0; line-height: 1.5; }
 .upload-status.error { color: var(--accent); }
 
-/* Template download */
+/* Template-Link */
 .template-link { font-size: 11px; color: var(--accent); cursor: pointer; text-decoration: underline; background: none; border: none; font-family: inherit; padding: 0; }
 
-/* Actions */
+/* Action-Buttons */
 .actions { display: flex; flex-direction: column; gap: 6px; margin-top: auto; padding-top: 4px; }
 .btn { display: flex; align-items: center; justify-content: center; gap: 7px; border: none; border-radius: var(--radius-ui); padding: 10px 14px; font-family: inherit; font-size: 12px; font-weight: 600; cursor: pointer; transition: all 0.15s; }
 .btn-primary { background: var(--accent); color: white; }
-.btn-primary:hover { background: #d4473a; }
+.btn-primary:hover { background: var(--accent-hover); }
 .btn-secondary { background: var(--gray-100); color: #333; border: 1.5px solid var(--gray-200); }
 .btn-secondary:hover { background: var(--gray-200); }
 .btn:disabled { opacity: 0.4; cursor: not-allowed; }
 
-/* Preview */
+/* Preview-Bereich */
 main { display: flex; align-items: center; justify-content: center; padding: 28px; overflow: hidden; background: repeating-conic-gradient(#ddd 0% 25%, #e8e8e8 0% 50%) 0 0/18px 18px; }
-.card-wrap { transform-origin: center center; transition: transform 0.25s; filter: drop-shadow(0 6px 32px rgba(0,0,0,0.2)); }
-
-/* ── GETRÄNKEKARTE ── */
-.getraenkekarte {
-  background: white;
-  position: relative;
-  font-family: 'Source Sans 3', Arial, sans-serif;
-  overflow: hidden;
-}
-
-.gk-inner {
-  position: absolute;
-  top: 5%; left: 5%; right: 5%; bottom: 5%;
-  display: flex;
-  flex-direction: column;
-}
-
-/* Header area */
-.gk-header {
-  display: flex;
-  align-items: flex-end;
-  justify-content: space-between;
-  padding-bottom: 3%;
-  border-bottom: 2px solid var(--ci);
-  margin-bottom: 4%;
-  flex-shrink: 0;
-}
-.gk-title { font-family: 'Source Sans 3', Arial, sans-serif; font-weight: 800; letter-spacing: 0.04em; text-transform: uppercase; color: var(--ci); line-height: 1; }
-.gk-subtitle { font-size: 0.55em; font-weight: 700; letter-spacing: 0.12em; color: var(--accent); display: block; margin-bottom: 0.2em; }
-.gk-logo { object-fit: contain; opacity: 0.9; }
-
-/* Body = columns */
-.gk-body { flex: 1; overflow: hidden; }
-.gk-columns { display: grid; gap: 5%; height: 100%; }
-
-/* Category */
-.gk-category { overflow: hidden; }
-.gk-cat-title { font-family: 'Source Sans 3', Arial, sans-serif; font-weight: 800; text-transform: uppercase; letter-spacing: 0.06em; color: var(--ci); border-bottom: 1.5px solid var(--ci); padding-bottom: 0.3em; margin-bottom: 0.6em; line-height: 1; }
-
-/* Item */
-.gk-item { display: flex; align-items: baseline; gap: 0; margin-bottom: 0.35em; }
-.gk-item-name { font-weight: 700; color: #111; flex-shrink: 0; }
-.gk-item-variant { font-weight: 400; color: #555; margin-left: 0.25em; flex-shrink: 0; }
-.gk-item-desc { font-weight: 400; color: var(--gray-700); font-style: italic; display: block; margin-top: 0.05em; }
-.gk-item-dots { flex: 1; border-bottom: 1px dotted var(--gray-400); margin: 0 0.4em 0.2em; min-width: 8px; }
-.gk-item-price { font-weight: 700; color: #111; flex-shrink: 0; white-space: nowrap; }
-.gk-item-price.hidden { display: none; }
-
-/* Footer */
-.gk-footer { flex-shrink: 0; margin-top: 3%; padding-top: 2%; border-top: 1px solid var(--gray-200); display: flex; align-items: center; justify-content: center; }
-.gk-footer-logo { object-fit: contain; opacity: 0.7; }
-
-/* Schema colours */
-.schema-pe  { --ci: var(--pe-blue);     font-family: 'URW DIN', 'Source Sans 3', Arial, sans-serif; }
-.schema-kbw { --ci: var(--kbw-magenta); font-family: 'Source Sans 3', Arial, sans-serif; }
-
-/* ── 16:9 SCREEN-MODUS ── */
-.format-screen .getraenkekarte {
-  background: #000 !important;
-}
-.format-screen .gk-header::after,
-.format-screen .gk-cat-title::after,
-.format-screen .gk-footer::before {
-  background: rgba(255,255,255,0.4) !important;
-}
-.format-screen .gk-title,
-.format-screen .gk-subtitle,
-.format-screen .gk-cat-title { color: #fff !important; }
-.format-screen .gk-item-name  { color: #fff !important; }
-.format-screen .gk-item-variant { color: rgba(255,255,255,0.65) !important; }
-.format-screen .gk-item-desc  { color: rgba(255,255,255,0.55) !important; }
-.format-screen .gk-item-price { color: #fff !important; }
-.format-screen .gk-item-dots {
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='6' height='2'%3E%3Ccircle cx='1' cy='1' r='1' fill='rgba(255,255,255,0.35)'/%3E%3C/svg%3E") !important;
-}
-/* Logo invertieren: weißes SVG via CSS-Filter */
-.format-screen .gk-logo,
-.format-screen .gk-footer-logo {
-  filter: brightness(0) invert(1) !important;
-  opacity: 1 !important;
-}
-
-/* Empty state */
-.empty-state { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; gap: 12px; color: var(--gray-500); text-align: center; }
-.empty-state .big-icon { font-size: 48px; opacity: 0.3; }
-.empty-state p { font-size: 13px; max-width: 260px; line-height: 1.5; }
 
 /* ── PRINT ── */
 @media print {
@@ -168,7 +85,6 @@ main { display: flex; align-items: center; justify-content: center; padding: 28p
   html, body { margin: 0 !important; padding: 0 !important; }
   body, .app { height: auto !important; overflow: visible !important; }
   aside, header { display: none !important; }
-
   main {
     display: block !important;
     padding: 0 !important;
@@ -178,8 +94,6 @@ main { display: flex; align-items: center; justify-content: center; padding: 28p
     background: none !important;
     overflow: visible !important;
   }
-
-  /* card-wrap: kein transform, keine feste Pixelgröße */
   .card-wrap {
     transform: none !important;
     filter: none !important;
@@ -189,8 +103,6 @@ main { display: flex; align-items: center; justify-content: center; padding: 28p
     margin: 0 !important;
     padding: 0 !important;
   }
-
-  /* Karte: inline-style width/height überschreiben, auf Seite strecken */
   .getraenkekarte {
     width: 100vw !important;
     height: 100vh !important;
@@ -200,7 +112,6 @@ main { display: flex; align-items: center; justify-content: center; padding: 28p
     top: 0 !important;
     left: 0 !important;
   }
-
   @page { margin: 0; }
 }
 </style>
@@ -542,12 +453,16 @@ function buildItemHTML(row, sizes, showPrices) {
   const variant = row['Variante']     || '';
   const desc    = row['Beschreibung'] || '';
   const price   = row['Preis']        || '';
-  const dotsEl  = showPrices ? `<span class="gk-item-dots"></span>` : `<span style="flex:1"></span>`;
-  const priceEl = showPrices ? `<span class="gk-item-price">${price}</span>` : '';
-  const descEl  = desc ? `<span class="gk-item-desc" style="font-size:${sizes.descSz}px">${desc}</span>` : '';
+  const dotsEl     = showPrices ? `<span class="gk-item-dots"></span>` : `<span style="flex:1"></span>`;
+  const priceEl    = showPrices ? `<span class="gk-item-price">${price}</span>` : '';
+  const descEl     = desc ? `<span class="gk-item-desc" style="font-size:${sizes.descSz}px">${desc}</span>` : '';
+  const allergen   = row['Allergene'] || '';
+  const allergenEl = allergen.trim()
+    ? allergen.trim().split(',').map(a => `<sup class="gk-allergen-sup">${a.trim()}</sup>`).join('')
+    : '';
   return `
     <div class="gk-item" style="font-size:${sizes.itemSz}px;">
-      <span class="gk-item-name">${name}${(row['Allergene']||'').trim() ? (row['Allergene']).trim().split(',').map(a=>`<sup class="gk-allergen-sup">${a.trim()}</sup>`).join('') : ''}</span>
+      <span class="gk-item-name">${name}${allergenEl}</span>
       ${variant ? `<span class="gk-item-variant">${variant}</span>` : ''}
       ${dotsEl}
       ${priceEl}
@@ -592,6 +507,7 @@ function buildCard_A4P() {
   if (catKeys.length === 0) {
     columnsHTML = buildEmptyState();
   } else {
+    // Masonry via CSS columns: Kategorien fließen automatisch
     columnsHTML = `<div class="gk-columns a4p-masonry">`;
     catKeys.forEach(catName => {
       let itemsHTML = '';
@@ -600,12 +516,15 @@ function buildCard_A4P() {
         const variant = row['Variante']     || '';
         const desc    = row['Beschreibung'] || '';
         const price   = row['Preis']        || '';
-        // A4P: kein Dots-Platzhalter, Beschreibung nicht kursiv, direkt unter Name
-        const priceEl = state.showPrices ? `<span class="gk-item-price">${price}</span>` : '';
-        const descEl  = desc ? `<div class="gk-item-desc a4p-desc" style="font-size:${Math.round(8*1.333)}px">${desc}</div>` : '';
+        const priceEl    = state.showPrices ? `<span class="gk-item-price">${price}</span>` : '';
+        const descEl     = desc ? `<div class="gk-item-desc a4p-desc" style="font-size:${s.descSz}px">${desc}</div>` : '';
+        const allergen   = row['Allergene'] || '';
+        const allergenEl = allergen.trim()
+          ? allergen.trim().split(',').map(a => `<sup class="gk-allergen-sup">${a.trim()}</sup>`).join('')
+          : '';
         itemsHTML += `
-          <div class="gk-item a4p-item" style="font-size:${Math.round(10*1.333)}px;">
-            <span class="gk-item-name">${name}${(row['Allergene']||'').trim() ? (row['Allergene']).trim().split(',').map(a=>`<sup class="gk-allergen-sup">${a.trim()}</sup>`).join('') : ''}</span>
+          <div class="gk-item a4p-item" style="font-size:${s.itemSz}px;">
+            <span class="gk-item-name">${name}${allergenEl}</span>
             ${variant ? `<span class="gk-item-variant">${variant}</span>` : ''}
             <span style="flex:1"></span>
             ${priceEl}
@@ -613,27 +532,23 @@ function buildCard_A4P() {
           ${descEl}
           <div class="gk-item-separator"></div>`;
       });
-      // A4P: kein Unterstrich bei Kategorie, nur Whitespace
-      html_cat = `<div class="gk-category a4p-category">
-        <div class="gk-cat-title a4p-cat-title" style="font-size:${Math.round(16*1.333)}px;">${catName}</div>
+      itemsHTML += `<div class="a4p-cat-spacer"></div>`;
+      columnsHTML += `<div class="gk-category a4p-category">
+        <div class="gk-cat-title a4p-cat-title" style="font-size:${s.catTitleSz}px;">${catName}</div>
         ${itemsHTML}
       </div>`;
-      html_cat += `<div class="a4p-cat-spacer"></div>`;
-      columnsHTML += html_cat;
     });
     columnsHTML += '</div>';
   }
 
-  // A4P: feste Schriftgrößen in pt (1pt = 1.333px)
-  const pt          = 1.333;
-  const titleSzA4P  = Math.round(32 * pt);   // 32pt
-  const subtitleSzA4P = Math.round(titleSzA4P * 0.32);
+  // Titelgröße A4P: etwas größer
+  const titleSzA4P = Math.max(Math.round(W * 0.052), 24);
 
   return `
     <div class="gk-inner gk-inner-a4p">
       <div class="gk-header">
         <div>
-          <span class="gk-subtitle" style="font-size:${subtitleSzA4P}px;">${subtitle}</span>
+          <span class="gk-subtitle" style="font-size:${Math.round(titleSzA4P*0.4)}px;">${subtitle}</span>
           <div class="gk-title" style="font-size:${titleSzA4P}px;">Getränke</div>
         </div>
         <img class="gk-logo" src="${logoSrc}" alt="Logo" style="height:${s.headerLogoH}px;max-width:${Math.round(W*0.2)}px;">

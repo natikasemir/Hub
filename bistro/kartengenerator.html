@@ -517,13 +517,13 @@ function buildCard_A4P() {
         const desc    = row['Beschreibung'] || '';
         const price   = row['Preis']        || '';
         const priceEl    = state.showPrices ? `<span class="gk-item-price">${price}</span>` : '';
-        const descEl     = desc ? `<div class="gk-item-desc a4p-desc" style="font-size:${s.descSz}px">${desc}</div>` : '';
+        const descEl     = desc ? `<div class="gk-item-desc a4p-desc" style="font-size:${descSzA4P}px">${desc}</div>` : '';
         const allergen   = row['Allergene'] || '';
         const allergenEl = allergen.trim()
           ? allergen.trim().split(',').map(a => `<sup class="gk-allergen-sup">${a.trim()}</sup>`).join('')
           : '';
         itemsHTML += `
-          <div class="gk-item a4p-item" style="font-size:${s.itemSz}px;">
+          <div class="gk-item a4p-item" style="font-size:${itemSzA4P}px;">
             <span class="gk-item-name">${name}${allergenEl}</span>
             ${variant ? `<span class="gk-item-variant">${variant}</span>` : ''}
             <span style="flex:1"></span>
@@ -534,15 +534,19 @@ function buildCard_A4P() {
       });
       itemsHTML += `<div class="a4p-cat-spacer"></div>`;
       columnsHTML += `<div class="gk-category a4p-category">
-        <div class="gk-cat-title a4p-cat-title" style="font-size:${s.catTitleSz}px;">${catName}</div>
+        <div class="gk-cat-title a4p-cat-title" style="font-size:${catSzA4P}px;">${catName}</div>
         ${itemsHTML}
       </div>`;
     });
     columnsHTML += '</div>';
   }
 
-  // Titelgröße A4P: etwas größer
-  const titleSzA4P = Math.max(Math.round(W * 0.052), 24);
+  // A4P: feste Schriftgrößen in pt (1pt = 1.333px bei 96dpi)
+  const pt = 1.333;
+  const titleSzA4P  = Math.round(32 * pt);  // 32pt = 42.67px
+  const itemSzA4P   = Math.round(10 * pt);  // 10pt = 13.33px
+  const catSzA4P    = Math.round(16 * pt);  // 16pt = 21.33px
+  const descSzA4P   = Math.round(8  * pt);  // 8pt  = 10.67px
 
   return `
     <div class="gk-inner gk-inner-a4p">

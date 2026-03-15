@@ -49,9 +49,9 @@
   content: '';
   position: absolute;
   bottom: 0; left: 0; right: 0;
-  height: 2px;
+  height: 1px;
   background: var(--ci);
-  border-radius: 2px;
+  border-radius: 1px;
 }
 
 .gk-title {
@@ -239,6 +239,25 @@
   margin-top: 0;
 }
 
+/* ── Masonry-Layout: CSS columns ── */
+.getraenkekarte.format-a4p .a4p-masonry {
+  columns: 2;
+  column-gap: 5%;
+  height: 100%;
+  display: block;          /* überschreibt grid vom Standard */
+}
+
+.getraenkekarte.format-a4p .a4p-category {
+  break-inside: avoid;     /* Kategorie nie mitten durchbrechen */
+  display: block;
+}
+
+/* Spacer am Ende jeder Kategorie für optischen Abstand */
+.getraenkekarte.format-a4p .a4p-cat-spacer {
+  height: 0.6em;
+  display: block;
+}
+
 /* ── Getränk-Zeile: kein Dots-Platzhalter ── */
 .getraenkekarte.format-a4p .a4p-item {
   justify-content: space-between;
@@ -262,7 +281,7 @@
 /* ── Beschreibung: nicht kursiv, direkt unter Name ── */
 .getraenkekarte.format-a4p .a4p-desc {
   font-style: normal !important;
-  color: var(--gray-500);
+  color: var(--gray-700);
   margin-top: -0.05em;
   margin-bottom: 0;
   display: block;

@@ -592,7 +592,8 @@ function buildCard_A4P() {
   if (catKeys.length === 0) {
     columnsHTML = buildEmptyState();
   } else {
-    columnsHTML = `<div class="gk-columns" style="grid-template-columns:repeat(2,1fr);">`;
+    // Masonry via CSS columns: Kategorien fließen automatisch
+    columnsHTML = `<div class="gk-columns a4p-masonry">`;
     catKeys.forEach(catName => {
       let itemsHTML = '';
       cats[catName].forEach(row => {
@@ -600,7 +601,6 @@ function buildCard_A4P() {
         const variant = row['Variante']     || '';
         const desc    = row['Beschreibung'] || '';
         const price   = row['Preis']        || '';
-        // A4P: kein Dots-Platzhalter, Beschreibung nicht kursiv, direkt unter Name
         const priceEl = state.showPrices ? `<span class="gk-item-price">${price}</span>` : '';
         const descEl  = desc ? `<div class="gk-item-desc a4p-desc" style="font-size:${s.descSz}px">${desc}</div>` : '';
         itemsHTML += `
@@ -613,12 +613,11 @@ function buildCard_A4P() {
           ${descEl}
           <div class="gk-item-separator"></div>`;
       });
-      // A4P: kein Unterstrich bei Kategorie, nur Whitespace
-      html_cat = `<div class="gk-category a4p-category">
+      itemsHTML += `<div class="a4p-cat-spacer"></div>`;
+      columnsHTML += `<div class="gk-category a4p-category">
         <div class="gk-cat-title a4p-cat-title" style="font-size:${s.catTitleSz}px;">${catName}</div>
         ${itemsHTML}
       </div>`;
-      columnsHTML += html_cat;
     });
     columnsHTML += '</div>';
   }

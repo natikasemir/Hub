@@ -215,6 +215,7 @@
   display: flex;
   flex-direction: column;
   justify-content: flex-end;
+  padding-top: 0.4em;
 }
 
 .getraenkekarte.format-a4p .gk-title {
@@ -234,10 +235,7 @@
   display: none !important;
 }
 
-/* Erste Kategorie: kein Extra-Abstand oben */
-.getraenkekarte.format-a4p .a4p-category:first-child .a4p-cat-title {
-  margin-top: 0;
-}
+
 
 /* ── Masonry-Layout: CSS columns ── */
 .getraenkekarte.format-a4p .a4p-masonry {

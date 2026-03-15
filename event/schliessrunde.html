@@ -1,0 +1,863 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Schließrunde – kbw.</title>
+<style>
+:root {
+  --magenta:     #8c084d;
+  --magenta-light: #b5096a;
+  --accent:      #EB5E50;
+  --gray-50:     #fafafa;
+  --gray-100:    #f4f4f4;
+  --gray-200:    #e8e8e8;
+  --gray-300:    #d0d0d0;
+  --gray-500:    #888;
+  --gray-700:    #444;
+  --gray-900:    #1a1a1a;
+  --green:       #2a9d5c;
+  --green-light: #edf7f2;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: 'Source Sans 3', 'Segoe UI', Arial, sans-serif;
+  background: var(--gray-100);
+  color: var(--gray-900);
+  min-height: 100vh;
+}
+
+/* ── HEADER ── */
+.app-header {
+  background: var(--magenta);
+  padding: 0 24px;
+  height: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.app-header h1 {
+  color: white;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.version-tag {
+  color: rgba(255,255,255,0.45);
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+}
+
+/* ── PROGRESS BAR ── */
+.progress-bar-wrap {
+  background: var(--magenta);
+  padding: 0 24px 14px;
+  position: sticky;
+  top: 56px;
+  z-index: 99;
+}
+
+.progress-track {
+  background: rgba(255,255,255,0.2);
+  border-radius: 4px;
+  height: 5px;
+  overflow: hidden;
+}
+
+.progress-fill {
+  background: white;
+  height: 100%;
+  border-radius: 4px;
+  transition: width 0.4s ease;
+  width: 0%;
+}
+
+.progress-label {
+  color: rgba(255,255,255,0.8);
+  font-size: 11px;
+  margin-top: 6px;
+  display: flex;
+  justify-content: space-between;
+}
+
+/* ── NAME FIELD ── */
+.name-section {
+  background: white;
+  border-bottom: 1px solid var(--gray-200);
+  padding: 16px 24px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.name-section label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--gray-500);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.name-section input {
+  flex: 1;
+  border: none;
+  border-bottom: 2px solid var(--gray-200);
+  padding: 4px 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--gray-900);
+  font-family: inherit;
+  background: transparent;
+  outline: none;
+  transition: border-color 0.15s;
+  max-width: 320px;
+}
+
+.name-section input:focus {
+  border-bottom-color: var(--magenta);
+}
+
+/* ── CONTENT ── */
+.content {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 20px 20px 100px;
+}
+
+/* ── BEREICH ── */
+.bereich {
+  background: white;
+  border-radius: 6px;
+  margin-bottom: 12px;
+  overflow: hidden;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+}
+
+.bereich-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 18px;
+  cursor: pointer;
+  user-select: none;
+  border-bottom: 1px solid var(--gray-100);
+  transition: background 0.12s;
+}
+
+.bereich-header:hover {
+  background: var(--gray-50);
+}
+
+.bereich-header.complete {
+  background: var(--green-light);
+}
+
+.bereich-title-wrap {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.bereich-icon {
+  font-size: 16px;
+  width: 28px;
+  text-align: center;
+}
+
+.bereich-name {
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: var(--gray-900);
+  text-transform: uppercase;
+}
+
+.bereich-header.complete .bereich-name {
+  color: var(--green);
+}
+
+.bereich-badge {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--gray-500);
+  background: var(--gray-100);
+  border-radius: 10px;
+  padding: 2px 8px;
+}
+
+.bereich-header.complete .bereich-badge {
+  background: #c8edd8;
+  color: var(--green);
+}
+
+.bereich-chevron {
+  font-size: 12px;
+  color: var(--gray-300);
+  transition: transform 0.2s;
+}
+
+.bereich.open .bereich-chevron {
+  transform: rotate(180deg);
+}
+
+/* ── ITEMS ── */
+.bereich-items {
+  display: none;
+  padding: 4px 0;
+}
+
+.bereich.open .bereich-items {
+  display: block;
+}
+
+.check-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 10px 18px;
+  cursor: pointer;
+  transition: background 0.1s;
+  border-bottom: 1px solid var(--gray-100);
+}
+
+.check-item:last-child {
+  border-bottom: none;
+}
+
+.check-item:hover {
+  background: var(--gray-50);
+}
+
+.check-item.checked {
+  background: var(--green-light);
+}
+
+/* Custom Checkbox */
+.check-box {
+  width: 20px;
+  height: 20px;
+  border: 2px solid var(--gray-300);
+  border-radius: 4px;
+  flex-shrink: 0;
+  margin-top: 1px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s;
+}
+
+.check-item.checked .check-box {
+  background: var(--green);
+  border-color: var(--green);
+}
+
+.check-box::after {
+  content: '';
+  width: 5px;
+  height: 9px;
+  border: 2px solid white;
+  border-top: none;
+  border-left: none;
+  transform: rotate(45deg) translateY(-1px);
+  display: none;
+}
+
+.check-item.checked .check-box::after {
+  display: block;
+}
+
+.check-content {
+  flex: 1;
+}
+
+.check-label {
+  font-size: 13.5px;
+  color: var(--gray-900);
+  line-height: 1.4;
+}
+
+.check-item.checked .check-label {
+  color: var(--gray-500);
+  text-decoration: line-through;
+  text-decoration-color: var(--gray-300);
+}
+
+.check-timestamp {
+  font-size: 10.5px;
+  color: var(--green);
+  font-weight: 600;
+  margin-top: 3px;
+  display: none;
+}
+
+.check-item.checked .check-timestamp {
+  display: block;
+}
+
+/* ── FOOTER ACTIONS ── */
+.footer-actions {
+  position: fixed;
+  bottom: 0; left: 0; right: 0;
+  background: white;
+  border-top: 1px solid var(--gray-200);
+  padding: 12px 24px;
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  z-index: 100;
+}
+
+.btn {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  border: none;
+  border-radius: 4px;
+  padding: 10px 18px;
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+  letter-spacing: 0.03em;
+}
+
+.btn-primary {
+  background: var(--magenta);
+  color: white;
+}
+.btn-primary:hover { background: var(--magenta-light); }
+
+.btn-danger {
+  background: var(--gray-100);
+  color: var(--accent);
+  border: 1.5px solid var(--gray-200);
+}
+.btn-danger:hover { background: #fdf0ee; }
+
+.btn-secondary {
+  background: var(--gray-100);
+  color: var(--gray-700);
+  border: 1.5px solid var(--gray-200);
+}
+.btn-secondary:hover { background: var(--gray-200); }
+
+/* ── ABSCHLUSS-BANNER ── */
+.complete-banner {
+  display: none;
+  background: var(--green);
+  color: white;
+  border-radius: 6px;
+  padding: 20px 24px;
+  margin-bottom: 16px;
+  text-align: center;
+}
+
+.complete-banner.show {
+  display: block;
+}
+
+.complete-banner h2 {
+  font-size: 18px;
+  margin-bottom: 6px;
+}
+
+.complete-banner p {
+  font-size: 13px;
+  opacity: 0.85;
+}
+
+/* ── PRINT ── */
+@media print {
+  body * { visibility: hidden; }
+  #printSummary, #printSummary * { visibility: visible; }
+  #printSummary {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    display: flex !important;
+    align-items: center;
+    justify-content: center;
+  }
+}
+
+/* ── PRINT SUMMARY (versteckt im Browser, sichtbar beim Drucken) ── */
+#printSummary {
+  display: none;
+}
+
+.print-card {
+  text-align: center;
+  font-family: 'Source Sans 3', Arial, sans-serif;
+  max-width: 480px;
+  padding: 48px;
+}
+
+.print-logo-text {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: #8c084d;
+  margin-bottom: 32px;
+}
+
+.print-check {
+  font-size: 48px;
+  margin-bottom: 20px;
+}
+
+.print-title {
+  font-size: 22px;
+  font-weight: 800;
+  color: #1a1a1a;
+  margin-bottom: 16px;
+}
+
+.print-body {
+  font-size: 15px;
+  color: #444;
+  line-height: 1.6;
+  margin-bottom: 24px;
+}
+
+.print-missing {
+  text-align: left;
+  background: #fff8f7;
+  border: 1px solid #f0c0ba;
+  border-radius: 6px;
+  padding: 16px 20px;
+  margin-top: 20px;
+}
+
+.print-missing-title {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #EB5E50;
+  margin-bottom: 10px;
+}
+
+.print-missing-item {
+  font-size: 12px;
+  color: #555;
+  padding: 3px 0;
+  border-bottom: 1px solid #f0ddd9;
+}
+
+.print-missing-item:last-child { border-bottom: none; }
+
+.print-footer {
+  font-size: 11px;
+  color: #aaa;
+  margin-top: 32px;
+}
+</style>
+</head>
+<body>
+
+<header class="app-header">
+  <h1>🔐 Schließrunde</h1>
+  <div class="header-right">
+    <span class="version-tag">2026-03-15</span>
+  </div>
+</header>
+
+<div class="progress-bar-wrap">
+  <div class="progress-track">
+    <div class="progress-fill" id="progressFill"></div>
+  </div>
+  <div class="progress-label">
+    <span id="progressText">0 von 0 Punkten erledigt</span>
+    <span id="progressPct">0%</span>
+  </div>
+</div>
+
+<div class="name-section">
+  <label>Durchgeführt von</label>
+  <input type="text" id="personName" placeholder="Name eingeben..." autocomplete="name">
+</div>
+
+<div class="content">
+
+  <div class="complete-banner" id="completeBanner">
+    <h2>✅ Schließrunde abgeschlossen!</h2>
+    <p id="completeSummary"></p>
+  </div>
+
+  <div id="checklist"></div>
+
+</div>
+
+<!-- Druck-Zusammenfassung (nur beim Drucken sichtbar) -->
+<div id="printSummary">
+  <div class="print-card">
+    <div class="print-logo-text">kbw. – Schließrunde</div>
+    <div class="print-check" id="printIcon">✅</div>
+    <div class="print-title" id="printTitle">Schließrunde abgeschlossen</div>
+    <div class="print-body" id="printBody"></div>
+    <div class="print-missing" id="printMissing" style="display:none;">
+      <div class="print-missing-title">⚠ Nicht abgehakte Punkte</div>
+      <div id="printMissingItems"></div>
+    </div>
+    <div class="print-footer" id="printFooter"></div>
+  </div>
+</div>
+
+<div class="footer-actions">
+  <button class="btn btn-primary" onclick="doPrint()">🖨️ Drucken / PDF</button>
+  <button class="btn btn-secondary" onclick="expandAll()">Alle aufklappen</button>
+  <button class="btn btn-danger" onclick="resetAll()">↺ Zurücksetzen</button>
+</div>
+
+<script>
+// ── CHECKLISTE ──
+const BEREICHE = [
+  {
+    id: 'og2-alt',
+    name: '2. OG – Altbau',
+    icon: '🏢',
+    items: [
+      'Fenster schließen Büros',
+      'Licht aus in allen Räumen (auch Küchenzeile)',
+      'Eingangstür abschließen',
+      'WC checken (Fenster zu, noch jemand drauf?)',
+      'Flurfenster schließen',
+      'Klimaanlagen per Fernbedienungen in den Büroräumen ausschalten',
+    ]
+  },
+  {
+    id: 'og1-alt',
+    name: '1. OG – Altbau',
+    icon: '🏢',
+    items: [
+      'Orga Lager zu & Fenster geschlossen',
+      'Eingangstür zu machen & abschließen',
+      'Fenster schließen in allen Räumen',
+      'WC checken',
+      'Technik ausmachen in allen Räumen (Beamer, Screens, Hybridtechnik, Dozenten Tisch – Raum 16 Technik in Wagen ausschalten)',
+      'Licht Teeküche aus',
+      'Außenrollos hochfahren',
+      'Licht Atrium ausschalten (über Gira App)',
+      'Zwischenfenster (vor Raum 17) schließen',
+      'Zwischentür schließen',
+      'Tür Übergang Neubau abschließen',
+      'Mobile Klimaanlagen ausschalten und Schlauch aus der Gaze nehmen',
+      'Feedbackbögen/Unterschriften und Kontaktdatenlisten einsammeln und im Kopierraum 2OG Altbau im Fach „Listen unbearbeitet" ablegen',
+      'Besonderheiten: Raum 17/19/22 (BINNS Technik) falls notwendig auf dem Tablet den Button „abschalten" drücken',
+      'PC Kabinett: Rechner runterfahren',
+    ]
+  },
+  {
+    id: 'og2-neu',
+    name: '2. OG – Neubau',
+    icon: '🏗️',
+    items: [
+      'Treppenhaus Fenster schließen',
+      'Flurfenster schließen',
+      'Eingangstüren abschließen',
+      'WC kontrollieren (Fenster zu, noch jemand drauf?)',
+      'Türen & Fenster in allen Räumen schließen',
+      'Licht aus in allen Räumen',
+      'Außenrollos hochfahren',
+      'Zwischentür schließen',
+      'Klimaanlage im Christin Zimmer ausschalten (Off-Schalter oder Gira App)',
+    ]
+  },
+  {
+    id: 'og1-neu',
+    name: '1. OG – Neubau',
+    icon: '🏗️',
+    items: [
+      'Treppenhaus Fenster schließen',
+      'Eingangstüren abschließen',
+      'Türen & Fenster in allen Räumen schließen',
+      'Außenrollos hochfahren',
+      'Licht aus in allen Räumen',
+      'Zwischentür schließen',
+      'WC kontrollieren (Fenster zu, noch jemand drin?)',
+      'Tür Übergang Altbau schließen',
+    ]
+  },
+  {
+    id: 'eg-neu',
+    name: 'EG – Neubau',
+    icon: '🚪',
+    items: [
+      'Jalousien Seminarräume nach unten fahren',
+      'Fenster schließen (Fensterschloss zu machen)',
+      'Technik ausmachen in allen Räumen (Beamer, Screens, Hybridtechnik, Dozenten Tisch)',
+      'Klimaanlage ausschalten (Gira App)',
+      'Licht aus in allen Räumen',
+      'Fenster Vorraum schließen',
+      'WCs checken',
+      'Tür Treppenhaus schließen & Außentür Treppenhaus abschließen',
+      'Eingangstür Vorraum auf Nachtmodus stellen',
+      'Licht Teeküche aus',
+    ]
+  },
+  {
+    id: 'innenhof',
+    name: 'Innenhof',
+    icon: '🌿',
+    items: [
+      'Alle Außentüren schließen (NB)',
+      'Schirme schließen und zusammenbinden',
+      'Bauzaun schließen',
+      'Hoftor schließen',
+      'Fotoautomat',
+    ]
+  },
+  {
+    id: 'keller-alt',
+    name: 'Keller – Altbau',
+    icon: '🔑',
+    items: [
+      'WCs checken',
+      'Fenster schließen R01 & R02 (Fensterschloss zu machen)',
+      'Licht aus (R01 & R02)',
+      'Technik ausmachen in allen Räumen (Beamer, Screens, Hybridtechnik, Dozenten Tisch)',
+      'Innenrollos schließen',
+      'Außenrollos öffnen',
+      'R01 & R02 abschließen',
+      'Eingangstür Hof abschließen',
+      'Zwischentür schließen',
+      'Umkleiden Fenster checken',
+    ]
+  },
+  {
+    id: 'eg-alt',
+    name: 'EG – Altbau',
+    icon: '🏠',
+    items: [
+      'Tür Bistro Außenlager abschließen',
+      'Zugang GS abschließen',
+      'Eingangstür Bistro abschließen',
+      'Eingangstür KS abschließen',
+      'Licht Bistro & KS ausmachen',
+      'Türen GS abschließen',
+      'GS checken ob Licht aus & alle Türen geschlossen, Türen zur Straße absperren',
+      'Zwischentür KS auf Nachtmodus stellen',
+      'Schauen ob alle Fenster Bistro geschlossen',
+      'Alle Fenster in Räumen schließen (Fensterschloss zu machen)',
+      'Innenrollos schließen in allen Räumen (R03 Vorhänge)',
+      'Außenrollos hochfahren',
+      'Technik ausmachen in allen Räumen (Beamer, Screens, Hybridtechnik, Dozenten Tisch)',
+      'Klimaanlage ausmachen (Gira App)',
+      'Außentür Übergang NB checken (unter Brücke)',
+      'Zwischentür schließen',
+      'Zwischentür Foyer schließen',
+      'Licht Foyer ausmachen',
+      'Ab 16:45 Schild reinfahren und Tür auf Nachtmodus stellen',
+      'Großen Bildschirm herunterfahren',
+      'Ringlicht im Foyer EG im Empfang ausschalten',
+    ]
+  },
+];
+
+// ── STATE ──
+const STORAGE_KEY = 'schliessrunde_state';
+
+function loadState() {
+  try {
+    const raw = sessionStorage.getItem(STORAGE_KEY);
+    return raw ? JSON.parse(raw) : { checked: {}, timestamps: {}, name: '' };
+  } catch(e) {
+    return { checked: {}, timestamps: {}, name: '' };
+  }
+}
+
+function saveState(state) {
+  try {
+    sessionStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  } catch(e) {}
+}
+
+let state = loadState();
+
+// ── RENDER ──
+function itemKey(bereichId, itemIdx) {
+  return `${bereichId}_${itemIdx}`;
+}
+
+function formatTime(ts) {
+  if (!ts) return '';
+  const d = new Date(ts);
+  return d.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
+}
+
+function renderChecklist() {
+  const container = document.getElementById('checklist');
+  container.innerHTML = '';
+
+  BEREICHE.forEach((bereich, bi) => {
+    const totalItems = bereich.items.length;
+    const checkedItems = bereich.items.filter((_, i) =>
+      state.checked[itemKey(bereich.id, i)]
+    ).length;
+    const isComplete = checkedItems === totalItems;
+    const isOpen = checkedItems < totalItems; // öffne unfertige Bereiche
+
+    const div = document.createElement('div');
+    div.className = `bereich${isOpen ? ' open' : ''}`;
+    div.innerHTML = `
+      <div class="bereich-header${isComplete ? ' complete' : ''}" onclick="toggleBereich(this)">
+        <div class="bereich-title-wrap">
+          <span class="bereich-icon">${isComplete ? '✅' : bereich.icon}</span>
+          <span class="bereich-name">${bereich.name}</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;">
+          <span class="bereich-badge">${checkedItems}/${totalItems}</span>
+          <span class="bereich-chevron">▼</span>
+        </div>
+      </div>
+      <div class="bereich-items">
+        ${bereich.items.map((item, i) => {
+          const key = itemKey(bereich.id, i);
+          const checked = state.checked[key];
+          const ts = state.timestamps[key];
+          return `
+            <div class="check-item${checked ? ' checked' : ''}" onclick="toggleItem('${bereich.id}', ${i})">
+              <div class="check-box"></div>
+              <div class="check-content">
+                <div class="check-label">${item}</div>
+                <div class="check-timestamp">${checked ? '✓ ' + formatTime(ts) : ''}</div>
+              </div>
+            </div>`;
+        }).join('')}
+      </div>`;
+    container.appendChild(div);
+  });
+
+  updateProgress();
+}
+
+function toggleBereich(header) {
+  const bereich = header.closest('.bereich');
+  bereich.classList.toggle('open');
+}
+
+function toggleItem(bereichId, itemIdx) {
+  const key = itemKey(bereichId, itemIdx);
+  if (state.checked[key]) {
+    delete state.checked[key];
+    delete state.timestamps[key];
+  } else {
+    state.checked[key] = true;
+    state.timestamps[key] = Date.now();
+  }
+  saveState(state);
+  renderChecklist();
+}
+
+function updateProgress() {
+  let total = 0, done = 0;
+  BEREICHE.forEach(b => {
+    total += b.items.length;
+    b.items.forEach((_, i) => {
+      if (state.checked[itemKey(b.id, i)]) done++;
+    });
+  });
+  const pct = total > 0 ? Math.round((done / total) * 100) : 0;
+  document.getElementById('progressFill').style.width = pct + '%';
+  document.getElementById('progressText').textContent = `${done} von ${total} Punkten erledigt`;
+  document.getElementById('progressPct').textContent = pct + '%';
+
+  // Abschluss-Banner
+  const banner = document.getElementById('completeBanner');
+  if (done === total && total > 0) {
+    banner.classList.add('show');
+    const name = state.name ? ` durch ${state.name}` : '';
+    const time = new Date().toLocaleString('de-DE', { dateStyle: 'short', timeStyle: 'short' });
+    document.getElementById('completeSummary').textContent =
+      `Abgeschlossen${name} am ${time} — alle ${total} Punkte erledigt.`;
+  } else {
+    banner.classList.remove('show');
+  }
+}
+
+function expandAll() {
+  document.querySelectorAll('.bereich').forEach(b => b.classList.add('open'));
+}
+
+function resetAll() {
+  if (!confirm('Wirklich alle Häkchen zurücksetzen?')) return;
+  state = { checked: {}, timestamps: {}, name: state.name };
+  saveState(state);
+  renderChecklist();
+}
+
+function doPrint() {
+  // Summary befüllen
+  const name    = state.name || 'Unbekannt';
+  const now     = new Date();
+  const datum   = now.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' });
+  const zeit    = now.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
+
+  // Fehlende Punkte sammeln
+  const missing = [];
+  BEREICHE.forEach(b => {
+    b.items.forEach((item, i) => {
+      if (!state.checked[itemKey(b.id, i)]) {
+        missing.push({ bereich: b.name, item });
+      }
+    });
+  });
+
+  const isComplete = missing.length === 0;
+
+  document.getElementById('printIcon').textContent  = isComplete ? '✅' : '⚠️';
+  document.getElementById('printTitle').textContent = isComplete
+    ? 'Schließrunde abgeschlossen'
+    : 'Schließrunde unvollständig';
+
+  document.getElementById('printBody').innerHTML =
+    `<strong>${name}</strong> hat die Schließrunde am <strong>${datum}</strong> um <strong>${zeit} Uhr</strong> ${isComplete ? 'abgeschlossen' : 'beendet'}.` +
+    (isComplete ? '<br><br>Schönen Feierabend! 🎉' : '');
+
+  // Fehlende Punkte
+  const missingDiv = document.getElementById('printMissing');
+  if (!isComplete) {
+    missingDiv.style.display = 'block';
+    document.getElementById('printMissingItems').innerHTML = missing.map(m =>
+      `<div class="print-missing-item"><strong>${m.bereich}:</strong> ${m.item}</div>`
+    ).join('');
+  } else {
+    missingDiv.style.display = 'none';
+  }
+
+  document.getElementById('printFooter').textContent =
+    `Erstellt mit GÜNTHER · kbw. Toolbox · ${datum}`;
+
+  window.print();
+}
+
+// ── NAME ──
+const nameInput = document.getElementById('personName');
+nameInput.value = state.name || '';
+nameInput.addEventListener('input', () => {
+  state.name = nameInput.value;
+  saveState(state);
+});
+
+// ── INIT ──
+renderChecklist();
+</script>
+</body>
+</html>

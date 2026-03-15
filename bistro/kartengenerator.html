@@ -453,12 +453,16 @@ function buildItemHTML(row, sizes, showPrices) {
   const variant = row['Variante']     || '';
   const desc    = row['Beschreibung'] || '';
   const price   = row['Preis']        || '';
-  const dotsEl  = showPrices ? `<span class="gk-item-dots"></span>` : `<span style="flex:1"></span>`;
-  const priceEl = showPrices ? `<span class="gk-item-price">${price}</span>` : '';
-  const descEl  = desc ? `<span class="gk-item-desc" style="font-size:${sizes.descSz}px">${desc}</span>` : '';
+  const dotsEl     = showPrices ? `<span class="gk-item-dots"></span>` : `<span style="flex:1"></span>`;
+  const priceEl    = showPrices ? `<span class="gk-item-price">${price}</span>` : '';
+  const descEl     = desc ? `<span class="gk-item-desc" style="font-size:${sizes.descSz}px">${desc}</span>` : '';
+  const allergen   = row['Allergene'] || '';
+  const allergenEl = allergen.trim()
+    ? allergen.trim().split(',').map(a => `<sup class="gk-allergen-sup">${a.trim()}</sup>`).join('')
+    : '';
   return `
     <div class="gk-item" style="font-size:${sizes.itemSz}px;">
-      <span class="gk-item-name">${name}</span>
+      <span class="gk-item-name">${name}${allergenEl}</span>
       ${variant ? `<span class="gk-item-variant">${variant}</span>` : ''}
       ${dotsEl}
       ${priceEl}
@@ -512,11 +516,15 @@ function buildCard_A4P() {
         const variant = row['Variante']     || '';
         const desc    = row['Beschreibung'] || '';
         const price   = row['Preis']        || '';
-        const priceEl = state.showPrices ? `<span class="gk-item-price">${price}</span>` : '';
-        const descEl  = desc ? `<div class="gk-item-desc a4p-desc" style="font-size:${s.descSz}px">${desc}</div>` : '';
+        const priceEl    = state.showPrices ? `<span class="gk-item-price">${price}</span>` : '';
+        const descEl     = desc ? `<div class="gk-item-desc a4p-desc" style="font-size:${s.descSz}px">${desc}</div>` : '';
+        const allergen   = row['Allergene'] || '';
+        const allergenEl = allergen.trim()
+          ? allergen.trim().split(',').map(a => `<sup class="gk-allergen-sup">${a.trim()}</sup>`).join('')
+          : '';
         itemsHTML += `
           <div class="gk-item a4p-item" style="font-size:${s.itemSz}px;">
-            <span class="gk-item-name">${name}</span>
+            <span class="gk-item-name">${name}${allergenEl}</span>
             ${variant ? `<span class="gk-item-variant">${variant}</span>` : ''}
             <span style="flex:1"></span>
             ${priceEl}

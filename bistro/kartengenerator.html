@@ -122,6 +122,7 @@ main { display: flex; align-items: center; justify-content: center; padding: 28p
 <header>
   <div class="accent-dot"></div>
   <h1>Getränkekarten-Generator</h1>
+  <span style="margin-left:auto; color:rgba(255,255,255,0.45); font-size:10px; font-weight:500; letter-spacing:0.08em;">Karte 2026-03-15</span>
 </header>
 
 <aside>
@@ -390,18 +391,77 @@ function parseCSV(text) {
 // Kartenvariante = kommagetrennte Liste: bistro-normal,bistro-spezial,bar-normal,bar-spezial
 
 function downloadTemplate() {
-  // Kartenvariante-Spalte: bistro-normal | bistro-spezial | bar-normal | bar-spezial
-  const csv = 'Kategorie;Name;Variante;Beschreibung;Preis;Kartenvariante\n' +
-    'Alkoholfreie Getränke;Spreequell Wasser;0,33l;Classic | Naturell;3,00 €;bistro-normal,bistro-spezial,bar-normal,bar-spezial\n' +
-    'Alkoholfreie Getränke;fritz kola;0,33l;Original | Superzero;4,00 €;bistro-normal,bistro-spezial,bar-normal,bar-spezial\n' +
-    'Bier;Berliner Pilsner;0,5l;;4,00 €;bistro-normal,bistro-spezial,bar-normal,bar-spezial\n' +
-    'Wein & Sekt;Weißwein trocken;0,2l;Grauer Burgunder;7,00 €;bistro-normal,bistro-spezial,bar-normal,bar-spezial\n' +
-    'Longdrinks;Club Mate Vodka;0,3l;Mampe Vodka\, Club Mate;7,50 €;bistro-spezial,bar-normal,bar-spezial\n' +
-    'Shots;Kleiner Feigling;2cl;;3,00 €;bistro-normal,bistro-spezial,bar-normal,bar-spezial\n';
-  const blob = new Blob(['\uFEFF'+csv], { type: 'text/csv;charset=utf-8;' });
+  // Vorlage mit echten Getränkedaten — Karte 2026-03-15
+  // Format: Tab-getrennt, Spalten: Kategorie	Name	Variante	Beschreibung	Preis	Allergene	Kartenvariante
+  const rows = [
+        'Kategorie\tName\tVariante\tBeschreibung\tPreis\tAllergene\tKartenvariante',
+    'Alkoholfreie Getränke\tSpreequell Wasser\t0,33l\tClassic | Naturell\t3,00 €\t\tbistro-spezial,bar-normal,bar-spezial,screen',
+    'Alkoholfreie Getränke\tfritz-kola\t0,33l\tORIGINAL | SUPER ZERO\t4,00 €\t\tbistro-spezial,bar-normal,bar-spezial,screen',
+    'Alkoholfreie Getränke\tfritz-limo\t0,33l\tINGWER-LIMETTE | ORANGE | ZITRONE | APFEL-KIRSCH-HOLUNDER\t4,00 €\t\tbistro-spezial,bar-normal,bar-spezial,screen',
+    'Alkoholfreie Getränke\tfritz-spritz\t0,33l\tBIO RHABARBERSCHORLE | BIO APFELSCHORLE\t4,00 €\t\tbistro-spezial,bar-normal,bar-spezial,screen',
+    'Alkoholfreie Getränke\tClub Mate\t0,33l\t\t4,00 €\t\tbistro-spezial,bar-normal,bar-spezial,screen',
+    'Alkoholfreie Getränke\tRed Bull\t0,25l\t\t4,50 €\t\tbistro-spezial,bar-normal,bar-spezial,screen',
+    'Alkoholfreie Getränke\tFlaschenbier alkoholfrei\t0,33l\tLammsbräu Pils\t4,00 €\t\tbar-normal,bar-spezial,screen',
+    'Alkoholfreie Getränke\tSpritz alkoholfrei\t0,3l\tLaori Ruby No. 4, Vaux Bio Träublein, Wasser, Alkohol <0,3%\t7,50 €\t\tbar-normal,screen',
+    'Alkoholfreie Getränke\tGin Tonic alkoholfrei\t0,3l\tMampe 00, Thomas Henry Tonic Water, Alkohol <0,3%\t7,50 €\t\tbar-normal,screen',
+    'Wein & Sekt\tWeißwein trocken\t0,2l\tGrauer Burgunder\t7,00 €\t\tbistro-spezial,bar-normal,bar-spezial,screen',
+    'Wein & Sekt\tRotwein trocken\t0,2l\tPrimitivo salento\t7,00 €\t\tbar-normal,bar-spezial,screen',
+    'Wein & Sekt\tRosé trocken\t0,2l\t50° Pinot Noir\t7,00 €\t\tbar-normal,bar-spezial,screen',
+    'Wein & Sekt\tWeiß- & Roséweinschorle trocken\t0,2l\t\t4,00 €\t\tbar-normal,bar-spezial,screen',
+    'Wein & Sekt\tSekt Piccolo trocken\t0,2l\tZekt\t7,00 €\t\tbar-normal,bar-spezial,screen',
+    'Wein & Sekt\tSekt trocken\t0,1l\tZekt\t3,50 €\t\tbar-normal,bar-spezial,screen',
+    'Bier\tBerliner Pilsner | Naturradler\t0,33l\t\t4,00 €\t\tbar-normal,bar-spezial,screen',
+    'Bier\tQ-Bier aus Pankow\t0,33l\tPils | Pale Ale | Red Lager\t4,50 €\t\tbar-normal,bar-spezial,screen',
+    'Bier\tSchöfferhofer Grapefruit\t0,33l\t\t4,50 €\t\tbar-normal,bar-spezial,screen',
+    "Bier\tHelles\t0,5l\tBrewer's Tribute\t5,00 €\t\tbar-normal,bar-spezial,screen",
+    'Longdrinks\tClub Mate Vodka\t0,3l\tMampe Vodka, Club Mate\t7,50 €\t\tbar-normal,screen',
+    'Longdrinks\tVodka Lemon\t0,3l\tMampe Vodka, Thomas Henry Bitter Lemon\t7,50 €\t\tbar-normal,screen',
+    'Longdrinks\tGin Tonic\t0,3l\tMampe Gin, Thomas Henry Tonic Water\t7,50 €\t\tbar-normal,bar-spezial,screen',
+    'Longdrinks\tAperol Spritz\t0,3l\tAperol, Sekt, Sodawasser\t7,50 €\t\tbar-normal,bar-spezial,screen',
+    'Longdrinks\tLimoncello Spritz\t0,3l\tLimoncello, Sekt, Sodawasser\t7,50 €\t\tbar-normal,screen',
+    'Longdrinks\tLillet Vive | Lillet Berry\t0,3l\tLillet, Thomas Henry Tonic Water | Lillet, Thomas Henry Wild Berry\t7,50 €\t\tbar-normal,screen',
+    'Longdrinks\tCuba Libre\t0,3l\tHavana Club Añejo 3 Años Rum,  Coca-Cola\t7,50 €\t\tbar-normal,bar-spezial,screen',
+    'Longdrinks\tWhiskey Cola\t0,3l\tJack Daniels, Coca Cola\t7,50 €\t\tbar-normal,screen',
+    'Longdrinks\tVodka Red Bull\t0,3l\tMampe Vodka, Red Bull\t8,00 €\t\tbar-normal,screen',
+    'Longdrinks\tMoscow Mule\t0,3l\tMampe Vodk, Thomas Henry Hinger Beer, Limette, Angostura Bitter\t8,50 €\t\tbar-normal,screen',
+    'Shots\tKleiner Feigling\t\t\t3,00 €\t\tbar-normal,screen',
+    'Shots\tBerliner Luft\t\t\t3,00 €\t\tbar-normal,screen',
+    'Shots\tMampe Popcorn\t2cl\t\t3,00 €\t\tbar-normal,screen',
+    'Heißgetränke\tKaffee Créme\t\t\t3,50 €\t\tbistro-normal',
+    'Heißgetränke\tAmericano\t\t\t3,00 €\t\tbistro-normal',
+    'Heißgetränke\tEspresso\t\t\t2,50 €\t\tbistro-normal',
+    'Heißgetränke\tEspresso doppelt\t\t\t4,00 €\t\tbistro-normal',
+    'Heißgetränke\tEspresso Macchiato\t\t\t2,80 €\t\tbistro-normal',
+    'Heißgetränke\tCappuccino\t\t\t3,50 €\t\tbistro-normal',
+    'Heißgetränke\tLatte Macchiato\t\t\t3,50 €\t\tbistro-normal',
+    'Heißgetränke\tMilchkaffee\t\t\t3,50 €\t\tbistro-normal',
+    'Heißgetränke\tTee\t\t\t3,00 €\t\tbistro-normal',
+    'Heißgetränke\tEspresso Shot\t\t\t1,00 €\t\tbistro-normal',
+    'Heißgetränke\tFlavour Shot\t\tVanille | Weiße Schokolade | Karamell\t0,50 €\t1\tbistro-normal',
+    'Alkoholfreie Getränke\tBauer Apfelsaft\t0,2l\t\t2,50 €\t\tbistro-normal',
+    'Alkoholfreie Getränke\tBauer Orangensaft\t0,2l\t\t2,50 €\t\tbistro-normal',
+    'Alkoholfreie Getränke\tSpreequell Wasser\t0,33l\tClassic | Naturell\t3,00 €\t\tbistro-normal',
+    'Alkoholfreie Getränke\tSpreequell Wasser\t0,75l\tClassic | Naturell\t4,50 €\t\tbistro-normal',
+    'Alkoholfreie Getränke\tfritz-kola\t0,33l\t\t2,80 €\t1,11\tbistro-normal',
+    'Alkoholfreie Getränke\tfritz-kola SUPER ZERO\t0,33l\t\t2,80 €\t1,9,10,11\tbistro-normal',
+    'Alkoholfreie Getränke\tfritz-limo HONIGMELONE\t0,33l\t\t2,80 €\t\tbistro-normal',
+    'Alkoholfreie Getränke\tfritz-limo APFEL-KIRSCH-HOLUNDER\t0,33l\t\t2,80 €\t\tbistro-normal',
+    'Alkoholfreie Getränke\tfritz-limo ZITRONE\t0,33l\t\t2,80 €\t\tbistro-normal',
+    'Alkoholfreie Getränke\tfritz-limo ORANGE\t0,33l\t\t2,80 €\t\tbistro-normal',
+    'Alkoholfreie Getränke\tfritz-spritz RHABARBER\t0,33l\t\t2,80 €\t\tbistro-normal',
+    'Alkoholfreie Getränke\tfritz-spritz APFELSCHORLE\t0,33l\t\t2,80 €\t\tbistro-normal',
+    'Alkoholfreie Getränke\tfritz-spritz TRAUBENSCHORLE\t0,33l\t\t2,80 €\t\tbistro-normal',
+    'Alkoholfreie Getränke\tELEPHANT BAY EISTEE Peach\t0,33l\t\t3,40 €\t3\tbistro-normal',
+    'Alkoholfreie Getränke\tELEPHANT BAY EISTEE Granat\t0,33l\t\t3,40 €\t3\tbistro-normal',
+    'Alkoholfreie Getränke\tClub Mate\t0,33l\t\t4,00 €\t11\tbistro-normal',
+    'Alkoholfreie Getränke\tRed Bull\t0,25l\t\t3,50 €\t1,2,11,13\tbistro-normal',
+    'Alkoholfreie Getränke\tLammsbräu Pils (alkoholfrei)\t0,33l\t\t3,20 €\t16,a\tbar-normal,bar-spezial,screen',
+  ];
+  const csv = rows.join('\n');
+  const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
-  a.download = 'getraenkekarte_vorlage.csv';
+  a.download = 'getraenkekarte_vorlage_2026-03-15.csv';
   a.click();
 }
 
@@ -546,8 +606,8 @@ function buildCard_A4P() {
 
   return `
     <div class="gk-inner gk-inner-a4p">
-      <div class="gk-header a4p-header">
-        <div class="a4p-title-wrap">
+      <div class="gk-header">
+        <div>
           <span class="gk-subtitle" style="font-size:${Math.round(titleSzA4P*0.4)}px;">${subtitle}</span>
           <div class="gk-title" style="font-size:${titleSzA4P}px;">Getränke</div>
         </div>

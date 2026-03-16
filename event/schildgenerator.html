@@ -54,8 +54,8 @@
   .poster-frame { position: absolute; top: 2.5%; left: 2.5%; right: 2.5%; bottom: 2.5%; border: 1.5px solid currentColor; pointer-events: none; z-index: 10; }
   .poster.schema-pe .poster-frame { color: var(--pe-blue); border-radius: 0; }
   .poster.schema-kbw .poster-frame { color: var(--kbw-magenta); }
-  .poster-content { position: absolute; top: 2.5%; left: 2.5%; right: 2.5%; bottom: 2.5%; display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 8% 10%; text-align: center; }
-  .poster-headline { line-height: 1.1; font-weight: 700; margin-bottom: 0.4em; word-break: break-word; }
+  .poster-content { position: absolute; top: 2.5%; left: 2.5%; right: 2.5%; bottom: 2.5%; display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 8% 10%; text-align: center; gap: 0.6em; }
+  .poster-headline { line-height: 1.1; font-weight: 700; word-break: break-word; }
   .poster-bodytext { line-height: 1.6; font-weight: 400; word-break: break-word; }
   .poster.schema-pe .poster-headline { color: var(--pe-blue); font-family: 'URW DIN', 'Source Sans 3', Arial, sans-serif; }
   .poster.schema-pe .poster-bodytext { color: #222; font-family: 'URW DIN', 'Source Sans 3', Arial, sans-serif; }
@@ -65,6 +65,16 @@
   .poster-logo-wrap { position: absolute; bottom: 2.5%; left: 0; right: 0; display: flex; justify-content: center; transform: translateY(20%); z-index: 20; }
   .poster-logo-bg { background: white; padding: 0 16px; display: flex; align-items: center; }
   .poster-logo { display: block; object-fit: contain; }
+  /* User image */
+  .poster-user-img { display: block; max-width: 100%; object-fit: contain; flex-shrink: 0; }
+  /* Image upload UI */
+  .img-drop { border: 1.5px dashed var(--gray-200); border-radius: var(--radius-ui); padding: 12px 10px; text-align: center; cursor: pointer; color: var(--gray-500); font-size: 11px; transition: border-color 0.15s; }
+  .img-drop:hover { border-color: var(--accent); }
+  .img-drop input[type="file"] { display: none; }
+  .img-pos-toggle { display: flex; background: var(--gray-100); border-radius: var(--radius-ui); padding: 3px; gap: 3px; }
+  .img-pos-btn { flex: 1; border: none; background: transparent; border-radius: 3px; padding: 6px 4px; font-size: 11px; font-weight: 600; cursor: pointer; color: var(--gray-500); transition: all 0.15s; font-family: inherit; }
+  .img-pos-btn.active { background: white; color: #222; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+  .img-controls { display: flex; flex-direction: column; gap: 7px; }
   @media print {
     body, .app { height: auto; overflow: visible; }
     aside, header { display: none !important; }
@@ -128,6 +138,22 @@
       <label>Subtext</label>
       <textarea id="bodytext" rows="4" placeholder="Weiterer Text..." oninput="updateText()"></textarea>
     </div>
+    <div id="imgSection">
+      <div class="section-label">Bild</div>
+      <div class="img-controls" id="imgControls">
+        <label class="img-drop" id="imgDrop" onclick="document.getElementById('imgFileInput').click()">
+          <input type="file" id="imgFileInput" accept="image/*" onchange="loadUserImg(event)">
+          Bild auswählen oder hier ablegen
+        </label>
+        <div id="imgOptions" style="display:none; flex-direction:column; gap:7px;">
+          <div class="img-pos-toggle">
+            <button class="img-pos-btn active" onclick="setImgPos('top',this)">Oben</button>
+            <button class="img-pos-btn" onclick="setImgPos('bottom',this)">Unten</button>
+          </div>
+          <button class="btn btn-secondary" style="font-size:11px; padding:7px 10px;" onclick="removeUserImg()">Bild entfernen</button>
+        </div>
+      </div>
+    </div>
     <div class="actions">
       <button class="btn btn-primary" onclick="doPrint()">Drucken</button>
       <button class="btn btn-secondary" onclick="doPDF()">Als PDF speichern</button>
@@ -138,7 +164,8 @@
       <div class="poster schema-pe" id="poster">
         <div class="poster-frame"></div>
         <div class="poster-content">
-          <div class="poster-headline" id="posterHeadline">Ihre Ueberschrift</div>
+          <img class="poster-user-img" id="posterUserImg" style="display:none;" alt="">
+          <div class="poster-headline" id="posterHeadline">Haupttext</div>
           <div class="poster-bodytext" id="posterBodytext" style="display:none;"></div>
         </div>
         <div class="poster-logo-wrap">
@@ -191,6 +218,10 @@ function applyAll() {
   document.getElementById('posterLogo').style.height = logoH + 'px';
   document.getElementById('posterHeadline').style.fontSize = Math.round(w * 0.07) + 'px';
   document.getElementById('posterBodytext').style.fontSize  = Math.round(w * 0.036) + 'px';
+  const userImg = document.getElementById('posterUserImg');
+  if (userImg.style.display !== 'none') {
+    userImg.style.maxHeight = Math.round(h * 0.35) + 'px';
+  }
 }
 
 function setSchema(s, btn) {
@@ -216,6 +247,52 @@ function updateText() {
   document.getElementById('posterHeadline').textContent = document.getElementById('headline').value  || 'Ihre Ueberschrift';
   document.getElementById('posterBodytext').textContent  = document.getElementById('bodytext').value  || '';
 }
+const imgState = { pos: 'top' };
+
+function loadUserImg(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    const img = document.getElementById('posterUserImg');
+    img.src = e.target.result;
+    img.style.display = 'block';
+    document.getElementById('imgOptions').style.display = 'flex';
+    document.getElementById('imgDrop').textContent = file.name;
+    applyImgPos();
+    applyAll();
+  };
+  reader.readAsDataURL(file);
+}
+
+function setImgPos(pos, btn) {
+  imgState.pos = pos;
+  document.querySelectorAll('.img-pos-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  applyImgPos();
+}
+
+function applyImgPos() {
+  const content = document.querySelector('.poster-content');
+  const img = document.getElementById('posterUserImg');
+  if (img.style.display === 'none') return;
+  if (imgState.pos === 'top') {
+    content.insertBefore(img, content.firstChild);
+  } else {
+    content.appendChild(img);
+  }
+}
+
+function removeUserImg() {
+  const img = document.getElementById('posterUserImg');
+  img.src = '';
+  img.style.display = 'none';
+  document.getElementById('imgOptions').style.display = 'none';
+  const drop = document.getElementById('imgDrop');
+  drop.innerHTML = '<input type="file" id="imgFileInput" accept="image/*" onchange="loadUserImg(event)">Bild auswählen oder hier ablegen';
+  applyAll();
+}
+
 const PAGE_MM = { A6:'105mm 148mm', A5:'148mm 210mm', A4:'210mm 297mm', A3:'297mm 420mm' };
 function _injectPageSize() {
   const p = PAGE_MM[state.format].split(' ');

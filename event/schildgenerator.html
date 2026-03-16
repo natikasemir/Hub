@@ -62,16 +62,16 @@
   .poster.schema-kbw .poster-headline { color: var(--kbw-magenta); }
   .poster.schema-kbw .poster-bodytext { color: #222; }
   /* Logo sits on the bottom frame line, centered */
-  .poster-logo-wrap { position: absolute; bottom: 2.5%; left: 0; right: 0; display: flex; justify-content: center; transform: translateY(50%); z-index: 20; }
+  .poster-logo-wrap { position: absolute; bottom: 2.5%; left: 0; right: 0; display: flex; justify-content: center; transform: translateY(20%); z-index: 20; }
   .poster-logo-bg { background: white; padding: 0 16px; display: flex; align-items: center; }
   .poster-logo { display: block; object-fit: contain; }
   @media print {
     body, .app { height: auto; overflow: visible; }
     aside, header { display: none !important; }
     main { display: flex; padding: 0; background: white; width: 100vw; height: 100vh; }
-    .poster-wrap { transform: none !important; filter: none; }
+    .poster-wrap { transform: none !important; filter: none; width: 100% !important; height: 100% !important; }
     .poster { width: 100% !important; height: 100% !important; }
-    @page { margin: 0; size: auto; }
+    @page { margin: 0; }
   }
 </style>
 </head>
@@ -129,7 +129,7 @@
       <textarea id="bodytext" rows="4" placeholder="Weiterer Text..." oninput="updateText()"></textarea>
     </div>
     <div class="actions">
-      <button class="btn btn-primary" onclick="window.print()">Drucken</button>
+      <button class="btn btn-primary" onclick="doPrint()">Drucken</button>
       <button class="btn btn-secondary" onclick="doPDF()">Als PDF speichern</button>
     </div>
   </aside>
@@ -216,10 +216,21 @@ function updateText() {
   document.getElementById('posterHeadline').textContent = document.getElementById('headline').value  || 'Ihre Ueberschrift';
   document.getElementById('posterBodytext').textContent  = document.getElementById('bodytext').value  || '';
 }
+const PAGE_MM = { A6:'105mm 148mm', A5:'148mm 210mm', A4:'210mm 297mm', A3:'297mm 420mm' };
+function _injectPageSize() {
+  const p = PAGE_MM[state.format].split(' ');
+  const size = state.orient === 'portrait' ? p[0]+' '+p[1] : p[1]+' '+p[0];
+  const s = document.createElement('style');
+  s.id = '_ps'; s.textContent = '@page{size:'+size+';margin:0}';
+  document.head.appendChild(s);
+}
+function doPrint() {
+  _injectPageSize(); window.print(); document.getElementById('_ps').remove();
+}
 function doPDF() {
   const orig = document.title;
   document.title = 'Poster_' + state.schema.toUpperCase() + '_' + state.format + '_' + (state.orient === 'landscape' ? 'Q' : 'H');
-  window.print();
+  _injectPageSize(); window.print(); document.getElementById('_ps').remove();
   document.title = orig;
 }
 applyAll();

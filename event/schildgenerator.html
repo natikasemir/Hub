@@ -52,7 +52,18 @@
   /* THE POSTER */
   .poster { background: white; position: relative; overflow: hidden; }
   .poster-frame { position: absolute; top: 2.5%; left: 2.5%; right: 2.5%; bottom: 2.5%; border: 1.5px solid currentColor; pointer-events: none; z-index: 10; }
-  .poster.schema-pe .poster-frame { color: var(--pe-blue); border-radius: 0; }
+  .poster.schema-pe .poster-frame { color: var(--pe-blue); border-radius: 0; border-bottom: none; }
+  .poster.schema-pe .poster-frame::before,
+  .poster.schema-pe .poster-frame::after {
+    content: '';
+    position: absolute;
+    bottom: -1px;
+    height: 1.5px;
+    background: var(--pe-blue);
+    width: var(--frame-bottom-seg, 35%);
+  }
+  .poster.schema-pe .poster-frame::before { left: 0; }
+  .poster.schema-pe .poster-frame::after  { right: 0; }
   .poster.schema-kbw .poster-frame { color: var(--kbw-magenta); }
   .poster-content { position: absolute; top: 2.5%; left: 2.5%; right: 2.5%; bottom: 2.5%; display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 8% 10%; text-align: center; gap: 0.6em; }
   .poster-headline { line-height: 1.1; font-weight: 700; word-break: break-word; }
@@ -62,7 +73,7 @@
   .poster.schema-kbw .poster-headline { color: var(--kbw-magenta); }
   .poster.schema-kbw .poster-bodytext { color: #222; }
   /* Logo sits on the bottom frame line, centered */
-  .poster-logo-wrap { position: absolute; bottom: 2.5%; left: 0; right: 0; display: flex; justify-content: center; transform: translateY(20%); z-index: 20; }
+  .poster-logo-wrap { position: absolute; bottom: 2.5%; left: 0; right: 0; display: flex; justify-content: center; transform: translateY(40%); z-index: 20; }
   .poster-logo-bg { background: white; padding: 0 16px; display: flex; align-items: center; }
   .poster-logo { display: block; object-fit: contain; }
   /* User image */
@@ -220,7 +231,16 @@ function applyAll() {
   document.getElementById('posterBodytext').style.fontSize  = Math.round(w * 0.036) + 'px';
   const userImg = document.getElementById('posterUserImg');
   if (userImg.style.display !== 'none') {
-    userImg.style.maxHeight = Math.round(h * 0.35) + 'px';
+    const imgMaxH = state.orient === 'portrait' ? h * 0.175 : h * 0.35;
+    userImg.style.maxHeight = Math.round(imgMaxH) + 'px';
+  }
+  // PE schema: compute bottom line segments so they end near the logo
+  if (state.schema === 'pe') {
+    const logoBg = poster.querySelector('.poster-logo-bg');
+    const frameW = w - 2 * margin;
+    const logoW = logoBg.offsetWidth > 0 ? logoBg.offsetWidth : Math.round(logoH * 3.5) + 32;
+    const segW = Math.max(12, (frameW - logoW) / 2 - 8);
+    frame.style.setProperty('--frame-bottom-seg', Math.round(segW) + 'px');
   }
 }
 
@@ -312,6 +332,7 @@ function doPDF() {
 }
 applyAll();
 window.addEventListener('resize', applyAll);
+document.getElementById('posterLogo').addEventListener('load', applyAll);
 </script>
 </body>
 </html>

@@ -53,7 +53,7 @@
   .poster { background: white; position: relative; overflow: hidden; }
   .poster-frame { position: absolute; top: 2.5%; left: 2.5%; right: 2.5%; bottom: 2.5%; border: 1.5px solid currentColor; pointer-events: none; z-index: 10; }
   .poster.schema-pe .poster-frame { color: var(--pe-blue); border-radius: 0; }
-  .poster.schema-kbw .poster-frame { color: var(--kbw-magenta); border-radius: 12% 0 12% 0; }
+  .poster.schema-kbw .poster-frame { color: var(--kbw-magenta); }
   .poster-content { position: absolute; top: 2.5%; left: 2.5%; right: 2.5%; bottom: 2.5%; display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 8% 10%; text-align: center; }
   .poster-headline { line-height: 1.1; font-weight: 700; margin-bottom: 0.4em; word-break: break-word; }
   .poster-bodytext { line-height: 1.6; font-weight: 400; word-break: break-word; }
@@ -177,14 +177,17 @@ function applyAll() {
   wrap.style.width    = w + 'px';
   wrap.style.height   = h + 'px';
   wrap.style.transform = 'scale(' + scale + ')';
-  const ms = Math.round(w * 0.025) + 'px';
+  const margin = Math.round(w * 0.04);
+  const ms = margin + 'px';
   const frame = poster.querySelector('.poster-frame');
   const content = poster.querySelector('.poster-content');
   [frame, content].forEach(el => {
     el.style.top = ms; el.style.left = ms; el.style.right = ms; el.style.bottom = ms;
   });
   poster.querySelector('.poster-logo-wrap').style.bottom = ms;
-  const logoH = Math.min(w * 0.07, 52);
+  const r = Math.round(w * 0.12) + 'px';
+  frame.style.borderRadius = state.schema === 'kbw' ? r + ' 0 ' + r + ' 0' : '0';
+  const logoH = Math.min(w * 0.07, 52) * (state.schema === 'kbw' ? 0.6 : 1);
   document.getElementById('posterLogo').style.height = logoH + 'px';
   document.getElementById('posterHeadline').style.fontSize = Math.round(w * 0.07) + 'px';
   document.getElementById('posterBodytext').style.fontSize  = Math.round(w * 0.036) + 'px';

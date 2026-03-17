@@ -162,37 +162,6 @@ aside {
 .field-group.active { display: flex; }
 
 /* Logo toggle */
-.logo-toggle {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-.switch {
-  position: relative;
-  width: 36px; height: 20px;
-}
-.switch input { opacity: 0; width: 0; height: 0; }
-.slider {
-  position: absolute;
-  inset: 0;
-  background: var(--gray-300);
-  border-radius: 20px;
-  cursor: pointer;
-  transition: background 0.2s;
-}
-.slider::before {
-  content: '';
-  position: absolute;
-  width: 14px; height: 14px;
-  left: 3px; top: 3px;
-  background: white;
-  border-radius: 50%;
-  transition: transform 0.2s;
-}
-.switch input:checked + .slider { background: var(--ci); }
-.switch input:checked + .slider::before { transform: translateX(16px); }
-.logo-toggle-label { font-size: 12px; font-weight: 600; color: var(--gray-700); }
-
 /* Actions */
 .actions { display: flex; flex-direction: column; gap: 6px; margin-top: auto; }
 .btn {
@@ -247,15 +216,6 @@ main {
 #qrCanvas {
   display: block;
   border-radius: 4px;
-}
-
-.qr-logo-overlay {
-  position: absolute;
-  pointer-events: none;
-}
-
-.qr-logo-overlay img {
-  display: block;
 }
 
 .empty-hint {
@@ -339,18 +299,6 @@ main {
     </div>
   </div>
 
-  <!-- Logo -->
-  <div>
-    <div class="section-label">Logo</div>
-    <div class="logo-toggle">
-      <span class="logo-toggle-label">Logo in der Mitte</span>
-      <label class="switch">
-        <input type="checkbox" id="toggleLogo" checked onchange="generate()">
-        <span class="slider"></span>
-      </label>
-    </div>
-  </div>
-
   <!-- Actions -->
   <div class="actions">
     <button class="btn btn-primary" id="btnPng" onclick="downloadPNG()" disabled>↓ Als PNG speichern</button>
@@ -368,7 +316,7 @@ main {
     <div id="qrOutput" style="display:none; flex-direction:column; align-items:center; gap:16px;">
       <div class="qr-wrap" id="qrWrap">
         <canvas id="qrCanvas"></canvas>
-        <div class="qr-logo-overlay" id="logoOverlay"></div>
+
       </div>
 
     </div>
@@ -384,7 +332,6 @@ const state = {
   schema: 'pe',
   mode:   'url',
   size:   280,
-  logo:   true,
 };
 
 const CI = {
@@ -451,8 +398,6 @@ function generate() {
   const ci     = CI[state.schema];
   const size   = state.size;
 
-  const schemaAtGenerate = state.schema; // Schema zum Zeitpunkt des Aufrufs merken
-
   // QRCode auf Canvas zeichnen
   const tempDiv = document.createElement('div');
   tempDiv.style.display = 'none';
@@ -476,32 +421,6 @@ function generate() {
     canvas.height = size;
     ctx.drawImage(srcCanvas, 0, 0);
     document.body.removeChild(tempDiv);
-
-    // Logo als Overlay-Element statt drawImage — zuverlässiger bei Schema-Wechsel
-    const overlay = document.getElementById('logoOverlay');
-    overlay.innerHTML = '';
-    if (state.logo) {
-      const logoCI   = CI[schemaAtGenerate];
-      const logoSize = Math.round(size * 0.22);
-      const pad      = 6;
-      const bgSize   = logoSize + pad * 2;
-      const bgOffset = Math.round((size - bgSize) / 2);
-
-      overlay.style.cssText = `
-        position:absolute;
-        left:${bgOffset}px; top:${bgOffset}px;
-        width:${bgSize}px; height:${bgSize}px;
-        background:white;
-        border-radius:6px;
-        display:flex; align-items:center; justify-content:center;
-        padding:${pad}px;
-      `;
-
-      const img = document.createElement('img');
-      img.src   = logoCI.logo;
-      img.style.cssText = `width:${logoSize}px; height:${logoSize}px; object-fit:contain; display:block;`;
-      overlay.appendChild(img);
-    }
 
     document.getElementById('btnPng').disabled = false;
     document.getElementById('btnSvg').disabled = false;

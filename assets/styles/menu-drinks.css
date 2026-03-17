@@ -295,8 +295,9 @@
 }
 
 /* ── Allergen-Text: ganz unten, 6.5pt ── */
-.getraenkekarte.format-a4p .gk-allergen {
-  font-size: 10.67px; /* 8pt = 8 × 1.333 = 10.67px */
+/* Allergen-Text: gilt für alle Formate */
+.getraenkekarte .gk-allergen {
+  font-size: 10.67px; /* 8pt */
   color: var(--gray-700);
   line-height: 1.4;
   padding-top: 1%;
@@ -305,13 +306,27 @@
   position: relative;
 }
 
-.getraenkekarte.format-a4p .gk-allergen::before {
+.getraenkekarte .gk-allergen::before {
   content: '';
   position: absolute;
   top: 0; left: 0; right: 0;
   height: 0.5px;
   background: var(--gray-200);
   border-radius: 1px;
+}
+
+/* A4P: identisch, wird von der allgemeinen Regel abgedeckt */
+.getraenkekarte.format-a4p .gk-allergen {
+  font-size: 10.67px;
+  color: var(--gray-700);
+}
+
+/* SCREEN: Allergen-Text in weiß */
+.getraenkekarte.format-screen .gk-allergen {
+  color: rgba(255,255,255,0.5);
+}
+.getraenkekarte.format-screen .gk-allergen::before {
+  background: rgba(255,255,255,0.2);
 }
 
 

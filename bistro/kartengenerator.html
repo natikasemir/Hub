@@ -222,6 +222,8 @@ main { display: flex; align-items: center; justify-content: center; padding: 28p
       <button class="toggle-btn" style="flex:none;padding:6px 8px;" onclick="setVariant('tanztee',this)">Tanztee</button>
       <button class="toggle-btn" style="flex:none;padding:6px 8px;" onclick="setVariant('kultur',this)">Kultur</button>
       <button class="toggle-btn" style="flex:none;padding:6px 8px;" onclick="setVariant('party',this)">Party</button>
+      <button class="toggle-btn" style="flex:none;padding:6px 8px;" onclick="setVariant('snacks',this)">Snacks</button>
+      <button class="toggle-btn" style="flex:none;padding:6px 8px;" onclick="setVariant('vermietung',this)">Vermietung</button>
     </div>
   </div>
 
@@ -256,6 +258,16 @@ main { display: flex; align-items: center; justify-content: center; padding: 28p
       <button class="format-btn" onclick="setFormat('SCREEN',this)">
         <div class="fmt-icon" style="width:28px;height:16px;"></div>16:9<br>4K
       </button>
+    </div>
+  </div>
+
+  <!-- Allergen-Hinweis -->
+  <div>
+    <div class="section-label">Allergen-Hinweis</div>
+    <div class="toggle-group" style="flex-direction:column; gap:3px; background:none; padding:0;">
+      <button class="toggle-btn active" style="text-align:left; padding:6px 8px; background:var(--gray-100); border-radius:var(--radius-ui);" onclick="setAllergen('none',this)">Ohne</button>
+      <button class="toggle-btn" style="text-align:left; padding:6px 8px; background:var(--gray-100); border-radius:var(--radius-ui);" onclick="setAllergen('general',this)">Allgemein</button>
+      <button class="toggle-btn" style="text-align:left; padding:6px 8px; background:var(--gray-100); border-radius:var(--radius-ui);" onclick="setAllergen('detailed',this)">Detailliert</button>
     </div>
   </div>
 
@@ -323,22 +335,24 @@ const LOGOS = {
 
 // ── FORMAT DIMENSIONS (px at 96dpi) ──
 const FORMATS = {
-  A4P:    { w: 595,  h: 842,  cols: 2, party: false },
-  A4L:    { w: 842,  h: 595,  cols: 3, party: false },
-  A3P:    { w: 842,  h: 1191, cols: 3, party: false },
-  A3L:    { w: 1191, h: 842,  cols: 4, party: false },
-  DINLANG:{ w: 297,  h: 630,  cols: 1, party: false },
-  SCREEN: { w: 3840, h: 2160, cols: 4, party: true  }  // 4K UHD 16:9
+  A4P:    { w: 595,  h: 842,  cols: 2, screen: false },
+  A4L:    { w: 842,  h: 595,  cols: 3, screen: false },
+  A3P:    { w: 842,  h: 1191, cols: 3, screen: false },
+  A3L:    { w: 1191, h: 842,  cols: 3, screen: false },
+  DINLANG:{ w: 297,  h: 630,  cols: 1, screen: false },
+  SCREEN: { w: 3840, h: 2160, cols: 3, screen: true  }  // 4K UHD 16:9
 };
 
 // ── VARIANTEN-KEYS (müssen mit der CSV-Spalte 'Angebotsvariante' übereinstimmen) ──
-const VARIANT_KEYS = ['bistro-tag', 'tanztee', 'kultur', 'party'];
+const VARIANT_KEYS = ['bistro-tag', 'tanztee', 'kultur', 'party', 'snacks', 'vermietung'];
 
 const VARIANT_LABELS = {
-  'bistro-tag': 'Bistro tägl.',
-  'tanztee':    'Tanztee',
-  'kultur':     'Kultur',
-  'party':      'Party',
+  'bistro-tag':  'Bistro tägl.',
+  'tanztee':     'Tanztee',
+  'kultur':      'Kultur',
+  'party':       'Party',
+  'snacks':      'Snacks',
+  'vermietung':  'Vermietung',
 };
 
 const state = {
@@ -346,7 +360,8 @@ const state = {
   variant: 'bistro-tag',
   showPrices: true,
   format: 'A4P',
-  data: []   // parsed rows
+  allergen: 'none',  // 'none' | 'general' | 'detailed'
+  data: []
 };
 
 function clearActive(sel) { document.querySelectorAll(sel).forEach(b=>b.classList.remove('active')); }
@@ -365,6 +380,11 @@ function setVariant(v, btn) {
 function setPrices(v, btn) {
   state.showPrices = v;
   clearActive('.toggle-btn[onclick^="setPrices"]'); btn.classList.add('active');
+  renderCard();
+}
+function setAllergen(v, btn) {
+  state.allergen = v;
+  clearActive('.toggle-btn[onclick^="setAllergen"]'); btn.classList.add('active');
   renderCard();
 }
 function setFormat(f, btn) {
@@ -574,8 +594,13 @@ function getFilteredData() {
   return cats;
 }
 
-// ── ALLERGEN-TEXT (fest) ──
-const ALLERGEN_TEXT = '1-Farbstoff, 2-Aroma, 16-Alkohol, 3-Antioxidationsmittel, 11-Koffein, 2-Konservierungsstoff, 9-Süßungsmittel, 10-enthält eine Phenylalaninquelle, 13-Taurin, a-Gluten';
+// ── ALLERGEN-TEXT ──
+const ALLERGEN_TEXTS = {
+  none:     '',
+  general:  'Bei Fragen zu Inhaltsstoffen und Allergenen steht Ihnen unser Team gern zur Seite.',
+  detailed: '1-Farbstoff, 2-Aroma, 16-Alkohol, 3-Antioxidationsmittel, 11-Koffein, 2-Konservierungsstoff, 9-Süßungsmittel, 10-enthält eine Phenylalaninquelle, 13-Taurin, a-Gluten',
+};
+function getAllergenText() { return ALLERGEN_TEXTS[state.allergen] || ''; }
 
 // ── GEMEINSAME HILFSFUNKTIONEN ──
 
@@ -642,8 +667,9 @@ function buildColumnsHTML(cats, fmt, sizes, showPrices) {
 // ── ROUTER: Welches Template? ──
 function buildCard() {
   switch(state.format) {
-    case 'A4P': return buildCard_A4P();
-    default:    return buildCard_default();
+    case 'A4P':    return buildCard_A4P();
+    case 'SCREEN': return buildCard_SCREEN();
+    default:       return buildCard_default();
   }
 }
 
@@ -710,7 +736,47 @@ function buildCard_A4P() {
         <img class="gk-logo" src="${logoSrc}" alt="Logo" style="height:${s.headerLogoH}px;max-width:${Math.round(W*0.2)}px;">
       </div>
       <div class="gk-body">${columnsHTML}</div>
-      <div class="gk-allergen">${ALLERGEN_TEXT}</div>
+      ${getAllergenText() ? `<div class="gk-allergen">${getAllergenText()}</div>` : ""}
+    </div>`;
+}
+
+// ── TEMPLATE: 16:9 SCREEN (4K) ──
+function buildCard_SCREEN() {
+  const fmt  = FORMATS['SCREEN'];
+  const cats = getFilteredData();
+  const W    = fmt.w;
+  const logoSrc = LOGOS[state.schema];
+  const label   = VARIANT_LABELS[state.variant];
+  const subtitle = label.includes('·') ? label.split('·')[1].trim() : '';
+
+  // Schriftgrößen: max 9pt = 12px bei 96dpi
+  const pt = 1.333;
+  const maxItemSz  = Math.round(9  * pt);  // 12px
+  const maxCatSz   = Math.round(11 * pt);  // ~15px
+  const maxTitleSz = Math.round(18 * pt);  // ~24px
+
+  const columnsHTML = buildColumnsHTML(cats, fmt, {
+    titleSz:    maxTitleSz,
+    catTitleSz: maxCatSz,
+    itemSz:     maxItemSz,
+    descSz:     Math.round(7.5 * pt),
+    logoH:      Math.round(W * 0.025),
+    headerLogoH: Math.round(W * 0.028),
+  }, state.showPrices);
+
+  const allergen = getAllergenText();
+
+  return `
+    <div class="gk-inner gk-inner-std">
+      <div class="gk-header">
+        <div>
+          <span class="gk-subtitle" style="font-size:${Math.round(maxTitleSz*0.4)}px;">${subtitle}</span>
+          <div class="gk-title" style="font-size:${maxTitleSz}px;">Getränke</div>
+        </div>
+        <img class="gk-logo" src="${logoSrc}" alt="Logo" style="height:${Math.round(W*0.028)}px;max-width:${Math.round(W*0.15)}px;">
+      </div>
+      <div class="gk-body">${columnsHTML}</div>
+      ${allergen ? `<div class="gk-allergen">${allergen}</div>` : ''}
     </div>`;
 }
 
@@ -736,7 +802,7 @@ function buildCard_default() {
         <img class="gk-logo" src="${logoSrc}" alt="Logo" style="height:${s.headerLogoH}px;max-width:${Math.round(W*0.2)}px;">
       </div>
       <div class="gk-body">${columnsHTML}</div>
-      <div class="gk-allergen">${ALLERGEN_TEXT}</div>
+      ${getAllergenText() ? `<div class="gk-allergen">${getAllergenText()}</div>` : ""}
     </div>`;
 }
 
@@ -771,7 +837,7 @@ const PAGE_SIZES = {
   A3P:     { w: 297,  h: 420,  orientation: 'portrait'  },
   A3L:     { w: 420,  h: 297,  orientation: 'landscape' },
   DINLANG: { w: 99,   h: 210,  orientation: 'portrait'  },
-  SCREEN:  { w: 381,  h: 215,  orientation: 'landscape' }, // 16:9 (Full HD Basis)
+  SCREEN:  { w: 381,  h: 215,  orientation: 'landscape' }, // 16:9 — jsPDF in mm, Canvas separat
 };
 
 async function exportPDF() {
@@ -779,43 +845,54 @@ async function exportPDF() {
   const fmt  = FORMATS[state.format];
   const page = PAGE_SIZES[state.format];
   const wrap = document.getElementById('cardWrap');
+  const isScreen = fmt.screen;
 
-  // Buttons deaktivieren während Export läuft
   const btns = ['btnPrint', 'btnPDF', 'btnJPEG'];
   btns.forEach(id => document.getElementById(id).disabled = true);
 
-  // Transform entfernen → Karte in Originalgröße rendern
   const prevTransform = wrap.style.transform;
   wrap.style.transform = 'none';
   wrap.style.transformOrigin = 'top left';
 
   try {
+    // SCREEN: 4K-Auflösung via scale-Faktor auf Basis 1920×1080
+    // Alle anderen: direkte Pixelgröße × scale:2
+    const renderW  = isScreen ? 1920 : fmt.w;
+    const renderH  = isScreen ? 1080 : fmt.h;
+    const scaleFactor = isScreen ? 2 : 2; // 1920×2 = 3840, 1080×2 = 2160
+
     const canvas = await html2canvas(card, {
-      scale: 2,
+      scale: scaleFactor,
       useCORS: true,
       allowTaint: true,
-      backgroundColor: fmt.screen ? '#000000' : '#ffffff',
-      width:  fmt.w,
-      height: fmt.h,
+      backgroundColor: isScreen ? '#000000' : '#ffffff',
+      width:  renderW,
+      height: renderH,
       logging: false,
     });
 
-    const imgData = canvas.toDataURL('image/jpeg', 0.95);
-
-    // jsPDF: Seite in exakter Größe, Bild füllt die gesamte Seite
-    const { jsPDF } = window.jspdf;
-    const pdf = new jsPDF({
-      orientation: page.orientation,
-      unit: 'mm',
-      format: [page.w, page.h],
-      compress: true,
-    });
-
-    pdf.addImage(imgData, 'JPEG', 0, 0, page.w, page.h, '', 'FAST');
-    pdf.save(`Getraenkekarte_${state.variant}_${state.format}.pdf`);
+    if (isScreen) {
+      // SCREEN: als JPEG exportieren (3840×2160)
+      const link = document.createElement('a');
+      link.download = `Getraenkekarte_${state.variant}_SCREEN_4K.jpg`;
+      link.href = canvas.toDataURL('image/jpeg', 0.95);
+      link.click();
+    } else {
+      // Alle anderen Formate: als PDF
+      const imgData = canvas.toDataURL('image/jpeg', 0.95);
+      const { jsPDF } = window.jspdf;
+      const pdf = new jsPDF({
+        orientation: page.orientation,
+        unit: 'mm',
+        format: [page.w, page.h],
+        compress: true,
+      });
+      pdf.addImage(imgData, 'JPEG', 0, 0, page.w, page.h, '', 'FAST');
+      pdf.save(`Getraenkekarte_${state.variant}_${state.format}.pdf`);
+    }
 
   } catch(err) {
-    alert('PDF-Export fehlgeschlagen: ' + err.message);
+    alert('Export fehlgeschlagen: ' + err.message);
   } finally {
     wrap.style.transform = prevTransform;
     wrap.style.transformOrigin = 'center center';

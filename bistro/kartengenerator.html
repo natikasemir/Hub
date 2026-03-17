@@ -149,7 +149,7 @@ main { display: flex; align-items: center; justify-content: center; padding: 28p
   cursor: pointer;
   font-family: inherit;
 }
-.help-close:hover { background: var(--accent-hover, #d4473a); }
+.help-close:hover { background: #d4473a; }
 
 /* ── PRINT ── */
 @media print {
@@ -273,7 +273,7 @@ main { display: flex; align-items: center; justify-content: center; padding: 28p
   </div>
 
   <div class="actions">
-    <button class="btn btn-primary" id="btnPrint" onclick="doPrint()" disabled>🖨️ Drucken</button>
+    <button class="btn btn-primary" id="btnPrint" onclick="doPrint()" disabled>↓ Als PDF drucken</button>
     <button class="btn btn-secondary" id="btnPDF" onclick="doPDF()" disabled>↓ Als PDF speichern</button>
     <button class="btn btn-secondary" id="btnJPEG" onclick="doJPEG()" disabled>↓ Als JPEG speichern</button>
   </div>
@@ -313,6 +313,7 @@ main { display: flex; align-items: center; justify-content: center; padding: 28p
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script>
 // ── LOGOS (injected) ──
 const LOGOS = {
@@ -758,37 +759,67 @@ function applyDimensions() {
   wrap.style.transform = `scale(${scale})`;
 }
 
-// Papiergrößen in mm pro Format
+// Papiergrößen in mm (für jsPDF) und orientation
 const PAGE_SIZES = {
-  A4P:     { w: '210mm', h: '297mm' },
-  A4L:     { w: '297mm', h: '210mm' },
-  A3P:     { w: '297mm', h: '420mm' },
-  A3L:     { w: '420mm', h: '297mm' },
-  DINLANG: { w: '99mm',  h: '210mm' },
-  SCREEN:  { w: '3840px', h: '2160px' },
+  A4P:     { w: 210,  h: 297,  orientation: 'portrait'  },
+  A4L:     { w: 297,  h: 210,  orientation: 'landscape' },
+  A3P:     { w: 297,  h: 420,  orientation: 'portrait'  },
+  A3L:     { w: 420,  h: 297,  orientation: 'landscape' },
+  DINLANG: { w: 99,   h: 210,  orientation: 'portrait'  },
+  SCREEN:  { w: 381,  h: 215,  orientation: 'landscape' }, // 16:9 annähernd
 };
 
-function doPrint() {
-  const page = PAGE_SIZES[state.format] || { w: 'auto', h: 'auto' };
+async function exportPDF() {
+  const card = document.getElementById('card');
+  const fmt  = FORMATS[state.format];
+  const page = PAGE_SIZES[state.format];
+  const wrap = document.getElementById('cardWrap');
 
-  // @page size dynamisch per <style>-Tag setzen
-  let el = document.getElementById('_print_page_style');
-  if (!el) {
-    el = document.createElement('style');
-    el.id = '_print_page_style';
-    document.head.appendChild(el);
+  // Buttons deaktivieren während Export läuft
+  const btns = ['btnPrint', 'btnPDF', 'btnJPEG'];
+  btns.forEach(id => document.getElementById(id).disabled = true);
+
+  // Transform entfernen → Karte in Originalgröße rendern
+  const prevTransform = wrap.style.transform;
+  wrap.style.transform = 'none';
+  wrap.style.transformOrigin = 'top left';
+
+  try {
+    const canvas = await html2canvas(card, {
+      scale: 2,
+      useCORS: true,
+      allowTaint: true,
+      backgroundColor: fmt.party ? '#000000' : '#ffffff',
+      width:  fmt.w,
+      height: fmt.h,
+      logging: false,
+    });
+
+    const imgData = canvas.toDataURL('image/jpeg', 0.95);
+
+    // jsPDF: Seite in exakter Größe, Bild füllt die gesamte Seite
+    const { jsPDF } = window.jspdf;
+    const pdf = new jsPDF({
+      orientation: page.orientation,
+      unit: 'mm',
+      format: [page.w, page.h],
+      compress: true,
+    });
+
+    pdf.addImage(imgData, 'JPEG', 0, 0, page.w, page.h, '', 'FAST');
+    pdf.save(`Getraenkekarte_${state.variant}_${state.format}.pdf`);
+
+  } catch(err) {
+    alert('PDF-Export fehlgeschlagen: ' + err.message);
+  } finally {
+    wrap.style.transform = prevTransform;
+    wrap.style.transformOrigin = 'center center';
+    btns.forEach(id => document.getElementById(id).disabled = false);
   }
-  el.textContent = `@page { margin: 0; size: ${page.w} ${page.h}; }`;
-
-  const orig = document.title;
-  document.title = `Getraenkekarte_${state.variant}_${state.format}`;
-  window.print();
-  document.title = orig;
 }
 
-function doPDF() {
-  doPrint();
-}
+function doPrint() { exportPDF(); }
+function doPDF()   { exportPDF(); }
 
 async function doJPEG() {
   const card = document.getElementById('card');
@@ -805,7 +836,7 @@ async function doJPEG() {
       scale: 2,
       useCORS: true,
       allowTaint: true,
-      backgroundColor: FORMATS[state.format].party ? '#000000' : '#ffffff',
+      backgroundColor: fmt.party ? '#000000' : '#ffffff',
       width:  fmt.w,
       height: fmt.h,
       logging: false

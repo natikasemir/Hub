@@ -58,8 +58,8 @@
     content: '';
     position: absolute;
     bottom: -1px;
-    height: 1.5px;
-    background: var(--pe-blue);
+    height: var(--frame-bw, 1.5px);
+    background: currentColor;
     width: var(--frame-bottom-seg, 35%);
   }
   .poster.schema-pe .poster-frame::before { left: 0; }
@@ -86,12 +86,10 @@
   .img-pos-btn { flex: 1; border: none; background: transparent; border-radius: 3px; padding: 6px 4px; font-size: 11px; font-weight: 600; cursor: pointer; color: var(--gray-500); transition: all 0.15s; font-family: inherit; }
   .img-pos-btn.active { background: white; color: #222; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
   .img-controls { display: flex; flex-direction: column; gap: 7px; }
+  #_printGrid { display: none; }
   @media print {
-    body, .app { height: auto; overflow: visible; }
-    aside, header { display: none !important; }
-    main { display: flex; padding: 0; background: white; width: 100vw; height: 100vh; }
-    .poster-wrap { transform: none !important; filter: none; width: 100% !important; height: 100% !important; }
-    .poster { width: 100% !important; height: 100% !important; }
+    .app { display: none !important; }
+    #_printGrid { display: grid !important; }
     @page { margin: 0; }
   }
 </style>
@@ -195,6 +193,10 @@ const FORMATS = {
   A4: { w: 595, h: 842 }, A3: { w: 842, h: 1191 }
 };
 const state = { schema: 'pe', format: 'A6', orient: 'portrait', mode: 'headline' };
+const BORDER_WIDTHS = {
+  pe:  { A6: 1, A5: 1.5, A4: 2,   A3: 3 },
+  kbw: { A6: 1, A5: 1.25, A4: 1.5, A3: 2 }
+};
 
 function clearActive(sel) { document.querySelectorAll(sel).forEach(b => b.classList.remove('active')); }
 
@@ -223,6 +225,12 @@ function applyAll() {
     el.style.top = ms; el.style.left = ms; el.style.right = ms; el.style.bottom = ms;
   });
   poster.querySelector('.poster-logo-wrap').style.bottom = ms;
+  const bw = BORDER_WIDTHS[state.schema][state.format] + 'px';
+  frame.style.setProperty('--frame-bw', bw);
+  frame.style.borderTop    = bw + ' solid currentColor';
+  frame.style.borderLeft   = bw + ' solid currentColor';
+  frame.style.borderRight  = bw + ' solid currentColor';
+  frame.style.borderBottom = state.schema === 'pe' ? 'none' : bw + ' solid currentColor';
   const r = Math.round(w * 0.12) + 'px';
   frame.style.borderRadius = state.schema === 'kbw' ? r + ' 0 ' + r + ' 0' : '0';
   const logoH = Math.min(w * 0.07, 52) * (state.schema === 'kbw' ? 0.6 : 1);
@@ -313,22 +321,83 @@ function removeUserImg() {
   applyAll();
 }
 
-const PAGE_MM = { A6:'105mm 148mm', A5:'148mm 210mm', A4:'210mm 297mm', A3:'297mm 420mm' };
-function _injectPageSize() {
-  const p = PAGE_MM[state.format].split(' ');
-  const size = state.orient === 'portrait' ? p[0]+' '+p[1] : p[1]+' '+p[0];
-  const s = document.createElement('style');
-  s.id = '_ps'; s.textContent = '@page{size:'+size+';margin:0}';
-  document.head.appendChild(s);
+// Print layout: always targets A4 paper; smaller formats tile, A3 scales down
+function getPrintLayout() {
+  const f = state.format, o = state.orient;
+  if (f === 'A6') {
+    return o === 'portrait'
+      ? { cols: 2, rows: 2, paperW: 210, paperH: 297 }
+      : { cols: 2, rows: 2, paperW: 297, paperH: 210 };
+  }
+  if (f === 'A5') {
+    // portrait A5 (148×210): 2 side-by-side on A4 landscape (297×210)
+    // landscape A5 (210×148): 2 stacked on A4 portrait (210×297)
+    return o === 'portrait'
+      ? { cols: 2, rows: 1, paperW: 297, paperH: 210 }
+      : { cols: 1, rows: 2, paperW: 210, paperH: 297 };
+  }
+  if (f === 'A4') {
+    return o === 'portrait'
+      ? { cols: 1, rows: 1, paperW: 210, paperH: 297 }
+      : { cols: 1, rows: 1, paperW: 297, paperH: 210 };
+  }
+  // A3: scale to fit A4 (same orientation)
+  return o === 'portrait'
+    ? { cols: 1, rows: 1, paperW: 210, paperH: 297 }
+    : { cols: 1, rows: 1, paperW: 297, paperH: 210 };
 }
+
+function buildPrintGrid(layout) {
+  const { w, h } = getDims();
+  const cellW = layout.paperW / layout.cols;   // mm per cell
+  const cellH = layout.paperH / layout.rows;
+  // Our px values are at 72 dpi; CSS print reference pixel is 96 dpi.
+  // Scale to fill cellW mm exactly: scale = (cellW * 96 / 25.4) / w
+  const scale = (cellW * 96) / (w * 25.4);
+  const grid = document.createElement('div');
+  grid.id = '_printGrid';
+  grid.style.width                = layout.paperW + 'mm';
+  grid.style.height               = layout.paperH + 'mm';
+  grid.style.gridTemplateColumns  = 'repeat(' + layout.cols + ', ' + cellW + 'mm)';
+  grid.style.gridTemplateRows     = 'repeat(' + layout.rows + ', ' + cellH + 'mm)';
+  const poster = document.getElementById('poster');
+  for (let i = 0; i < layout.cols * layout.rows; i++) {
+    const clone = poster.cloneNode(true);
+    clone.removeAttribute('id');
+    clone.querySelectorAll('[id]').forEach(el => el.removeAttribute('id'));
+    const cell = document.createElement('div');
+    cell.style.cssText = 'width:' + cellW + 'mm; height:' + cellH + 'mm; overflow:hidden; position:relative;';
+    const scaler = document.createElement('div');
+    scaler.style.cssText = 'transform:scale(' + scale.toFixed(5) + '); transform-origin:top left; width:' + w + 'px; height:' + h + 'px; position:absolute; top:0; left:0;';
+    scaler.appendChild(clone);
+    cell.appendChild(scaler);
+    grid.appendChild(cell);
+  }
+  return grid;
+}
+
+function _execPrint(grid, layout, title) {
+  const origTitle = document.title;
+  if (title) document.title = title;
+  document.body.appendChild(grid);
+  const ps = document.createElement('style');
+  ps.id = '_ps';
+  ps.textContent = '@page{size:' + layout.paperW + 'mm ' + layout.paperH + 'mm;margin:0}';
+  document.head.appendChild(ps);
+  window.addEventListener('afterprint', function() {
+    ps.remove(); grid.remove(); document.title = origTitle;
+  }, { once: true });
+  window.print();
+}
+
 function doPrint() {
-  _injectPageSize(); window.print(); document.getElementById('_ps').remove();
+  const layout = getPrintLayout();
+  _execPrint(buildPrintGrid(layout), layout, null);
 }
 function doPDF() {
-  const orig = document.title;
-  document.title = 'Poster_' + state.schema.toUpperCase() + '_' + state.format + '_' + (state.orient === 'landscape' ? 'Q' : 'H');
-  _injectPageSize(); window.print(); document.getElementById('_ps').remove();
-  document.title = orig;
+  const layout = getPrintLayout();
+  const title = 'Poster_' + state.schema.toUpperCase() + '_' + state.format + '_' + (state.orient === 'landscape' ? 'Q' : 'H');
+  _execPrint(buildPrintGrid(layout), layout, title);
 }
 applyAll();
 window.addEventListener('resize', applyAll);

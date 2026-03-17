@@ -258,6 +258,7 @@ main {
     <div class="toggle-group">
       <button class="toggle-btn active" onclick="setMode('url', this)">🔗 URL</button>
       <button class="toggle-btn" onclick="setMode('wifi', this)">📶 WLAN</button>
+      <button class="toggle-btn" onclick="setMode('vcard', this)">👤 vCard</button>
     </div>
   </div>
 
@@ -286,6 +287,38 @@ main {
         <option value="WEP">WEP</option>
         <option value="nopass">Kein Passwort</option>
       </select>
+    </div>
+  </div>
+
+  <!-- vCard-Felder -->
+  <div class="field-group" id="groupVcard">
+    <div class="field">
+      <label>Vorname</label>
+      <input type="text" id="inputVcardFirst" placeholder="Nati" oninput="generate()">
+    </div>
+    <div class="field">
+      <label>Nachname</label>
+      <input type="text" id="inputVcardLast" placeholder="Kasemir" oninput="generate()">
+    </div>
+    <div class="field">
+      <label>Titel / Position</label>
+      <input type="text" id="inputVcardTitle" placeholder="Projektleiterin Digitale Ökosysteme" oninput="generate()">
+    </div>
+    <div class="field">
+      <label>Organisation</label>
+      <input type="text" id="inputVcardOrg" placeholder="kbw." oninput="generate()">
+    </div>
+    <div class="field">
+      <label>E-Mail</label>
+      <input type="email" id="inputVcardEmail" placeholder="kasemir@kbw.de" oninput="generate()">
+    </div>
+    <div class="field">
+      <label>Telefon</label>
+      <input type="tel" id="inputVcardPhone" placeholder="030 29 33 50 1031" oninput="generate()">
+    </div>
+    <div class="field">
+      <label>Website (optional)</label>
+      <input type="url" id="inputVcardUrl" placeholder="https://kbw.de" oninput="generate()">
     </div>
   </div>
 
@@ -353,8 +386,9 @@ function setMode(m, btn) {
   state.mode = m;
   document.querySelectorAll('.toggle-btn[onclick^="setMode"]').forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
-  document.getElementById('groupUrl').classList.toggle('active', m === 'url');
-  document.getElementById('groupWifi').classList.toggle('active', m === 'wifi');
+  document.getElementById('groupUrl').classList.toggle('active',   m === 'url');
+  document.getElementById('groupWifi').classList.toggle('active',  m === 'wifi');
+  document.getElementById('groupVcard').classList.toggle('active', m === 'vcard');
   generate();
 }
 
@@ -369,14 +403,36 @@ function setSize(s, btn) {
 function getContent() {
   if (state.mode === 'url') {
     return document.getElementById('inputUrl').value.trim();
-  } else {
+  } else if (state.mode === 'wifi') {
     const ssid = document.getElementById('inputSsid').value.trim();
     const pass = document.getElementById('inputPassword').value.trim();
     const enc  = document.getElementById('inputEncryption').value;
     if (!ssid) return '';
-    // WiFi QR format
     return `WIFI:T:${enc};S:${ssid};P:${pass};;`;
+  } else if (state.mode === 'vcard') {
+    const first = document.getElementById('inputVcardFirst').value.trim();
+    const last  = document.getElementById('inputVcardLast').value.trim();
+    if (!first && !last) return '';
+    const title = document.getElementById('inputVcardTitle').value.trim();
+    const org   = document.getElementById('inputVcardOrg').value.trim();
+    const email = document.getElementById('inputVcardEmail').value.trim();
+    const phone = document.getElementById('inputVcardPhone').value.trim();
+    const url   = document.getElementById('inputVcardUrl').value.trim();
+    return [
+      'BEGIN:VCARD',
+      'VERSION:3.0',
+      `N:${last};${first};;;`,
+      `FN:${first} ${last}`.trim(),
+      title ? `TITLE:${title}` : '',
+      org   ? `ORG:${org}`     : '',
+      email ? `EMAIL:${email}` : '',
+      phone ? `TEL:${phone}`   : '',
+      url   ? `URL:${url}`     : '',
+      'END:VCARD',
+    ].filter(Boolean).join('
+');
   }
+  return '';
 }
 
 // ── GENERATE ──
@@ -394,20 +450,21 @@ function generate() {
   document.getElementById('emptyHint').style.display = 'none';
   document.getElementById('qrOutput').style.display  = 'flex';
 
-  const canvas = document.getElementById('qrCanvas');
-  const ci     = CI[state.schema];
-  const size   = state.size;
+  const canvas  = document.getElementById('qrCanvas');
+  const ci      = CI[state.schema];
+  const size    = state.size;
 
-  // QRCode auf Canvas zeichnen
+  // Schritt 1: QR-Matrix über qrcode.js in temp-Canvas rendern (1px pro Modul)
   const tempDiv = document.createElement('div');
-  tempDiv.style.display = 'none';
+  tempDiv.style.cssText = 'position:absolute;left:-9999px;';
   document.body.appendChild(tempDiv);
 
-  new QRCode(tempDiv, {
+  // Temporäre Größe = 1px pro Modul für sauberes Pixel-Auslesen
+  const tempQR = new QRCode(tempDiv, {
     text:         content,
-    width:        size,
-    height:       size,
-    colorDark:    ci.color,
+    width:        500,
+    height:       500,
+    colorDark:    '#000000',
     colorLight:   '#ffffff',
     correctLevel: QRCode.CorrectLevel.H,
   });
@@ -416,23 +473,129 @@ function generate() {
     const srcCanvas = tempDiv.querySelector('canvas');
     if (!srcCanvas) { document.body.removeChild(tempDiv); return; }
 
-    const ctx = canvas.getContext('2d');
+    // Pixel-Matrix auslesen
+    const tmpCtx  = srcCanvas.getContext('2d');
+    const tmpData = tmpCtx.getImageData(0, 0, srcCanvas.width, srcCanvas.height);
+    const tmpW    = srcCanvas.width;
+    const tmpH    = srcCanvas.height;
+
+    // Modul-Größe ermitteln (QR-Module sind gleich groß)
+    // Wir suchen den ersten schwarzen Pixel-Run in Zeile 0
+    let moduleSize = 1;
+    const pix = tmpData.data;
+    let counting = false;
+    let runLen = 0;
+    for (let x = 0; x < tmpW; x++) {
+      const idx = x * 4;
+      const dark = pix[idx] < 128;
+      if (dark && !counting) { counting = true; runLen = 1; }
+      else if (dark && counting) { runLen++; }
+      else if (!dark && counting) { moduleSize = runLen; break; }
+    }
+    const modules = Math.round(tmpW / moduleSize);
+
+    // Modul-Matrix aufbauen
+    const mat = [];
+    for (let r = 0; r < modules; r++) {
+      mat[r] = [];
+      for (let c = 0; c < modules; c++) {
+        const px = Math.floor(c * moduleSize + moduleSize/2);
+        const py = Math.floor(r * moduleSize + moduleSize/2);
+        const i  = (py * tmpW + px) * 4;
+        mat[r][c] = pix[i] < 128;
+      }
+    }
+    document.body.removeChild(tempDiv);
+
+    // Schritt 2: Selbst auf Canvas zeichnen mit styled Finder-Patterns
+    const ctx  = canvas.getContext('2d');
     canvas.width  = size;
     canvas.height = size;
-    ctx.drawImage(srcCanvas, 0, 0);
-    document.body.removeChild(tempDiv);
+
+    const cell  = size / modules;
+    const color = ci.color;
+
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, size, size);
+
+    // Finder-Pattern Positionen (oben-links, oben-rechts, unten-links)
+    const fpSize = 7; // Finder-Pattern ist immer 7x7 Module
+    const fps = [
+      { r: 0, c: 0 },
+      { r: 0, c: modules - fpSize },
+      { r: modules - fpSize, c: 0 },
+    ];
+
+    // Prüfen ob ein Modul zu einem Finder-Pattern gehört
+    function isFP(r, c) {
+      return fps.some(fp =>
+        r >= fp.r && r < fp.r + fpSize &&
+        c >= fp.c && c < fp.c + fpSize
+      );
+    }
+
+    // Normale Module zeichnen (quadratisch, ohne Finder-Pattern)
+    ctx.fillStyle = color;
+    for (let r = 0; r < modules; r++) {
+      for (let c = 0; c < modules; c++) {
+        if (mat[r][c] && !isFP(r, c)) {
+          const x = c * cell;
+          const y = r * cell;
+          ctx.fillRect(x + 0.5, y + 0.5, cell - 1, cell - 1);
+        }
+      }
+    }
+
+    // Finder-Patterns mit Stil zeichnen
+    // Stil: äußerer Ring spitz, inneres Quadrat abgerundet (oben-links + unten-rechts)
+    function drawFinderPattern(r0, c0) {
+      const x = c0 * cell;
+      const y = r0 * cell;
+      const s = fpSize * cell;
+      const r = cell * 1.2; // border-radius
+
+      // Äußerer Rahmen (7x7, ausgefüllt, abgerundet außen)
+      ctx.fillStyle = color;
+      roundRect(ctx, x, y, s, s, r);
+      ctx.fill();
+
+      // Weißes Innenfeld (5x5)
+      ctx.fillStyle = '#ffffff';
+      roundRect(ctx, x + cell, y + cell, s - 2*cell, s - 2*cell, r * 0.6);
+      ctx.fill();
+
+      // Inneres Quadrat (3x3, abgerundet)
+      ctx.fillStyle = color;
+      roundRect(ctx, x + 2*cell, y + 2*cell, s - 4*cell, s - 4*cell, r * 0.5);
+      ctx.fill();
+    }
+
+    function roundRect(ctx, x, y, w, h, r) {
+      ctx.beginPath();
+      ctx.moveTo(x + r, y);
+      ctx.lineTo(x + w - r, y);
+      ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+      ctx.lineTo(x + w, y + h - r);
+      ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+      ctx.lineTo(x + r, y + h);
+      ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+      ctx.lineTo(x, y + r);
+      ctx.quadraticCurveTo(x, y, x + r, y);
+      ctx.closePath();
+    }
+
+    fps.forEach(fp => drawFinderPattern(fp.r, fp.c));
 
     document.getElementById('btnPng').disabled = false;
     document.getElementById('btnSvg').disabled = false;
-  }, 50);
+  }, 80);
 }
 
 // ── DOWNLOADS ──
 function downloadPNG() {
   const canvas = document.getElementById('qrCanvas');
-  const label  = getLabel() || 'qrcode';
   const link   = document.createElement('a');
-  link.download = `QR_${label.replace(/\s+/g,'_') || 'code'}.png`;
+  link.download = `QR_${state.schema}_${state.mode}.png`;
   link.href     = canvas.toDataURL('image/png');
   link.click();
 }

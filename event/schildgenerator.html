@@ -164,8 +164,8 @@
       </div>
     </div>
     <div class="actions">
-      <button class="btn btn-primary" onclick="doPrint()">Drucken</button>
-      <button class="btn btn-secondary" onclick="doPDF()">Als PDF speichern</button>
+      <button class="btn btn-primary" id="btnPrint" onclick="doPrint()">↓ Als PDF drucken</button>
+      <button class="btn btn-secondary" id="btnPDF" onclick="doPDF()">↓ Als PDF speichern</button>
     </div>
   </aside>
   <main id="mainArea">
@@ -186,6 +186,8 @@
     </div>
   </main>
 </div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script>
 const LOGOS = { pe: '../assets/logos/PE_Logo_v2_blau.svg', kbw: '../assets/logos/kbw_logo_brombeere.svg' };
 const FORMATS = {
@@ -383,28 +385,66 @@ function buildPrintGrid(layout) {
   return grid;
 }
 
-function _execPrint(grid, layout, title) {
-  const origTitle = document.title;
-  if (title) document.title = title;
+async function _execExport(layout, filename) {
+  const { jsPDF } = window.jspdf;
+
+  // Print-Grid kurz ins DOM einsetzen (außerhalb des sichtbaren Bereichs)
+  const grid = buildPrintGrid(layout);
+  grid.style.cssText += '; position:fixed; left:-9999px; top:0; display:grid;';
   document.body.appendChild(grid);
-  const ps = document.createElement('style');
-  ps.id = '_ps';
-  ps.textContent = '@page{size:' + layout.paperW + 'mm ' + layout.paperH + 'mm;margin:0}';
-  document.head.appendChild(ps);
-  window.addEventListener('afterprint', function() {
-    ps.remove(); grid.remove(); document.title = origTitle;
-  }, { once: true });
-  window.print();
+
+  // Buttons deaktivieren
+  ['btnPrint', 'btnPDF'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.disabled = true;
+  });
+
+  try {
+    // Papiergröße in px bei 96dpi berechnen
+    const pxW = Math.round(layout.paperW * 96 / 25.4);
+    const pxH = Math.round(layout.paperH * 96 / 25.4);
+
+    const canvas = await html2canvas(grid, {
+      scale: 2,
+      useCORS: true,
+      allowTaint: true,
+      backgroundColor: '#ffffff',
+      width:  pxW,
+      height: pxH,
+      logging: false,
+    });
+
+    const imgData = canvas.toDataURL('image/jpeg', 0.95);
+
+    const pdf = new jsPDF({
+      orientation: layout.paperW > layout.paperH ? 'landscape' : 'portrait',
+      unit: 'mm',
+      format: [layout.paperW, layout.paperH],
+      compress: true,
+    });
+
+    pdf.addImage(imgData, 'JPEG', 0, 0, layout.paperW, layout.paperH, '', 'FAST');
+    pdf.save((filename || 'Schild') + '.pdf');
+
+  } catch(err) {
+    alert('PDF-Export fehlgeschlagen: ' + err.message);
+  } finally {
+    grid.remove();
+    ['btnPrint', 'btnPDF'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.disabled = false;
+    });
+  }
 }
 
 function doPrint() {
   const layout = getPrintLayout();
-  _execPrint(buildPrintGrid(layout), layout, null);
+  _execExport(layout, 'Schild_' + state.schema.toUpperCase() + '_' + state.format + '_' + (state.orient === 'landscape' ? 'Q' : 'H'));
 }
+
 function doPDF() {
   const layout = getPrintLayout();
-  const title = 'Poster_' + state.schema.toUpperCase() + '_' + state.format + '_' + (state.orient === 'landscape' ? 'Q' : 'H');
-  _execPrint(buildPrintGrid(layout), layout, title);
+  _execExport(layout, 'Poster_' + state.schema.toUpperCase() + '_' + state.format + '_' + (state.orient === 'landscape' ? 'Q' : 'H'));
 }
 applyAll();
 window.addEventListener('resize', applyAll);

@@ -321,45 +321,49 @@ function removeUserImg() {
   applyAll();
 }
 
-// Print layout: always targets A4 paper; smaller formats tile, A3 scales down
+// Print layout
+// Landscape variants are rotated -90° so all layouts use portrait paper.
+// rotate:true  → poster is rotated -90°; scale uses poster.h as the width dimension
+// rotate:false → poster is placed upright; scale uses poster.w as the width dimension
+//
+// A6 portrait  : 2×2 upright   on A4 portrait (210×297)
+// A6 landscape : 2×2 rotated   on A4 portrait (210×297)
+// A5 portrait  : 1×2 rotated   on A4 portrait (210×297)
+// A5 landscape : 1×2 upright   on A4 portrait (210×297)
+// A4 portrait  : 1×1 upright   on A4 portrait (210×297)
+// A4 landscape : 1×1 rotated   on A4 portrait (210×297)
+// A3 portrait  : 1×1 upright   on A3 portrait (297×420)
+// A3 landscape : 1×1 rotated   on A3 portrait (297×420)
 function getPrintLayout() {
   const f = state.format, o = state.orient;
-  if (f === 'A6') {
-    return o === 'portrait'
-      ? { cols: 2, rows: 2, paperW: 210, paperH: 297 }
-      : { cols: 2, rows: 2, paperW: 297, paperH: 210 };
-  }
-  if (f === 'A5') {
-    // portrait A5 (148×210): 2 side-by-side on A4 landscape (297×210)
-    // landscape A5 (210×148): 2 stacked on A4 portrait (210×297)
-    return o === 'portrait'
-      ? { cols: 2, rows: 1, paperW: 297, paperH: 210 }
-      : { cols: 1, rows: 2, paperW: 210, paperH: 297 };
-  }
-  if (f === 'A4') {
-    return o === 'portrait'
-      ? { cols: 1, rows: 1, paperW: 210, paperH: 297 }
-      : { cols: 1, rows: 1, paperW: 297, paperH: 210 };
-  }
-  // A3: scale to fit A4 (same orientation)
-  return o === 'portrait'
-    ? { cols: 1, rows: 1, paperW: 210, paperH: 297 }
-    : { cols: 1, rows: 1, paperW: 297, paperH: 210 };
+  if (f === 'A6') return { cols: 2, rows: 2, paperW: 210, paperH: 297, rotate: o === 'landscape' };
+  if (f === 'A5') return { cols: 1, rows: 2, paperW: 210, paperH: 297, rotate: o === 'portrait' };
+  if (f === 'A4') return { cols: 1, rows: 1, paperW: 210, paperH: 297, rotate: o === 'landscape' };
+  /* A3 */        return { cols: 1, rows: 1, paperW: 297, paperH: 420, rotate: o === 'landscape' };
 }
 
+// Scale factor derivation (print CSS reference = 96 dpi; our pixel dims = 72 dpi equivalent):
+//   non-rotated: poster.w px must fill cellW mm  → scale = (cellW × 96/25.4) / w
+//   rotated    : poster.h px must fill cellW mm  → scale = (cellW × 96/25.4) / h
+//
+// Rotation (-90°) positioning: with transform-origin 0 0 and top = scale×w,
+//   the rotated+scaled element occupies exactly x∈[0, cellW_px], y∈[0, scale×w] in the cell.
 function buildPrintGrid(layout) {
   const { w, h } = getDims();
-  const cellW = layout.paperW / layout.cols;   // mm per cell
-  const cellH = layout.paperH / layout.rows;
-  // Our px values are at 72 dpi; CSS print reference pixel is 96 dpi.
-  // Scale to fill cellW mm exactly: scale = (cellW * 96 / 25.4) / w
-  const scale = (cellW * 96) / (w * 25.4);
+  const cellW    = layout.paperW / layout.cols;        // mm
+  const cellH    = layout.paperH / layout.rows;        // mm
+  const cellW_px = cellW * 96 / 25.4;
+  const scale    = layout.rotate ? cellW_px / h : cellW_px / w;
+  const topPx    = layout.rotate ? Math.round(scale * w) : 0;
+  const tfm      = layout.rotate
+    ? 'rotate(-90deg) scale(' + scale.toFixed(5) + ')'
+    : 'scale(' + scale.toFixed(5) + ')';
   const grid = document.createElement('div');
   grid.id = '_printGrid';
-  grid.style.width                = layout.paperW + 'mm';
-  grid.style.height               = layout.paperH + 'mm';
-  grid.style.gridTemplateColumns  = 'repeat(' + layout.cols + ', ' + cellW + 'mm)';
-  grid.style.gridTemplateRows     = 'repeat(' + layout.rows + ', ' + cellH + 'mm)';
+  grid.style.width               = layout.paperW + 'mm';
+  grid.style.height              = layout.paperH + 'mm';
+  grid.style.gridTemplateColumns = 'repeat(' + layout.cols + ', ' + cellW + 'mm)';
+  grid.style.gridTemplateRows    = 'repeat(' + layout.rows + ', ' + cellH + 'mm)';
   const poster = document.getElementById('poster');
   for (let i = 0; i < layout.cols * layout.rows; i++) {
     const clone = poster.cloneNode(true);
@@ -368,7 +372,10 @@ function buildPrintGrid(layout) {
     const cell = document.createElement('div');
     cell.style.cssText = 'width:' + cellW + 'mm; height:' + cellH + 'mm; overflow:hidden; position:relative;';
     const scaler = document.createElement('div');
-    scaler.style.cssText = 'transform:scale(' + scale.toFixed(5) + '); transform-origin:top left; width:' + w + 'px; height:' + h + 'px; position:absolute; top:0; left:0;';
+    scaler.style.cssText =
+      'position:absolute; left:0; top:' + topPx + 'px;' +
+      'width:' + w + 'px; height:' + h + 'px;' +
+      'transform-origin:0 0; transform:' + tfm + ';';
     scaler.appendChild(clone);
     cell.appendChild(scaler);
     grid.appendChild(cell);

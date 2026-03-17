@@ -453,16 +453,18 @@ function generate() {
   const ci      = CI[state.schema];
   const size    = state.size;
 
-  // Schritt 1: QR-Matrix über qrcode.js in temp-Canvas rendern (1px pro Modul)
+  // Schritt 1: QR-Matrix über qrcode.js in temp-Canvas rendern
+  // Wir rendern sehr klein (100px) damit Quiet Zone minimal ist,
+  // und tasten die Mitte jedes Moduls ab.
+  const RENDER_SIZE = 100;
   const tempDiv = document.createElement('div');
   tempDiv.style.cssText = 'position:absolute;left:-9999px;';
   document.body.appendChild(tempDiv);
 
-  // Temporäre Größe = 1px pro Modul für sauberes Pixel-Auslesen
-  const tempQR = new QRCode(tempDiv, {
+  new QRCode(tempDiv, {
     text:         content,
-    width:        500,
-    height:       500,
+    width:        RENDER_SIZE,
+    height:       RENDER_SIZE,
     colorDark:    '#000000',
     colorLight:   '#ffffff',
     correctLevel: QRCode.CorrectLevel.H,
@@ -472,36 +474,49 @@ function generate() {
     const srcCanvas = tempDiv.querySelector('canvas');
     if (!srcCanvas) { document.body.removeChild(tempDiv); return; }
 
-    // Pixel-Matrix auslesen
     const tmpCtx  = srcCanvas.getContext('2d');
     const tmpData = tmpCtx.getImageData(0, 0, srcCanvas.width, srcCanvas.height);
     const tmpW    = srcCanvas.width;
-    const tmpH    = srcCanvas.height;
+    const pix     = tmpData.data;
 
-    // Modul-Größe ermitteln (QR-Module sind gleich groß)
-    // Wir suchen den ersten schwarzen Pixel-Run in Zeile 0
+    // Modul-Größe: scanne von links bis zum ersten schwarzen Pixel (Quiet Zone überspringen),
+    // dann zähle wie lange der schwarze Run geht
+    let quietZone = 0;
     let moduleSize = 1;
-    const pix = tmpData.data;
-    let counting = false;
-    let runLen = 0;
-    for (let x = 0; x < tmpW; x++) {
-      const idx = x * 4;
-      const dark = pix[idx] < 128;
-      if (dark && !counting) { counting = true; runLen = 1; }
-      else if (dark && counting) { runLen++; }
-      else if (!dark && counting) { moduleSize = runLen; break; }
-    }
-    const modules = Math.round(tmpW / moduleSize);
 
-    // Modul-Matrix aufbauen
+    // Finde erste schwarze Zeile (nach Quiet Zone)
+    let startRow = 0;
+    outer: for (let y = 0; y < tmpW; y++) {
+      for (let x = 0; x < tmpW; x++) {
+        if (pix[(y * tmpW + x) * 4] < 128) { startRow = y; break outer; }
+      }
+    }
+
+    // In dieser Zeile: finde Quiet Zone und ersten schwarzen Run
+    let inBlack = false;
+    for (let x = 0; x < tmpW; x++) {
+      const dark = pix[(startRow * tmpW + x) * 4] < 128;
+      if (!dark && !inBlack) { quietZone++; }
+      else if (dark && !inBlack) { inBlack = true; moduleSize = 1; }
+      else if (dark && inBlack) { moduleSize++; }
+      else if (!dark && inBlack) { break; }
+    }
+
+    // Anzahl Module = (Bildbreite - 2*quietZone) / moduleSize
+    const dataWidth = tmpW - 2 * quietZone;
+    const modules   = Math.round(dataWidth / moduleSize);
+
+    // Modul-Matrix: sample die Mitte jedes Moduls
     const mat = [];
     for (let r = 0; r < modules; r++) {
       mat[r] = [];
       for (let c = 0; c < modules; c++) {
-        const px = Math.floor(c * moduleSize + moduleSize/2);
-        const py = Math.floor(r * moduleSize + moduleSize/2);
-        const i  = (py * tmpW + px) * 4;
-        mat[r][c] = pix[i] < 128;
+        const px = Math.round(quietZone + c * moduleSize + moduleSize / 2);
+        const py = Math.round(quietZone + r * moduleSize + moduleSize / 2);
+        // Clamp innerhalb des Canvas
+        const cx = Math.min(px, tmpW - 1);
+        const cy = Math.min(py, tmpW - 1);
+        mat[r][c] = pix[(cy * tmpW + cx) * 4] < 128;
       }
     }
     document.body.removeChild(tempDiv);

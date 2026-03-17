@@ -79,6 +79,78 @@ aside { background: white; border-right: 1px solid var(--gray-200); padding: 18p
 /* Preview-Bereich */
 main { display: flex; align-items: center; justify-content: center; padding: 28px; overflow: hidden; background: repeating-conic-gradient(#ddd 0% 25%, #e8e8e8 0% 50%) 0 0/18px 18px; }
 
+/* ── HILFE-POPUP ── */
+.help-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.45);
+  z-index: 200;
+  align-items: center;
+  justify-content: center;
+}
+.help-overlay.show { display: flex; }
+.help-card {
+  background: white;
+  border-radius: 8px;
+  padding: 32px 36px;
+  max-width: 420px;
+  width: 90%;
+  box-shadow: 0 16px 48px rgba(0,0,0,0.2);
+}
+.help-card h2 {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--pe-blue);
+  margin-bottom: 20px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+.help-steps { list-style: none; display: flex; flex-direction: column; gap: 12px; }
+.help-steps li {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  font-size: 13px;
+  color: var(--gray-700);
+  line-height: 1.5;
+}
+.help-step-num {
+  background: var(--pe-blue);
+  color: white;
+  width: 22px; height: 22px;
+  border-radius: 50%;
+  font-size: 11px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+.help-footer {
+  margin-top: 24px;
+  font-size: 12px;
+  color: var(--gray-500);
+  text-align: center;
+  font-style: italic;
+}
+.help-close {
+  display: block;
+  width: 100%;
+  margin-top: 20px;
+  padding: 10px;
+  background: var(--accent);
+  color: white;
+  border: none;
+  border-radius: 4px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+}
+.help-close:hover { background: var(--accent-hover, #d4473a); }
+
 /* ── PRINT ── */
 @media print {
   * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
@@ -120,9 +192,11 @@ main { display: flex; align-items: center; justify-content: center; padding: 28p
 <div class="app">
 
 <header>
+  <a href="../index.html" style="color:rgba(255,255,255,0.7); font-size:11px; font-weight:600; text-decoration:none; letter-spacing:0.05em; display:flex; align-items:center; gap:5px; flex-shrink:0;">← Übersicht</a>
   <div class="accent-dot"></div>
   <h1>Getränkekarten-Generator</h1>
   <span style="margin-left:auto; color:rgba(255,255,255,0.45); font-size:10px; font-weight:500; letter-spacing:0.08em;"><strong>Letztes Kartenupdate </strong>2026-03-15</span>
+  <button onclick="showHelp()" style="background:rgba(255,255,255,0.15); border:none; color:white; width:22px; height:22px; border-radius:50%; font-size:12px; font-weight:700; cursor:pointer; flex-shrink:0; margin-left:8px;" title="Kurzanleitung">?</button>
 </header>
 
 <aside>
@@ -144,11 +218,10 @@ main { display: flex; align-items: center; justify-content: center; padding: 28p
   <div>
     <div class="section-label">Angebotsvariante</div>
     <div class="toggle-group" style="flex-wrap:wrap; gap:3px;">
-      <button class="toggle-btn active" style="flex:none;padding:6px 8px;" onclick="setVariant('bistro-normal',this)">Bistro NORMAL</button>
-      <button class="toggle-btn" style="flex:none;padding:6px 8px;" onclick="setVariant('bistro-spezial',this)">Bistro SPEZIAL</button>
-      <button class="toggle-btn" style="flex:none;padding:6px 8px;" onclick="setVariant('bar-normal',this)">Bar NORMAL</button>
-      <button class="toggle-btn" style="flex:none;padding:6px 8px;" onclick="setVariant('bar-spezial',this)">Bar SPEZIAL</button>
-      <button class="toggle-btn" style="flex:none;padding:6px 8px;" onclick="setVariant('screen',this)">16:9 Screen</button>
+      <button class="toggle-btn active" style="flex:none;padding:6px 8px;" onclick="setVariant('bistro-tag',this)">Bistro tägl.</button>
+      <button class="toggle-btn" style="flex:none;padding:6px 8px;" onclick="setVariant('tanztee',this)">Tanztee</button>
+      <button class="toggle-btn" style="flex:none;padding:6px 8px;" onclick="setVariant('kultur',this)">Kultur</button>
+      <button class="toggle-btn" style="flex:none;padding:6px 8px;" onclick="setVariant('party',this)">Party</button>
     </div>
   </div>
 
@@ -222,6 +295,22 @@ main { display: flex; align-items: center; justify-content: center; padding: 28p
 
 </div>
 
+<!-- Hilfe-Popup -->
+<div class="help-overlay" id="helpOverlay" onclick="hideHelp(event)">
+  <div class="help-card">
+    <h2>🍸 Kurzanleitung</h2>
+    <ol class="help-steps">
+      <li><span class="help-step-num">1</span><span>Vorlage runterladen über „↓ Vorlage herunterladen"</span></li>
+      <li><span class="help-step-num">2</span><span>Getränke in der CSV-Datei ändern und speichern</span></li>
+      <li><span class="help-step-num">3</span><span>Gespeicherte Vorlage wieder hochladen</span></li>
+      <li><span class="help-step-num">4</span><span>Angebotsvariante auswählen (Bistro tägl., Tanztee, Kultur oder Party)</span></li>
+      <li><span class="help-step-num">5</span><span>Format wählen und drucken — fertig!</span></li>
+    </ol>
+    <div class="help-footer">Happy Kartendrucken! 🎉</div>
+    <button class="help-close" onclick="hideHelp()">Verstanden, los geht's!</button>
+  </div>
+</div>
+
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script>
@@ -233,28 +322,27 @@ const LOGOS = {
 
 // ── FORMAT DIMENSIONS (px at 96dpi) ──
 const FORMATS = {
-  A4P:    { w: 595,  h: 842,  cols: 2, screen: false },
-  A4L:    { w: 842,  h: 595,  cols: 3, screen: false },
-  A3P:    { w: 842,  h: 1191, cols: 3, screen: false },
-  A3L:    { w: 1191, h: 842,  cols: 4, screen: false },
-  DINLANG:{ w: 297,  h: 630,  cols: 1, screen: false },
-  SCREEN: { w: 3840, h: 2160, cols: 4, screen: true  }  // 4K UHD 16:9
+  A4P:    { w: 595,  h: 842,  cols: 2, party: false },
+  A4L:    { w: 842,  h: 595,  cols: 3, party: false },
+  A3P:    { w: 842,  h: 1191, cols: 3, party: false },
+  A3L:    { w: 1191, h: 842,  cols: 4, party: false },
+  DINLANG:{ w: 297,  h: 630,  cols: 1, party: false },
+  SCREEN: { w: 3840, h: 2160, cols: 4, party: true  }  // 4K UHD 16:9
 };
 
-// ── VARIANTEN-KEYS (müssen mit der CSV-Spalte 'Kartenvariante' übereinstimmen) ──
-const VARIANT_KEYS = ['bistro-normal', 'bistro-spezial', 'bar-normal', 'bar-spezial', 'screen'];
+// ── VARIANTEN-KEYS (müssen mit der CSV-Spalte 'Angebotsvariante' übereinstimmen) ──
+const VARIANT_KEYS = ['bistro-tag', 'tanztee', 'kultur', 'party'];
 
 const VARIANT_LABELS = {
-  'bistro-normal':  'Bistro',
-  'bistro-spezial': 'Bistro · Spezial',
-  'bar-normal':     'Bar',
-  'bar-spezial':    'Bar · Spezial',
-  'screen':         'Getränke'
+  'bistro-tag': 'Bistro tägl.',
+  'tanztee':    'Tanztee',
+  'kultur':     'Kultur',
+  'party':      'Party',
 };
 
 const state = {
   schema: 'pe',
-  variant: 'bistro-normal',
+  variant: 'bistro-tag',
   showPrices: true,
   format: 'A4P',
   data: []   // parsed rows
@@ -286,8 +374,8 @@ function setFormat(f, btn) {
 }
 
 // ── PFLICHTFELDER ──
-const REQUIRED_COLUMNS = ['Kategorie', 'Name', 'Kartenvariante'];
-const EXPECTED_COLUMNS = ['Kategorie', 'Name', 'Variante', 'Beschreibung', 'Preis', 'Kartenvariante'];
+const REQUIRED_COLUMNS = ['Kategorie', 'Name', 'Angebotsvariante'];
+const EXPECTED_COLUMNS = ['Kategorie', 'Name', 'Variante', 'Beschreibung', 'Preis', 'Angebotsvariante'];
 
 function showStatus(msg, isError = false) {
   const el = document.getElementById('uploadStatus');
@@ -324,13 +412,13 @@ function handleFile(e) {
         }
       }
 
-      // Warnungen für Zeilen ohne Kartenvariante
-      const noVariant = rows.filter(r => !r['Kartenvariante'] || r['Kartenvariante'].trim() === '').length;
+      // Warnungen für Zeilen ohne Angebotsvariante
+      const noVariant = rows.filter(r => !r['Angebotsvariante'] || r['Angebotsvariante'].trim() === '').length;
 
       state.data = rows;
 
       let statusMsg = `✓ ${rows.length} Getränke geladen`;
-      if (noVariant > 0) statusMsg += ` · ⚠ ${noVariant} ohne Kartenvariante`;
+      if (noVariant > 0) statusMsg += ` · ⚠ ${noVariant} ohne Angebotsvariante`;
       showStatus(statusMsg);
 
       document.getElementById('btnPrint').disabled = false;
@@ -387,75 +475,75 @@ function parseCSV(text) {
   return rows;
 }
 
-// Expected CSV columns: Kategorie; Name; Variante; Beschreibung; Preis; Kartenvariante
-// Kartenvariante = kommagetrennte Liste: bistro-normal,bistro-spezial,bar-normal,bar-spezial
+// Expected CSV columns: Kategorie; Name; Variante; Beschreibung; Preis; Angebotsvariante
+// Angebotsvariante = kommagetrennte Liste: bistro-tag,tanztee,kultur
 
 function downloadTemplate() {
   // Vorlage mit echten Getränkedaten — Karte 2026-03-15
-  // Format: Tab-getrennt, Spalten: Kategorie	Name	Variante	Beschreibung	Preis	Allergene	Kartenvariante
+  // Format: Tab-getrennt, Spalten: Kategorie	Name	Variante	Beschreibung	Preis	Allergene	Angebotsvariante
   const rows = [
-        'Kategorie\tName\tVariante\tBeschreibung\tPreis\tAllergene\tKartenvariante',
-    'Alkoholfreie Getränke\tSpreequell Wasser\t0,33l\tClassic | Naturell\t3,00 €\t\tbistro-spezial,bar-normal,bar-spezial,screen',
-    'Alkoholfreie Getränke\tfritz-kola\t0,33l\tORIGINAL | SUPER ZERO\t4,00 €\t\tbistro-spezial,bar-normal,bar-spezial,screen',
-    'Alkoholfreie Getränke\tfritz-limo\t0,33l\tINGWER-LIMETTE | ORANGE | ZITRONE | APFEL-KIRSCH-HOLUNDER\t4,00 €\t\tbistro-spezial,bar-normal,bar-spezial,screen',
-    'Alkoholfreie Getränke\tfritz-spritz\t0,33l\tBIO RHABARBERSCHORLE | BIO APFELSCHORLE\t4,00 €\t\tbistro-spezial,bar-normal,bar-spezial,screen',
-    'Alkoholfreie Getränke\tClub Mate\t0,33l\t\t4,00 €\t\tbistro-spezial,bar-normal,bar-spezial,screen',
-    'Alkoholfreie Getränke\tRed Bull\t0,25l\t\t4,50 €\t\tbistro-spezial,bar-normal,bar-spezial,screen',
-    'Alkoholfreie Getränke\tFlaschenbier alkoholfrei\t0,33l\tLammsbräu Pils\t4,00 €\t\tbar-normal,bar-spezial,screen',
-    'Alkoholfreie Getränke\tSpritz alkoholfrei\t0,3l\tLaori Ruby No. 4, Vaux Bio Träublein, Wasser, Alkohol <0,3%\t7,50 €\t\tbar-normal,screen',
-    'Alkoholfreie Getränke\tGin Tonic alkoholfrei\t0,3l\tMampe 00, Thomas Henry Tonic Water, Alkohol <0,3%\t7,50 €\t\tbar-normal,screen',
-    'Wein & Sekt\tWeißwein trocken\t0,2l\tGrauer Burgunder\t7,00 €\t\tbistro-spezial,bar-normal,bar-spezial,screen',
-    'Wein & Sekt\tRotwein trocken\t0,2l\tPrimitivo salento\t7,00 €\t\tbar-normal,bar-spezial,screen',
-    'Wein & Sekt\tRosé trocken\t0,2l\t50° Pinot Noir\t7,00 €\t\tbar-normal,bar-spezial,screen',
-    'Wein & Sekt\tWeiß- & Roséweinschorle trocken\t0,2l\t\t4,00 €\t\tbar-normal,bar-spezial,screen',
-    'Wein & Sekt\tSekt Piccolo trocken\t0,2l\tZekt\t7,00 €\t\tbar-normal,bar-spezial,screen',
-    'Wein & Sekt\tSekt trocken\t0,1l\tZekt\t3,50 €\t\tbar-normal,bar-spezial,screen',
-    'Bier\tBerliner Pilsner | Naturradler\t0,33l\t\t4,00 €\t\tbar-normal,bar-spezial,screen',
-    'Bier\tQ-Bier aus Pankow\t0,33l\tPils | Pale Ale | Red Lager\t4,50 €\t\tbar-normal,bar-spezial,screen',
-    'Bier\tSchöfferhofer Grapefruit\t0,33l\t\t4,50 €\t\tbar-normal,bar-spezial,screen',
-    "Bier\tHelles\t0,5l\tBrewer's Tribute\t5,00 €\t\tbar-normal,bar-spezial,screen",
-    'Longdrinks\tClub Mate Vodka\t0,3l\tMampe Vodka, Club Mate\t7,50 €\t\tbar-normal,screen',
-    'Longdrinks\tVodka Lemon\t0,3l\tMampe Vodka, Thomas Henry Bitter Lemon\t7,50 €\t\tbar-normal,screen',
-    'Longdrinks\tGin Tonic\t0,3l\tMampe Gin, Thomas Henry Tonic Water\t7,50 €\t\tbar-normal,bar-spezial,screen',
-    'Longdrinks\tAperol Spritz\t0,3l\tAperol, Sekt, Sodawasser\t7,50 €\t\tbar-normal,bar-spezial,screen',
-    'Longdrinks\tLimoncello Spritz\t0,3l\tLimoncello, Sekt, Sodawasser\t7,50 €\t\tbar-normal,screen',
-    'Longdrinks\tLillet Vive | Lillet Berry\t0,3l\tLillet, Thomas Henry Tonic Water | Lillet, Thomas Henry Wild Berry\t7,50 €\t\tbar-normal,screen',
-    'Longdrinks\tCuba Libre\t0,3l\tHavana Club Añejo 3 Años Rum,  Coca-Cola\t7,50 €\t\tbar-normal,bar-spezial,screen',
-    'Longdrinks\tWhiskey Cola\t0,3l\tJack Daniels, Coca Cola\t7,50 €\t\tbar-normal,screen',
-    'Longdrinks\tVodka Red Bull\t0,3l\tMampe Vodka, Red Bull\t8,00 €\t\tbar-normal,screen',
-    'Longdrinks\tMoscow Mule\t0,3l\tMampe Vodk, Thomas Henry Hinger Beer, Limette, Angostura Bitter\t8,50 €\t\tbar-normal,screen',
-    'Shots\tKleiner Feigling\t\t\t3,00 €\t\tbar-normal,screen',
-    'Shots\tBerliner Luft\t\t\t3,00 €\t\tbar-normal,screen',
-    'Shots\tMampe Popcorn\t2cl\t\t3,00 €\t\tbar-normal,screen',
-    'Heißgetränke\tKaffee Créme\t\t\t3,50 €\t\tbistro-normal',
-    'Heißgetränke\tAmericano\t\t\t3,00 €\t\tbistro-normal',
-    'Heißgetränke\tEspresso\t\t\t2,50 €\t\tbistro-normal',
-    'Heißgetränke\tEspresso doppelt\t\t\t4,00 €\t\tbistro-normal',
-    'Heißgetränke\tEspresso Macchiato\t\t\t2,80 €\t\tbistro-normal',
-    'Heißgetränke\tCappuccino\t\t\t3,50 €\t\tbistro-normal',
-    'Heißgetränke\tLatte Macchiato\t\t\t3,50 €\t\tbistro-normal',
-    'Heißgetränke\tMilchkaffee\t\t\t3,50 €\t\tbistro-normal',
-    'Heißgetränke\tTee\t\t\t3,00 €\t\tbistro-normal',
-    'Heißgetränke\tEspresso Shot\t\t\t1,00 €\t\tbistro-normal',
-    'Heißgetränke\tFlavour Shot\t\tVanille | Weiße Schokolade | Karamell\t0,50 €\t1\tbistro-normal',
-    'Alkoholfreie Getränke\tBauer Apfelsaft\t0,2l\t\t2,50 €\t\tbistro-normal',
-    'Alkoholfreie Getränke\tBauer Orangensaft\t0,2l\t\t2,50 €\t\tbistro-normal',
-    'Alkoholfreie Getränke\tSpreequell Wasser\t0,33l\tClassic | Naturell\t3,00 €\t\tbistro-normal',
-    'Alkoholfreie Getränke\tSpreequell Wasser\t0,75l\tClassic | Naturell\t4,50 €\t\tbistro-normal',
-    'Alkoholfreie Getränke\tfritz-kola\t0,33l\t\t2,80 €\t1,11\tbistro-normal',
-    'Alkoholfreie Getränke\tfritz-kola SUPER ZERO\t0,33l\t\t2,80 €\t1,9,10,11\tbistro-normal',
-    'Alkoholfreie Getränke\tfritz-limo HONIGMELONE\t0,33l\t\t2,80 €\t\tbistro-normal',
-    'Alkoholfreie Getränke\tfritz-limo APFEL-KIRSCH-HOLUNDER\t0,33l\t\t2,80 €\t\tbistro-normal',
-    'Alkoholfreie Getränke\tfritz-limo ZITRONE\t0,33l\t\t2,80 €\t\tbistro-normal',
-    'Alkoholfreie Getränke\tfritz-limo ORANGE\t0,33l\t\t2,80 €\t\tbistro-normal',
-    'Alkoholfreie Getränke\tfritz-spritz RHABARBER\t0,33l\t\t2,80 €\t\tbistro-normal',
-    'Alkoholfreie Getränke\tfritz-spritz APFELSCHORLE\t0,33l\t\t2,80 €\t\tbistro-normal',
-    'Alkoholfreie Getränke\tfritz-spritz TRAUBENSCHORLE\t0,33l\t\t2,80 €\t\tbistro-normal',
-    'Alkoholfreie Getränke\tELEPHANT BAY EISTEE Peach\t0,33l\t\t3,40 €\t3\tbistro-normal',
-    'Alkoholfreie Getränke\tELEPHANT BAY EISTEE Granat\t0,33l\t\t3,40 €\t3\tbistro-normal',
-    'Alkoholfreie Getränke\tClub Mate\t0,33l\t\t4,00 €\t11\tbistro-normal',
-    'Alkoholfreie Getränke\tRed Bull\t0,25l\t\t3,50 €\t1,2,11,13\tbistro-normal',
-    'Alkoholfreie Getränke\tLammsbräu Pils (alkoholfrei)\t0,33l\t\t3,20 €\t16,a\tbar-normal,bar-spezial,screen',
+        'Kategorie\tName\tVariante\tBeschreibung\tPreis\tAllergene\tAngebotsvariante',
+    'Alkoholfreie Getränke\tSpreequell Wasser\t0,33l\tClassic | Naturell\t3,00 €\t\ttanztee,kultur,party',
+    'Alkoholfreie Getränke\tfritz-kola\t0,33l\tORIGINAL | SUPER ZERO\t4,00 €\t\ttanztee,kultur,party',
+    'Alkoholfreie Getränke\tfritz-limo\t0,33l\tINGWER-LIMETTE | ORANGE | ZITRONE | APFEL-KIRSCH-HOLUNDER\t4,00 €\t\ttanztee,kultur,party',
+    'Alkoholfreie Getränke\tfritz-spritz\t0,33l\tBIO RHABARBERSCHORLE | BIO APFELSCHORLE\t4,00 €\t\ttanztee,kultur,party',
+    'Alkoholfreie Getränke\tClub Mate\t0,33l\t\t4,00 €\t\ttanztee,kultur,party',
+    'Alkoholfreie Getränke\tRed Bull\t0,25l\t\t4,50 €\t\ttanztee,kultur,party',
+    'Alkoholfreie Getränke\tFlaschenbier alkoholfrei\t0,33l\tLammsbräu Pils\t4,00 €\t\tkultur,party',
+    'Alkoholfreie Getränke\tSpritz alkoholfrei\t0,3l\tLaori Ruby No. 4, Vaux Bio Träublein, Wasser, Alkohol <0,3%\t7,50 €\t\tkultur,party',
+    'Alkoholfreie Getränke\tGin Tonic alkoholfrei\t0,3l\tMampe 00, Thomas Henry Tonic Water, Alkohol <0,3%\t7,50 €\t\tkultur,party',
+    'Wein & Sekt\tWeißwein trocken\t0,2l\tGrauer Burgunder\t7,00 €\t\ttanztee,kultur,party',
+    'Wein & Sekt\tRotwein trocken\t0,2l\tPrimitivo salento\t7,00 €\t\tkultur,party',
+    'Wein & Sekt\tRosé trocken\t0,2l\t50° Pinot Noir\t7,00 €\t\tkultur,party',
+    'Wein & Sekt\tWeiß- & Roséweinschorle trocken\t0,2l\t\t4,00 €\t\tkultur,party',
+    'Wein & Sekt\tSekt Piccolo trocken\t0,2l\tZekt\t7,00 €\t\tkultur,party',
+    'Wein & Sekt\tSekt trocken\t0,1l\tZekt\t3,50 €\t\tkultur,party',
+    'Bier\tBerliner Pilsner | Naturradler\t0,33l\t\t4,00 €\t\tkultur,party',
+    'Bier\tQ-Bier aus Pankow\t0,33l\tPils | Pale Ale | Red Lager\t4,50 €\t\tkultur,party',
+    'Bier\tSchöfferhofer Grapefruit\t0,33l\t\t4,50 €\t\tkultur,party',
+    "Bier\tHelles\t0,5l\tBrewer's Tribute\t5,00 €\t\tkultur,party",
+    'Longdrinks\tClub Mate Vodka\t0,3l\tMampe Vodka, Club Mate\t7,50 €\t\tkultur,party',
+    'Longdrinks\tVodka Lemon\t0,3l\tMampe Vodka, Thomas Henry Bitter Lemon\t7,50 €\t\tkultur,party',
+    'Longdrinks\tGin Tonic\t0,3l\tMampe Gin, Thomas Henry Tonic Water\t7,50 €\t\tkultur,party',
+    'Longdrinks\tAperol Spritz\t0,3l\tAperol, Sekt, Sodawasser\t7,50 €\t\tkultur,party',
+    'Longdrinks\tLimoncello Spritz\t0,3l\tLimoncello, Sekt, Sodawasser\t7,50 €\t\tkultur,party',
+    'Longdrinks\tLillet Vive | Lillet Berry\t0,3l\tLillet, Thomas Henry Tonic Water | Lillet, Thomas Henry Wild Berry\t7,50 €\t\tkultur,party',
+    'Longdrinks\tCuba Libre\t0,3l\tHavana Club Añejo 3 Años Rum,  Coca-Cola\t7,50 €\t\tkultur,party',
+    'Longdrinks\tWhiskey Cola\t0,3l\tJack Daniels, Coca Cola\t7,50 €\t\tkultur,party',
+    'Longdrinks\tVodka Red Bull\t0,3l\tMampe Vodka, Red Bull\t8,00 €\t\tkultur,party',
+    'Longdrinks\tMoscow Mule\t0,3l\tMampe Vodk, Thomas Henry Hinger Beer, Limette, Angostura Bitter\t8,50 €\t\tkultur,party',
+    'Shots\tKleiner Feigling\t\t\t3,00 €\t\tkultur,party',
+    'Shots\tBerliner Luft\t\t\t3,00 €\t\tkultur,party',
+    'Shots\tMampe Popcorn\t2cl\t\t3,00 €\t\tkultur,party',
+    'Heißgetränke\tKaffee Créme\t\t\t3,50 €\t\tbistro-tag',
+    'Heißgetränke\tAmericano\t\t\t3,00 €\t\tbistro-tag',
+    'Heißgetränke\tEspresso\t\t\t2,50 €\t\tbistro-tag',
+    'Heißgetränke\tEspresso doppelt\t\t\t4,00 €\t\tbistro-tag',
+    'Heißgetränke\tEspresso Macchiato\t\t\t2,80 €\t\tbistro-tag',
+    'Heißgetränke\tCappuccino\t\t\t3,50 €\t\tbistro-tag',
+    'Heißgetränke\tLatte Macchiato\t\t\t3,50 €\t\tbistro-tag',
+    'Heißgetränke\tMilchkaffee\t\t\t3,50 €\t\tbistro-tag',
+    'Heißgetränke\tTee\t\t\t3,00 €\t\tbistro-tag',
+    'Heißgetränke\tEspresso Shot\t\t\t1,00 €\t\tbistro-tag',
+    'Heißgetränke\tFlavour Shot\t\tVanille | Weiße Schokolade | Karamell\t0,50 €\t1\tbistro-tag',
+    'Alkoholfreie Getränke\tBauer Apfelsaft\t0,2l\t\t2,50 €\t\tbistro-tag',
+    'Alkoholfreie Getränke\tBauer Orangensaft\t0,2l\t\t2,50 €\t\tbistro-tag',
+    'Alkoholfreie Getränke\tSpreequell Wasser\t0,33l\tClassic | Naturell\t3,00 €\t\tbistro-tag',
+    'Alkoholfreie Getränke\tSpreequell Wasser\t0,75l\tClassic | Naturell\t4,50 €\t\tbistro-tag',
+    'Alkoholfreie Getränke\tfritz-kola\t0,33l\t\t2,80 €\t1,11\tbistro-tag',
+    'Alkoholfreie Getränke\tfritz-kola SUPER ZERO\t0,33l\t\t2,80 €\t1,9,10,11\tbistro-tag',
+    'Alkoholfreie Getränke\tfritz-limo HONIGMELONE\t0,33l\t\t2,80 €\t\tbistro-tag',
+    'Alkoholfreie Getränke\tfritz-limo APFEL-KIRSCH-HOLUNDER\t0,33l\t\t2,80 €\t\tbistro-tag',
+    'Alkoholfreie Getränke\tfritz-limo ZITRONE\t0,33l\t\t2,80 €\t\tbistro-tag',
+    'Alkoholfreie Getränke\tfritz-limo ORANGE\t0,33l\t\t2,80 €\t\tbistro-tag',
+    'Alkoholfreie Getränke\tfritz-spritz RHABARBER\t0,33l\t\t2,80 €\t\tbistro-tag',
+    'Alkoholfreie Getränke\tfritz-spritz APFELSCHORLE\t0,33l\t\t2,80 €\t\tbistro-tag',
+    'Alkoholfreie Getränke\tfritz-spritz TRAUBENSCHORLE\t0,33l\t\t2,80 €\t\tbistro-tag',
+    'Alkoholfreie Getränke\tELEPHANT BAY EISTEE Peach\t0,33l\t\t3,40 €\t3\tbistro-tag',
+    'Alkoholfreie Getränke\tELEPHANT BAY EISTEE Granat\t0,33l\t\t3,40 €\t3\tbistro-tag',
+    'Alkoholfreie Getränke\tClub Mate\t0,33l\t\t4,00 €\t11\tbistro-tag',
+    'Alkoholfreie Getränke\tRed Bull\t0,25l\t\t3,50 €\t1,2,11,13\tbistro-tag',
+    'Alkoholfreie Getränke\tLammsbräu Pils (alkoholfrei)\t0,33l\t\t3,20 €\t16,a\tkultur,party',
   ];
   const csv = rows.join('\n');
   const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
@@ -469,9 +557,9 @@ function downloadTemplate() {
 function getFilteredData() {
   if (!state.data.length) return {};
 
-  // Filtere Zeilen: Behalte Zeilen, deren 'Kartenvariante'-Spalte den aktuellen Variant-Key enthält
+  // Filtere Zeilen: Behalte Zeilen, deren 'Angebotsvariante'-Spalte den aktuellen Variant-Key enthält
   const filtered = state.data.filter(row => {
-    const variantenDieserZeile = (row['Kartenvariante'] || '').split(',').map(v => v.trim().toLowerCase());
+    const variantenDieserZeile = (row['Angebotsvariante'] || '').split(',').map(v => v.trim().toLowerCase());
     return variantenDieserZeile.includes(state.variant);
   });
 
@@ -504,7 +592,7 @@ function calcSizes(W) {
 }
 
 function buildEmptyState() {
-  return '<div class="empty-state"><div class="big-icon">🍹</div><p>Keine Einträge für diese Kartenvariante gefunden.</p></div>';
+  return '<div class="empty-state"><div class="big-icon">🍹</div><p>Keine Einträge für diese Angebotsvariante gefunden.</p></div>';
 }
 
 // Standard-Item-HTML (alle Formate außer A4P)
@@ -717,7 +805,7 @@ async function doJPEG() {
       scale: 2,
       useCORS: true,
       allowTaint: true,
-      backgroundColor: FORMATS[state.format].screen ? '#000000' : '#ffffff',
+      backgroundColor: FORMATS[state.format].party ? '#000000' : '#ffffff',
       width:  fmt.w,
       height: fmt.h,
       logging: false
@@ -749,6 +837,16 @@ document.querySelector('.upload-zone').addEventListener('drop', e => {
     reader.onload = ev => handleFile({target:{files:[file], result:ev.target.result}, fromDrop:true, _result:ev.target.result});
   }
 });
+
+// ── HILFE ──
+function showHelp() {
+  document.getElementById('helpOverlay').classList.add('show');
+}
+function hideHelp(e) {
+  if (!e || e.target === document.getElementById('helpOverlay')) {
+    document.getElementById('helpOverlay').classList.remove('show');
+  }
+}
 
 // Init
 applyDimensions();

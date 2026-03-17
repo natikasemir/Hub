@@ -170,27 +170,27 @@
    16:9 SCREEN-MODUS
    ================================================================ */
 
-/* format-screen sitzt direkt auf .getraenkekarte */
-.getraenkekarte.format-screen { background: #000 !important; }
+/* format-party sitzt direkt auf .getraenkekarte */
+.getraenkekarte.format-party { background: #000 !important; }
 
-.getraenkekarte.format-screen .gk-header::after,
-.getraenkekarte.format-screen .gk-cat-title::after,
-.getraenkekarte.format-screen .gk-footer::before { background: rgba(255,255,255,0.4) !important; }
+.getraenkekarte.format-party .gk-header::after,
+.getraenkekarte.format-party .gk-cat-title::after,
+.getraenkekarte.format-party .gk-footer::before { background: rgba(255,255,255,0.4) !important; }
 
-.getraenkekarte.format-screen .gk-title,
-.getraenkekarte.format-screen .gk-subtitle,
-.getraenkekarte.format-screen .gk-cat-title { color: #fff !important; }
-.getraenkekarte.format-screen .gk-item-name    { color: #fff !important; }
-.getraenkekarte.format-screen .gk-item-variant { color: rgba(255,255,255,0.65) !important; }
-.getraenkekarte.format-screen .gk-item-desc    { color: rgba(255,255,255,0.55) !important; }
-.getraenkekarte.format-screen .gk-item-price   { color: #fff !important; }
+.getraenkekarte.format-party .gk-title,
+.getraenkekarte.format-party .gk-subtitle,
+.getraenkekarte.format-party .gk-cat-title { color: #fff !important; }
+.getraenkekarte.format-party .gk-item-name    { color: #fff !important; }
+.getraenkekarte.format-party .gk-item-variant { color: rgba(255,255,255,0.65) !important; }
+.getraenkekarte.format-party .gk-item-desc    { color: rgba(255,255,255,0.55) !important; }
+.getraenkekarte.format-party .gk-item-price   { color: #fff !important; }
 
-.getraenkekarte.format-screen .gk-item-dots {
+.getraenkekarte.format-party .gk-item-dots {
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='6' height='2'%3E%3Ccircle cx='1' cy='1' r='1' fill='rgba(255,255,255,0.35)'/%3E%3C/svg%3E") !important;
 }
 
-.getraenkekarte.format-screen .gk-logo,
-.getraenkekarte.format-screen .gk-footer-logo {
+.getraenkekarte.format-party .gk-logo,
+.getraenkekarte.format-party .gk-footer-logo {
   filter: brightness(0) invert(1) !important;
   opacity: 1 !important;
 }

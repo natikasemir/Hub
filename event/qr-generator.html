@@ -359,6 +359,7 @@ main {
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.min.js"></script>
 <script>
 // ── STATE ──
 const state = {
@@ -449,160 +450,95 @@ function generate() {
   document.getElementById('emptyHint').style.display = 'none';
   document.getElementById('qrOutput').style.display  = 'flex';
 
-  const canvas  = document.getElementById('qrCanvas');
-  const ci      = CI[state.schema];
-  const size    = state.size;
+  const canvas = document.getElementById('qrCanvas');
+  const ci     = CI[state.schema];
+  const size   = state.size;
 
-  // Schritt 1: QR-Matrix über qrcode.js in temp-Canvas rendern
-  // Wir rendern sehr klein (100px) damit Quiet Zone minimal ist,
-  // und tasten die Mitte jedes Moduls ab.
-  const RENDER_SIZE = 100;
-  const tempDiv = document.createElement('div');
-  tempDiv.style.cssText = 'position:absolute;left:-9999px;';
-  document.body.appendChild(tempDiv);
+  // qrcode-generator gibt uns direkt isDark(r, c) — kein Pixel-Auslesen
+  const qr = qrcode(0, 'H');
+  qr.addData(content);
+  qr.make();
 
-  new QRCode(tempDiv, {
-    text:         content,
-    width:        RENDER_SIZE,
-    height:       RENDER_SIZE,
-    colorDark:    '#000000',
-    colorLight:   '#ffffff',
-    correctLevel: QRCode.CorrectLevel.H,
-  });
+  const modules = qr.getModuleCount();
+  const cell    = size / modules;
 
-  setTimeout(() => {
-    const srcCanvas = tempDiv.querySelector('canvas');
-    if (!srcCanvas) { document.body.removeChild(tempDiv); return; }
+  const ctx = canvas.getContext('2d');
+  canvas.width  = size;
+  canvas.height = size;
 
-    const tmpCtx  = srcCanvas.getContext('2d');
-    const tmpData = tmpCtx.getImageData(0, 0, srcCanvas.width, srcCanvas.height);
-    const tmpW    = srcCanvas.width;
-    const pix     = tmpData.data;
+  // Weißer Hintergrund
+  ctx.fillStyle = '#ffffff';
+  ctx.fillRect(0, 0, size, size);
 
-    // Modul-Größe: scanne von links bis zum ersten schwarzen Pixel (Quiet Zone überspringen),
-    // dann zähle wie lange der schwarze Run geht
-    let quietZone = 0;
-    let moduleSize = 1;
+  // Finder-Pattern Positionen
+  const fpSize = 7;
+  const fps = [
+    { r: 0,           c: 0 },
+    { r: 0,           c: modules - fpSize },
+    { r: modules - fpSize, c: 0 },
+  ];
 
-    // Finde erste schwarze Zeile (nach Quiet Zone)
-    let startRow = 0;
-    outer: for (let y = 0; y < tmpW; y++) {
-      for (let x = 0; x < tmpW; x++) {
-        if (pix[(y * tmpW + x) * 4] < 128) { startRow = y; break outer; }
+  function isFP(r, c) {
+    return fps.some(fp =>
+      r >= fp.r && r < fp.r + fpSize &&
+      c >= fp.c && c < fp.c + fpSize
+    );
+  }
+
+  // Normale Module zeichnen
+  ctx.fillStyle = ci.color;
+  for (let r = 0; r < modules; r++) {
+    for (let c = 0; c < modules; c++) {
+      if (qr.isDark(r, c) && !isFP(r, c)) {
+        const x = c * cell;
+        const y = r * cell;
+        const pad = cell * 0.1;
+        ctx.fillRect(x + pad, y + pad, cell - pad*2, cell - pad*2);
       }
     }
+  }
 
-    // In dieser Zeile: finde Quiet Zone und ersten schwarzen Run
-    let inBlack = false;
-    for (let x = 0; x < tmpW; x++) {
-      const dark = pix[(startRow * tmpW + x) * 4] < 128;
-      if (!dark && !inBlack) { quietZone++; }
-      else if (dark && !inBlack) { inBlack = true; moduleSize = 1; }
-      else if (dark && inBlack) { moduleSize++; }
-      else if (!dark && inBlack) { break; }
-    }
+  // Styled Finder-Patterns zeichnen
+  function roundRect(x, y, w, h, r) {
+    ctx.beginPath();
+    ctx.moveTo(x + r, y);
+    ctx.lineTo(x + w - r, y);
+    ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+    ctx.lineTo(x + w, y + h - r);
+    ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+    ctx.lineTo(x + r, y + h);
+    ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+    ctx.lineTo(x, y + r);
+    ctx.quadraticCurveTo(x, y, x + r, y);
+    ctx.closePath();
+  }
 
-    // Anzahl Module = (Bildbreite - 2*quietZone) / moduleSize
-    const dataWidth = tmpW - 2 * quietZone;
-    const modules   = Math.round(dataWidth / moduleSize);
+  function drawFinderPattern(r0, c0) {
+    const x = c0 * cell;
+    const y = r0 * cell;
+    const s = fpSize * cell;
+    const r = cell * 1.2;
 
-    // Modul-Matrix: sample die Mitte jedes Moduls
-    const mat = [];
-    for (let r = 0; r < modules; r++) {
-      mat[r] = [];
-      for (let c = 0; c < modules; c++) {
-        const px = Math.round(quietZone + c * moduleSize + moduleSize / 2);
-        const py = Math.round(quietZone + r * moduleSize + moduleSize / 2);
-        // Clamp innerhalb des Canvas
-        const cx = Math.min(px, tmpW - 1);
-        const cy = Math.min(py, tmpW - 1);
-        mat[r][c] = pix[(cy * tmpW + cx) * 4] < 128;
-      }
-    }
-    document.body.removeChild(tempDiv);
+    // Äußerer Ring
+    ctx.fillStyle = ci.color;
+    roundRect(x, y, s, s, r);
+    ctx.fill();
 
-    // Schritt 2: Selbst auf Canvas zeichnen mit styled Finder-Patterns
-    const ctx  = canvas.getContext('2d');
-    canvas.width  = size;
-    canvas.height = size;
-
-    const cell  = size / modules;
-    const color = ci.color;
-
+    // Weißer Zwischenring
     ctx.fillStyle = '#ffffff';
-    ctx.fillRect(0, 0, size, size);
+    roundRect(x + cell, y + cell, s - 2*cell, s - 2*cell, r * 0.6);
+    ctx.fill();
 
-    // Finder-Pattern Positionen (oben-links, oben-rechts, unten-links)
-    const fpSize = 7; // Finder-Pattern ist immer 7x7 Module
-    const fps = [
-      { r: 0, c: 0 },
-      { r: 0, c: modules - fpSize },
-      { r: modules - fpSize, c: 0 },
-    ];
+    // Inneres Quadrat abgerundet
+    ctx.fillStyle = ci.color;
+    roundRect(x + 2*cell, y + 2*cell, s - 4*cell, s - 4*cell, r * 0.5);
+    ctx.fill();
+  }
 
-    // Prüfen ob ein Modul zu einem Finder-Pattern gehört
-    function isFP(r, c) {
-      return fps.some(fp =>
-        r >= fp.r && r < fp.r + fpSize &&
-        c >= fp.c && c < fp.c + fpSize
-      );
-    }
+  fps.forEach(fp => drawFinderPattern(fp.r, fp.c));
 
-    // Normale Module zeichnen (quadratisch, ohne Finder-Pattern)
-    ctx.fillStyle = color;
-    for (let r = 0; r < modules; r++) {
-      for (let c = 0; c < modules; c++) {
-        if (mat[r][c] && !isFP(r, c)) {
-          const x = c * cell;
-          const y = r * cell;
-          ctx.fillRect(x + 0.5, y + 0.5, cell - 1, cell - 1);
-        }
-      }
-    }
-
-    // Finder-Patterns mit Stil zeichnen
-    // Stil: äußerer Ring spitz, inneres Quadrat abgerundet (oben-links + unten-rechts)
-    function drawFinderPattern(r0, c0) {
-      const x = c0 * cell;
-      const y = r0 * cell;
-      const s = fpSize * cell;
-      const r = cell * 1.2; // border-radius
-
-      // Äußerer Rahmen (7x7, ausgefüllt, abgerundet außen)
-      ctx.fillStyle = color;
-      roundRect(ctx, x, y, s, s, r);
-      ctx.fill();
-
-      // Weißes Innenfeld (5x5)
-      ctx.fillStyle = '#ffffff';
-      roundRect(ctx, x + cell, y + cell, s - 2*cell, s - 2*cell, r * 0.6);
-      ctx.fill();
-
-      // Inneres Quadrat (3x3, abgerundet)
-      ctx.fillStyle = color;
-      roundRect(ctx, x + 2*cell, y + 2*cell, s - 4*cell, s - 4*cell, r * 0.5);
-      ctx.fill();
-    }
-
-    function roundRect(ctx, x, y, w, h, r) {
-      ctx.beginPath();
-      ctx.moveTo(x + r, y);
-      ctx.lineTo(x + w - r, y);
-      ctx.quadraticCurveTo(x + w, y, x + w, y + r);
-      ctx.lineTo(x + w, y + h - r);
-      ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
-      ctx.lineTo(x + r, y + h);
-      ctx.quadraticCurveTo(x, y + h, x, y + h - r);
-      ctx.lineTo(x, y + r);
-      ctx.quadraticCurveTo(x, y, x + r, y);
-      ctx.closePath();
-    }
-
-    fps.forEach(fp => drawFinderPattern(fp.r, fp.c));
-
-    document.getElementById('btnPng').disabled = false;
-    document.getElementById('btnSvg').disabled = false;
-  }, 80);
+  document.getElementById('btnPng').disabled = false;
+  document.getElementById('btnSvg').disabled = false;
 }
 
 // ── DOWNLOADS ──

@@ -316,6 +316,63 @@
 
 
 /* ================================================================
+   STANDARD-FORMATE — einheitlicher A4P-Stil
+   Gilt für: A4L, A3P, A3L, DINLANG
+   ================================================================ */
+
+/* Innerer Bereich: etwas weniger unten für Allergen-Text */
+.gk-inner-std {
+  top: 5%; left: 5%; right: 5%; bottom: 2%;
+}
+
+/* Kategorie: kein Unterstrich */
+.std-cat-title {
+  margin-top: 0.9em;
+  margin-bottom: 0.45em;
+  padding-bottom: 0 !important;
+  border-bottom: none !important;
+}
+
+.std-cat-title::after {
+  display: none !important;
+}
+
+.std-category:first-child .std-cat-title {
+  margin-top: 0;
+}
+
+/* Item: kein Dots-Platzhalter */
+.std-item {
+  justify-content: space-between;
+  margin-bottom: 0;
+  align-items: baseline;
+}
+
+/* Trennlinie zwischen Items */
+.gk-category .gk-item-separator {
+  height: 0;
+  border: none;
+  border-bottom: 1px dotted var(--gray-300, #ccc);
+  margin: 0.25em 0;
+}
+
+.gk-category > .gk-item-separator:last-child,
+.gk-category > .a4p-cat-spacer {
+  border: none;
+  height: 0.6em;
+}
+
+/* Beschreibung: nicht kursiv */
+.std-desc {
+  font-style: normal !important;
+  color: var(--gray-700);
+  margin-top: -0.05em;
+  margin-bottom: 0;
+  display: block;
+}
+
+
+/* ================================================================
    FORMAT-PLATZHALTER
    ================================================================ */
 

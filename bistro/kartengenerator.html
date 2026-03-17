@@ -192,7 +192,7 @@ main { display: flex; align-items: center; justify-content: center; padding: 28p
 <div class="app">
 
 <header>
-  <a href="../index.html" style="color:rgba(255,255,255,0.7); font-size:11px; font-weight:600; text-decoration:none; letter-spacing:0.05em; display:flex; align-items:center; gap:5px; flex-shrink:0;">← Übersicht</a>
+  <a href="../index.html" style="background:white; color:var(--pe-blue); font-size:11px; font-weight:700; text-decoration:none; letter-spacing:0.05em; display:flex; align-items:center; gap:5px; flex-shrink:0; padding:5px 10px; border-radius:4px;">← Übersicht</a>
   <div class="accent-dot"></div>
   <h1>Getränkekarten-Generator</h1>
   <span style="margin-left:auto; color:rgba(255,255,255,0.45); font-size:10px; font-weight:500; letter-spacing:0.08em;"><strong>Letztes Kartenupdate </strong>2026-03-15</span>
@@ -596,26 +596,28 @@ function buildEmptyState() {
   return '<div class="empty-state"><div class="big-icon">🍹</div><p>Keine Einträge für diese Angebotsvariante gefunden.</p></div>';
 }
 
-// Standard-Item-HTML (alle Formate außer A4P)
+// Item-HTML — einheitlicher Stil für alle Formate
 function buildItemHTML(row, sizes, showPrices) {
   const name    = row['Name']         || '';
   const variant = row['Variante']     || '';
   const desc    = row['Beschreibung'] || '';
   const price   = row['Preis']        || '';
-  const dotsEl     = showPrices ? `<span class="gk-item-dots"></span>` : `<span style="flex:1"></span>`;
+  // Kein Dots-Platzhalter — kein fill zwischen Name und Preis
   const priceEl    = showPrices ? `<span class="gk-item-price">${price}</span>` : '';
-  const descEl     = desc ? `<span class="gk-item-desc" style="font-size:${sizes.descSz}px">${desc}</span>` : '';
+  const descEl     = desc ? `<div class="gk-item-desc std-desc" style="font-size:${sizes.descSz}px">${desc}</div>` : '';
   const allergen   = row['Allergene'] || '';
   const allergenEl = allergen.trim()
     ? allergen.trim().split(',').map(a => `<sup class="gk-allergen-sup">${a.trim()}</sup>`).join('')
     : '';
   return `
-    <div class="gk-item" style="font-size:${sizes.itemSz}px;">
+    <div class="gk-item std-item" style="font-size:${sizes.itemSz}px;">
       <span class="gk-item-name">${name}${allergenEl}</span>
       ${variant ? `<span class="gk-item-variant">${variant}</span>` : ''}
-      ${dotsEl}
+      <span style="flex:1"></span>
       ${priceEl}
-    </div>${descEl}`;
+    </div>
+    ${descEl}
+    <div class="gk-item-separator"></div>`;
 }
 
 // Standard-Spalten-HTML
@@ -627,7 +629,12 @@ function buildColumnsHTML(cats, fmt, sizes, showPrices) {
   catKeys.forEach(catName => {
     let itemsHTML = '';
     cats[catName].forEach(row => { itemsHTML += buildItemHTML(row, sizes, showPrices); });
-    html += `<div class="gk-category"><div class="gk-cat-title" style="font-size:${sizes.catTitleSz}px;">${catName}</div>${itemsHTML}</div>`;
+    // Letzte Trennlinie entfernen
+    itemsHTML += `<div class="a4p-cat-spacer"></div>`;
+    html += `<div class="gk-category std-category">
+      <div class="gk-cat-title std-cat-title" style="font-size:${sizes.catTitleSz}px;">${catName}</div>
+      ${itemsHTML}
+    </div>`;
   });
   return html + '</div>';
 }
@@ -720,7 +727,7 @@ function buildCard_default() {
   const columnsHTML = buildColumnsHTML(cats, fmt, s, state.showPrices);
 
   return `
-    <div class="gk-inner">
+    <div class="gk-inner gk-inner-std">
       <div class="gk-header">
         <div>
           <span class="gk-subtitle" style="font-size:${Math.round(s.titleSz*0.4)}px;">${subtitle}</span>
@@ -729,9 +736,7 @@ function buildCard_default() {
         <img class="gk-logo" src="${logoSrc}" alt="Logo" style="height:${s.headerLogoH}px;max-width:${Math.round(W*0.2)}px;">
       </div>
       <div class="gk-body">${columnsHTML}</div>
-      <div class="gk-footer">
-        <img class="gk-footer-logo" src="${logoSrc}" alt="Logo" style="height:${s.logoH}px;">
-      </div>
+      <div class="gk-allergen">${ALLERGEN_TEXT}</div>
     </div>`;
 }
 
@@ -766,7 +771,7 @@ const PAGE_SIZES = {
   A3P:     { w: 297,  h: 420,  orientation: 'portrait'  },
   A3L:     { w: 420,  h: 297,  orientation: 'landscape' },
   DINLANG: { w: 99,   h: 210,  orientation: 'portrait'  },
-  SCREEN:  { w: 381,  h: 215,  orientation: 'landscape' }, // 16:9 annähernd
+  SCREEN:  { w: 381,  h: 215,  orientation: 'landscape' }, // 16:9 (Full HD Basis)
 };
 
 async function exportPDF() {
@@ -789,7 +794,7 @@ async function exportPDF() {
       scale: 2,
       useCORS: true,
       allowTaint: true,
-      backgroundColor: fmt.party ? '#000000' : '#ffffff',
+      backgroundColor: fmt.screen ? '#000000' : '#ffffff',
       width:  fmt.w,
       height: fmt.h,
       logging: false,
@@ -836,7 +841,7 @@ async function doJPEG() {
       scale: 2,
       useCORS: true,
       allowTaint: true,
-      backgroundColor: fmt.party ? '#000000' : '#ffffff',
+      backgroundColor: fmt.screen ? '#000000' : '#ffffff',
       width:  fmt.w,
       height: fmt.h,
       logging: false
@@ -882,6 +887,7 @@ function hideHelp(e) {
 // Init
 applyDimensions();
 window.addEventListener('resize', applyDimensions);
+showHelp(); // Kurzanleitung beim ersten Start anzeigen
 </script>
 </body>
 </html>

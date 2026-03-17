@@ -1,0 +1,568 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>QR-Generator – GÜNTHER</title>
+<style>
+:root {
+  --pe-blue:     #173557;
+  --kbw-magenta: #8c084d;
+  --accent:      #EB5E50;
+  --accent-hover:#d4473a;
+  --gray-50:     #fafafa;
+  --gray-100:    #f4f4f4;
+  --gray-200:    #e4e4e4;
+  --gray-300:    #d0d0d0;
+  --gray-400:    #bbb;
+  --gray-500:    #999;
+  --gray-700:    #444;
+  --gray-900:    #1a1a1a;
+  --ci:          var(--pe-blue);
+  --radius:      4px;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: 'Source Sans 3', 'Segoe UI', Arial, sans-serif;
+  background: var(--gray-100);
+  color: var(--gray-900);
+  height: 100vh;
+  overflow: hidden;
+}
+
+/* ── APP SHELL ── */
+.app {
+  display: grid;
+  grid-template-columns: 300px 1fr;
+  grid-template-rows: 56px 1fr;
+  height: 100vh;
+}
+
+header {
+  grid-column: 1/-1;
+  background: var(--ci);
+  display: flex;
+  align-items: center;
+  padding: 0 24px;
+  gap: 12px;
+  transition: background 0.3s;
+}
+
+header h1 {
+  color: white;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.accent-dot {
+  width: 7px; height: 7px;
+  background: var(--accent);
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.header-version {
+  margin-left: auto;
+  color: rgba(255,255,255,0.45);
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+}
+
+/* ── SIDEBAR ── */
+aside {
+  background: white;
+  border-right: 1px solid var(--gray-200);
+  padding: 18px 16px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.section-label {
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+  color: var(--gray-500);
+  margin-bottom: 7px;
+}
+
+/* Schema-Switcher */
+.schema-switcher { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+.schema-btn {
+  border: 2px solid var(--gray-200);
+  background: white;
+  border-radius: var(--radius);
+  padding: 8px 5px;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  color: #555;
+  transition: all 0.15s;
+  font-family: inherit;
+}
+.schema-btn .swatch { width: 22px; height: 22px; border-radius: 50%; }
+.schema-btn.active { border-color: var(--accent); color: var(--accent); }
+
+/* Mode-Switcher */
+.toggle-group {
+  display: flex;
+  background: var(--gray-100);
+  border-radius: var(--radius);
+  padding: 3px;
+  gap: 3px;
+}
+.toggle-btn {
+  flex: 1;
+  border: none;
+  background: transparent;
+  border-radius: 3px;
+  padding: 6px 3px;
+  font-size: 10.5px;
+  font-weight: 600;
+  cursor: pointer;
+  color: var(--gray-500);
+  transition: all 0.15s;
+  font-family: inherit;
+  white-space: nowrap;
+}
+.toggle-btn.active {
+  background: white;
+  color: #222;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+/* Inputs */
+.field { display: flex; flex-direction: column; gap: 5px; }
+.field label { font-size: 10.5px; font-weight: 600; color: var(--gray-500); letter-spacing: 0.05em; }
+.field input, .field select {
+  border: 1.5px solid var(--gray-200);
+  border-radius: var(--radius);
+  padding: 7px 10px;
+  font-size: 12px;
+  font-family: inherit;
+  color: var(--gray-900);
+  background: white;
+  outline: none;
+  transition: border-color 0.15s;
+}
+.field input:focus, .field select:focus { border-color: var(--ci); }
+
+.field-group { display: none; flex-direction: column; gap: 10px; }
+.field-group.active { display: flex; }
+
+/* Logo toggle */
+.logo-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.switch {
+  position: relative;
+  width: 36px; height: 20px;
+}
+.switch input { opacity: 0; width: 0; height: 0; }
+.slider {
+  position: absolute;
+  inset: 0;
+  background: var(--gray-300);
+  border-radius: 20px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.slider::before {
+  content: '';
+  position: absolute;
+  width: 14px; height: 14px;
+  left: 3px; top: 3px;
+  background: white;
+  border-radius: 50%;
+  transition: transform 0.2s;
+}
+.switch input:checked + .slider { background: var(--ci); }
+.switch input:checked + .slider::before { transform: translateX(16px); }
+.logo-toggle-label { font-size: 12px; font-weight: 600; color: var(--gray-700); }
+
+/* Actions */
+.actions { display: flex; flex-direction: column; gap: 6px; margin-top: auto; }
+.btn {
+  display: flex; align-items: center; justify-content: center;
+  gap: 7px; border: none; border-radius: var(--radius);
+  padding: 10px 14px; font-family: inherit; font-size: 12px;
+  font-weight: 600; cursor: pointer; transition: all 0.15s;
+}
+.btn-primary { background: var(--accent); color: white; }
+.btn-primary:hover { background: var(--accent-hover); }
+.btn-secondary { background: var(--gray-100); color: #333; border: 1.5px solid var(--gray-200); }
+.btn-secondary:hover { background: var(--gray-200); }
+.btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+/* ── MAIN PREVIEW ── */
+main {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: repeating-conic-gradient(#ddd 0% 25%, #e8e8e8 0% 50%) 0 0/18px 18px;
+  overflow: hidden;
+}
+
+.qr-card {
+  background: white;
+  border-radius: 8px;
+  padding: 32px;
+  box-shadow: 0 6px 32px rgba(0,0,0,0.15);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  min-width: 280px;
+}
+
+.qr-card-label {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ci);
+  text-align: center;
+}
+
+.qr-wrap {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+#qrCanvas {
+  display: block;
+  border-radius: 4px;
+}
+
+.qr-logo-overlay {
+  position: absolute;
+  pointer-events: none;
+}
+
+.qr-logo-overlay img {
+  display: block;
+}
+
+.empty-hint {
+  text-align: center;
+  color: var(--gray-400);
+  font-size: 13px;
+  padding: 40px;
+}
+
+.empty-hint .big { font-size: 40px; margin-bottom: 10px; }
+</style>
+</head>
+<body>
+<div class="app">
+
+<header id="appHeader">
+  <div class="accent-dot"></div>
+  <h1>QR-Generator</h1>
+  <span class="header-version">GÜNTHER 2026-03-15</span>
+</header>
+
+<aside>
+
+  <!-- Schema -->
+  <div>
+    <div class="section-label">CI-Schema</div>
+    <div class="schema-switcher">
+      <button class="schema-btn active" onclick="setSchema('pe', this)">
+        <div class="swatch" style="background:#173557"></div>PE
+      </button>
+      <button class="schema-btn" onclick="setSchema('kbw', this)">
+        <div class="swatch" style="background:#8c084d"></div>kbw.
+      </button>
+    </div>
+  </div>
+
+  <!-- Modus -->
+  <div>
+    <div class="section-label">Inhalt</div>
+    <div class="toggle-group">
+      <button class="toggle-btn active" onclick="setMode('url', this)">🔗 URL</button>
+      <button class="toggle-btn" onclick="setMode('wifi', this)">📶 WLAN</button>
+    </div>
+  </div>
+
+  <!-- URL-Felder -->
+  <div class="field-group active" id="groupUrl">
+    <div class="field">
+      <label>URL oder Text</label>
+      <input type="url" id="inputUrl" placeholder="https://..." oninput="generate()">
+    </div>
+  </div>
+
+  <!-- WLAN-Felder -->
+  <div class="field-group" id="groupWifi">
+    <div class="field">
+      <label>WLAN-Name (SSID)</label>
+      <input type="text" id="inputSsid" placeholder="Netzwerkname" oninput="generate()">
+    </div>
+    <div class="field">
+      <label>Passwort</label>
+      <input type="text" id="inputPassword" placeholder="Passwort" oninput="generate()">
+    </div>
+    <div class="field">
+      <label>Verschlüsselung</label>
+      <select id="inputEncryption" onchange="generate()">
+        <option value="WPA">WPA/WPA2</option>
+        <option value="WEP">WEP</option>
+        <option value="nopass">Kein Passwort</option>
+      </select>
+    </div>
+  </div>
+
+  <!-- Größe -->
+  <div>
+    <div class="section-label">Größe</div>
+    <div class="toggle-group">
+      <button class="toggle-btn" onclick="setSize(200, this)">S</button>
+      <button class="toggle-btn active" onclick="setSize(280, this)">M</button>
+      <button class="toggle-btn" onclick="setSize(360, this)">L</button>
+    </div>
+  </div>
+
+  <!-- Logo -->
+  <div>
+    <div class="section-label">Logo</div>
+    <div class="logo-toggle">
+      <span class="logo-toggle-label">Logo in der Mitte</span>
+      <label class="switch">
+        <input type="checkbox" id="toggleLogo" checked onchange="generate()">
+        <span class="slider"></span>
+      </label>
+    </div>
+  </div>
+
+  <!-- Actions -->
+  <div class="actions">
+    <button class="btn btn-primary" id="btnPng" onclick="downloadPNG()" disabled>↓ Als PNG speichern</button>
+    <button class="btn btn-secondary" id="btnSvg" onclick="downloadSVG()" disabled>↓ Als SVG speichern</button>
+  </div>
+
+</aside>
+
+<main>
+  <div class="qr-card" id="qrCard">
+    <div class="empty-hint" id="emptyHint">
+      <div class="big">🔲</div>
+      Inhalt eingeben um QR-Code zu generieren
+    </div>
+    <div id="qrOutput" style="display:none; flex-direction:column; align-items:center; gap:16px;">
+      <div class="qr-wrap" id="qrWrap">
+        <canvas id="qrCanvas"></canvas>
+        <div class="qr-logo-overlay" id="logoOverlay"></div>
+      </div>
+
+    </div>
+  </div>
+</main>
+
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script>
+// ── STATE ──
+const state = {
+  schema: 'pe',
+  mode:   'url',
+  size:   280,
+  logo:   true,
+};
+
+const CI = {
+  pe:  { color: '#173557', logo: 'data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiPz4KPHN2ZyBpZD0iRWJlbmVfMSIgZGF0YS1uYW1lPSJFYmVuZSAxIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA1ODQuNSA1ODQuNTkiPgogIDxkZWZzPgogICAgPHN0eWxlPgogICAgICAuY2xzLTEgewogICAgICAgIGZpbGw6ICMxNzM1NTc7CiAgICAgIH0KICAgIDwvc3R5bGU+CiAgPC9kZWZzPgogIDxwYXRoIGNsYXNzPSJjbHMtMSIgZD0iTTQ3OS4yNywyMTkuMzNoLTE0LjE0bC0xNTIuMzEtMzQuMTV2LTQxLjUxYzEuMTktLjMyLDIuMS0xLjM2LDIuMS0yLjY2di0yMi4zM2MwLTYuNDMtNC42Mi05LjkyLTguMzEtMTIuNzMtMS43OC0xLjM0LTMuNDUtMi42MS00LjQ5LTQuMDMtMi4zMy0zLjE2LTQuMTctMTIuOS00LjgyLTE4LjQyVjIuOGMwLTEuNTUtMS4yNS0yLjgtMi43OS0yLjhzLTIuNzgsMS4yNS0yLjc4LDIuOHY4MC42NGMtLjYzLDUuNS0yLjQ4LDE1LjMtNC44MywxOC40OC0xLjA0LDEuNDEtMi43MSwyLjY5LTQuNDksNC4wNC0zLjcxLDIuOC04LjMxLDYuMy04LjMxLDEyLjczdjIyLjMzYzAsMS4yOS45LDIuMzMsMi4wOSwyLjY1djQxLjUxbC0xNTQuMDMsMzQuMTVoLTEyLjQxYy0xLjU0LDAtMi43OSwxLjI1LTIuNzksMi44czEuMjUsMi43OSwyLjc5LDIuNzloOS45M3YyMTcuODdjMCwxLjU1LDEuMjYsMi43OSwyLjgsMi43OXMyLjgtMS4yNCwyLjgtMi43OXYtMTYzLjU4aDY1LjM0djE2My41OGMwLDEuNTUsMS4yNSwyLjc5LDIuNzksMi43OXMyLjgtMS4yNCwyLjgtMi43OXYtMTYzLjU4aDE5NC45M3YxNjMuNThjMCwxLjU1LDEuMjUsMi43OSwyLjgsMi43OXMyLjc5LTEuMjQsMi43OS0yLjc5di0xNjMuNThoNjUuMzN2MTYzLjU4YzAsMS41NSwxLjI2LDIuNzksMi44MSwyLjc5czIuNzktMS4yNCwyLjc5LTIuNzl2LTIxNy44N2gxMS42M2MxLjUzLDAsMi43OS0xLjI2LDIuNzktMi43OXMtMS4yNS0yLjgtMi43OS0yLjhaTTI4MS43NywxNDMuODFoMjUuNDd2NDAuODJoLTI1LjQ3di00MC44MlpNNDM5LjYxLDIxOS4zM0gxNDhsMTMxLjI5LTI5LjExaDMwLjQ0bDEyOS44OCwyOS4xMVpNMTI1LjI2LDIyNC45Mmg2NS4zNHY0OC43aC02NS4zNHYtNDguN1pNMTk2LjE5LDIyNC45MmgxOTQuOTN2NDguN2gtMTk0Ljkzdi00OC43Wk0zOTYuNzEsMjI0LjkyaDY1LjMzdjQ4LjdoLTY1LjMzdi00OC43Wk0yOTQuNSw5OC4xN2MuODMsMi43OSwxLjg2LDUuMzcsMy4xMiw3LjA3LDEuNTEsMi4wNiwzLjYsMy42NCw1LjYyLDUuMTcsMi4zMywxLjc3LDQuNDIsMy4zOCw1LjQ0LDUuNDdoLTI4LjMzYzEuMDItMi4wOSwzLjEtMy43LDUuNDQtNS40NywxLjkxLTEuNDUsNC4wOC0zLjEsNS42MS01LjE3LDEuMjUtMS43LDIuMjgtNC4yOCwzLjExLTcuMDdaTTMwOS4zMiwxMzguMjJoLTI5LjY0di0xNi43NGgyOS42NHYxNi43NFoiLz4KICA8cGF0aCBjbGFzcz0iY2xzLTEiIGQ9Ik0yMzUuMDYsMjk1LjQ0Yy0uMzYtLjAzLS43Mi0uMDUtMS4xMS0uMDUtNS44NC4wMi0xMS4zMywyLjMyLTE1LjQ3LDYuNDctNC4xMiw0LjE2LTYuMzksOS42Ny02LjM3LDE1LjUxbC4wMyw3LjE5Yy0uMDMuMTUtLjA1LjMyLS4wNS41djQ5LjM4YzAsMS41NCwxLjI2LDIuNzksMi44LDIuNzloMzguMjJjMS41NSwwLDIuODEtMS4yNSwyLjgxLTIuNzl2LTQ4Ljg1Yy4wNC0uMjIuMDctLjQ0LjA1LS42MWwtLjA0LTcuNzNjLS4wNC0xMS43NS05LjIzLTIxLjMyLTIwLjg3LTIxLjhaTTIxNy43LDMxNy4zNWMtLjAxLTQuMzYsMS42Ny04LjQ2LDQuNzQtMTEuNTQsMy4wNy0zLjEsNy4xNi00LjgxLDExLjUyLTQuODMuMTksMCwuMzcuMDEuNzcuMDQsOC43MS4zNiwxNS41OCw3LjUsMTUuNjIsMTYuMjVsLjA0LDcuMjFjLS4wNC4xOC0uMDUuMzgtLjA1LjU3djQ2LjU5aC0zMi42NXYtNDYuMDljLjAzLS4xNi4wNS0uMzMuMDUtLjVsLS4wMi03LjdaIi8+CiAgPHBhdGggY2xhc3M9ImNscy0xIiBkPSJNMjUzLjE1LDM4NC40MWgtMzguMjVjLTEuNTQsMC0yLjc5LDEuMjUtMi43OSwyLjh2NTUuNThjMCwxLjU1LDEuMjUsMi43OSwyLjc5LDIuNzlzMi43OS0xLjI0LDIuNzktMi43OXYtNTIuNzloMzIuNjd2NTIuNzljMCwxLjU1LDEuMjUsMi43OSwyLjgsMi43OXMyLjc5LTEuMjQsMi43OS0yLjc5di01NS41OGMwLTEuNTQtMS4yNS0yLjgtMi43OS0yLjhaIi8+CiAgPHBhdGggY2xhc3M9ImNscy0xIiBkPSJNMjcxLjczLDM3NC40NGMwLDEuNTQsMS4yNSwyLjc5LDIuNzksMi43OWgzOC4yM2MxLjU1LDAsMi44LTEuMjUsMi44LTIuNzl2LTQ4Ljc4Yy4wNi0uMjIuMDctLjQ1LjA3LS42NywwLS4xOCwwLS4zNC0uMDQtLjVsLS4wMy03LjI0Yy0uMDMtMTEuNzUtOS4yNi0yMS4zMy0yMC45NS0yMS44MS0uMzQtLjAzLS42Ni0uMDUtMS4wMy0uMDUtNS44NS4wMi0xMS4zNCwyLjMyLTE1LjQ3LDYuNDctNC4xMiw0LjE2LTYuMzksOS42Ny02LjM3LDE1LjUxbC4wMyw1LjIxYy0uMDMuMTUtLjA0LjMxLS4wNC40OHY1MS4zOFpNMjc3LjMzLDMxNy4zNWMtLjAyLTQuMzUsMS42Ny04LjQ1LDQuNzQtMTEuNTQsMy4wOC0zLjEsNy4xNy00LjgxLDExLjUyLTQuODMuMjEsMCwuNDEuMDEuNzQuMDQsOC43NC4zNywxNS42MSw3LjUsMTUuNjQsMTYuMjRsLjA0LDcuMTNjLS4wNC4yLS4wNS4zOS0uMDUuNnY0Ni42NWgtMzIuNjV2LTQ4LjA5Yy4wMy0uMTcuMDUtLjM0LjA1LS41MWwtLjAzLTUuN1oiLz4KICA8cGF0aCBjbGFzcz0iY2xzLTEiIGQ9Ik0zMDkuOTgsNDQyLjc5YzAsMS41NSwxLjI1LDIuNzksMi43OSwyLjc5czIuNzktMS4yNCwyLjc5LTIuNzl2LTU1LjU4YzAtMS41NC0xLjI1LTIuOC0yLjc5LTIuOGgtMzguMjVjLTEuNTQsMC0yLjc5LDEuMjUtMi43OSwyLjh2NTUuNThjMCwxLjU1LDEuMjUsMi43OSwyLjc5LDIuNzlzMi43OS0xLjI0LDIuNzktMi43OXYtNTIuNzloMzIuNjd2NTIuNzlaIi8+CiAgPHBhdGggY2xhc3M9ImNscy0xIiBkPSJNMzc0Ljc5LDMxNy4yNGMtLjA1LTExLjc1LTkuMjctMjEuMzMtMjAuOTctMjEuOC0uMzMtLjAzLS42NS0uMDUtMS4wMi0uMDUtNS44NC4wMi0xMS4zNSwyLjMyLTE1LjQ4LDYuNDctNC4xMiw0LjE3LTYuMzksOS42OC02LjM2LDE1LjUxbC4wMyw1LjQ1Yy0uMDQuMTUtLjA1LjMyLS4wNS40OXY1MS4xMmMwLDEuNTQsMS4yNSwyLjc5LDIuOCwyLjc5aDM4LjIyYzEuNTUsMCwyLjgtMS4yNSwyLjgtMi43OXYtNDguNzljLjA1LS4yMi4wNy0uNDUuMDctLjY2LDAtLjE4LS4wMi0uMzQtLjA0LS41bC0uMDItNy4yNVpNMzM2LjU2LDMxNy4zNWMtLjAzLTQuMzUsMS42Ni04LjQ2LDQuNzMtMTEuNTQsMy4wOC0zLjEsNy4xNy00LjgxLDExLjUzLTQuODMuMiwwLC40LjAxLjc0LjA0LDguNzMuMzYsMTUuNiw3LjUsMTUuNjMsMTYuMjRsLjAzLDcuMjZjLS4wMy4xNS0uMDQuMzEtLjA0LjQ3djQ2LjY1aC0zMi42NHYtNDcuODRjLjAzLS4xNS4wNC0uMzIuMDQtLjV2LTUuOTVaIi8+CiAgPHBhdGggY2xhc3M9ImNscy0xIiBkPSJNMzcxLjk5LDM4NC40MWgtMzguMjVjLTEuNTUsMC0yLjgxLDEuMjUtMi44MSwyLjh2NTUuNThjMCwxLjU1LDEuMjUsMi43OSwyLjgxLDIuNzlzMi43OS0xLjI0LDIuNzktMi43OXYtNTIuNzloMzIuNjZ2NTIuNzljMCwxLjU1LDEuMjUsMi43OSwyLjc5LDIuNzlzMi44LTEuMjQsMi44LTIuNzl2LTU1LjU4YzAtMS41NC0xLjI2LTIuOC0yLjgtMi44WiIvPgogIDxwYXRoIGNsYXNzPSJjbHMtMSIgZD0iTTUxOC4yMiw0NTEuMTJjLTIuNDgsMC00LjUsMi4wMi00LjUsNC41czIuMDIsNC41LDQuNSw0LjUsNC41MS0yLjAxLDQuNTEtNC41LTIuMDEtNC41LTQuNTEtNC41WiIvPgogIDxwYXRoIGNsYXNzPSJjbHMtMSIgZD0iTTY3LjA1LDQ1MS4xMWMtMi40OSwwLTQuNTEsMi4wMi00LjUxLDQuNXMyLjAyLDQuNTEsNC41MSw0LjUxLDQuNTEtMi4wMiw0LjUxLTQuNTEtMi4wMy00LjUtNC41MS00LjVaIi8+CiAgPHJlY3QgY2xhc3M9ImNscy0xIiB4PSIyMDUuNDEiIHk9IjEyLjgyIiB3aWR0aD0iOS41NyIgaGVpZ2h0PSIyOC42NCIgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoMS4zMyA2My4xMikgcm90YXRlKC0xNy4xMykiLz4KICA8cG9seWdvbiBjbGFzcz0iY2xzLTEiIHBvaW50cz0iMTgzLjA5IDUyLjY5IDE3MC43MyAyNi44NCAxNjIuMSAzMC45NiAxNzQuNDQgNTYuODEgMTgzLjA5IDUyLjY5Ii8+CiAgPHJlY3QgY2xhc3M9ImNscy0xIiB4PSIxMzMuMDkiIHk9IjQ3LjI4IiB3aWR0aD0iOS41NyIgaGVpZ2h0PSIyOC42NCIgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoLTEwLjk2IDg3LjEyKSByb3RhdGUoLTMzLjgpIi8+CiAgPHJlY3QgY2xhc3M9ImNscy0xIiB4PSIxMDEuNzIiIHk9IjcxLjY3IiB3aWR0aD0iOS41NyIgaGVpZ2h0PSIyOC42NCIgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoLTMwLjE5IDkzLjI0KSByb3RhdGUoLTQxLjk1KSIvPgogIDxyZWN0IGNsYXNzPSJjbHMtMSIgeD0iNzQuMTYiIHk9IjEwMC4yMiIgd2lkdGg9IjkuNTciIGhlaWdodD0iMjguNjQiIHRyYW5zZm9ybT0idHJhbnNsYXRlKC01OS41NiAxMDEuNikgcm90YXRlKC01MC4wOCkiLz4KICA8cmVjdCBjbGFzcz0iY2xzLTEiIHg9IjUwLjg4IiB5PSIxMzIuNDciIHdpZHRoPSI5LjU3IiBoZWlnaHQ9IjI4LjY0IiB0cmFuc2Zvcm09InRyYW5zbGF0ZSgtOTguNDYgMTE2LjkzKSByb3RhdGUoLTU4LjI3KSIvPgogIDxyZWN0IGNsYXNzPSJjbHMtMSIgeD0iMzIuMzMiIHk9IjE2Ny45NiIgd2lkdGg9IjkuNTciIGhlaWdodD0iMjguNjQiIHRyYW5zZm9ybT0idHJhbnNsYXRlKC0xNDQuODcgMTQzLjc5KSByb3RhdGUoLTY2LjU1KSIvPgogIDxyZWN0IGNsYXNzPSJjbHMtMSIgeD0iMTguOTgiIHk9IjIwNi4yMSIgd2lkdGg9IjkuNTciIGhlaWdodD0iMjguNjQiIHRyYW5zZm9ybT0idHJhbnNsYXRlKC0xOTUuMzkgMTg2LjMpIHJvdGF0ZSgtNzQuOTcpIi8+CiAgPHJlY3QgY2xhc3M9ImNscy0xIiB4PSIxMS4yOSIgeT0iMjQ2Ljc5IiB3aWR0aD0iOS41NyIgaGVpZ2h0PSIyOC42NCIgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoLTI0NS4xOSAyNDcuNjYpIHJvdGF0ZSgtODMuNTMpIi8+CiAgPHJlY3QgY2xhc3M9ImNscy0xIiB4PSIuMTciIHk9IjI5OC42NiIgd2lkdGg9IjI4LjY0IiBoZWlnaHQ9IjkuNTciIHRyYW5zZm9ybT0idHJhbnNsYXRlKC0xMS4zOCAuNzYpIHJvdGF0ZSgtMi4xNSkiLz4KICA8cmVjdCBjbGFzcz0iY2xzLTEiIHg9IjQuODYiIHk9IjM0MC4yMiIgd2lkdGg9IjI4LjY1IiBoZWlnaHQ9IjkuNTciIHRyYW5zZm9ybT0idHJhbnNsYXRlKC02NC4xNCA5LjY2KSByb3RhdGUoLTEwLjc3KSIvPgogIDxwb2x5Z29uIGNsYXNzPSJjbHMtMSIgcG9pbnRzPSIxNC42NyAzODQuNjkgMTcuODIgMzkzLjcyIDQ0Ljg2IDM4NC4yOCA0MS43MSAzNzUuMjUgMTQuNjcgMzg0LjY5Ii8+CiAgPHBvbHlnb24gY2xhc3M9ImNscy0xIiBwb2ludHM9IjEwOS4xNyA1MjAuNjkgMTE2LjcyIDUyNi41NiAxMzQuMzEgNTAzLjk2IDEyNi43NSA0OTguMDggMTA5LjE3IDUyMC42OSIvPgogIDxyZWN0IGNsYXNzPSJjbHMtMSIgeD0iMTQwLjUyIiB5PSI1MjkuNjgiIHdpZHRoPSIyOC42NCIgaGVpZ2h0PSI5LjU2IiB0cmFuc2Zvcm09InRyYW5zbGF0ZSgtMzg2LjIzIDQwNC41NSkgcm90YXRlKC02MC4zNCkiLz4KICA8cmVjdCBjbGFzcz0iY2xzLTEiIHg9IjE3Ni43NCIgeT0iNTQ2Ljk3IiB3aWR0aD0iMjguNjQiIGhlaWdodD0iOS41NiIgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoLTM5Mi4zOSA1MjguNzkpIHJvdGF0ZSgtNjguNjUpIi8+CiAgPHJlY3QgY2xhc3M9ImNscy0xIiB4PSIyMTUuNjIiIHk9IjU1OC45NSIgd2lkdGg9IjI4LjY0IiBoZWlnaHQ9IjkuNTciIHRyYW5zZm9ybT0idHJhbnNsYXRlKC0zNzAuOTQgNjYxLjgzKSByb3RhdGUoLTc3LjA4KSIvPgogIDxwb2x5Z29uIGNsYXNzPSJjbHMtMSIgcG9pbnRzPSIyNjUuMTcgNTgzLjg3IDI3NC43MiA1ODQuNTkgMjc2Ljg2IDU1Ni4wMyAyNjcuMzMgNTU1LjMxIDI2NS4xNyA1ODMuODciLz4KICA8cmVjdCBjbGFzcz0iY2xzLTEiIHg9IjMwOC42OCIgeT0iNTU1LjYzIiB3aWR0aD0iOS41NyIgaGVpZ2h0PSIyOC42NCIgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoLTQxLjk3IDI1LjE5KSByb3RhdGUoLTQuMzEpIi8+CiAgPHJlY3QgY2xhc3M9ImNscy0xIiB4PSIzNDkuNzciIHk9IjU0OS40MiIgd2lkdGg9IjkuNTYiIGhlaWdodD0iMjguNjQiIHRyYW5zZm9ybT0idHJhbnNsYXRlKC0xMTYuOTUgOTMuNDMpIHJvdGF0ZSgtMTIuOTEpIi8+CiAgPHJlY3QgY2xhc3M9ImNscy0xIiB4PSIzODguNjUiIHk9IjUzNy40NCIgd2lkdGg9IjkuNTYiIGhlaWdodD0iMjguNjQiIHRyYW5zZm9ybT0idHJhbnNsYXRlKC0xNzMuODggMTgxLjExKSByb3RhdGUoLTIxLjM1KSIvPgogIDxyZWN0IGNsYXNzPSJjbHMtMSIgeD0iNDI0Ljg3IiB5PSI1MjAuMTUiIHdpZHRoPSI5LjU3IiBoZWlnaHQ9IjI4LjY0IiB0cmFuc2Zvcm09InRyYW5zbGF0ZSgtMjA4LjI5IDI4Mi45MSkgcm90YXRlKC0yOS42OCkiLz4KICA8cG9seWdvbiBjbGFzcz0iY2xzLTEiIHBvaW50cz0iNDUwLjE5IDUwMy45NiA0NjcuNzcgNTI2LjU2IDQ3NS4zMyA1MjAuNjkgNDU3LjczIDQ5OC4wOSA0NTAuMTkgNTAzLjk2Ii8+CiAgPHJlY3QgY2xhc3M9ImNscy0xIiB4PSI1NDkuOTUiIHk9IjM3MC4xNiIgd2lkdGg9IjkuNTciIGhlaWdodD0iMjguNjUiIHRyYW5zZm9ybT0idHJhbnNsYXRlKDguODcgNzgxLjQ3KSByb3RhdGUoLTcwLjc1KSIvPgogIDxyZWN0IGNsYXNzPSJjbHMtMSIgeD0iNTYwLjUyIiB5PSIzMzAuNjkiIHdpZHRoPSI5LjU3IiBoZWlnaHQ9IjI4LjY0IiB0cmFuc2Zvcm09InRyYW5zbGF0ZSgxMjAuOCA4MzUuOTUpIHJvdGF0ZSgtNzkuMjQpIi8+CiAgPHJlY3QgY2xhc3M9ImNscy0xIiB4PSI1NjUuMjIiIHk9IjI4OS4xMyIgd2lkdGg9IjkuNTciIGhlaWdodD0iMjguNjQiIHRyYW5zZm9ybT0idHJhbnNsYXRlKDI0NC45NSA4NjEuNDEpIHJvdGF0ZSgtODcuOCkiLz4KICA8cmVjdCBjbGFzcz0iY2xzLTEiIHg9IjU1NC4xIiB5PSIyNTYuMzMiIHdpZHRoPSIyOC42NSIgaGVpZ2h0PSI5LjU3IiB0cmFuc2Zvcm09InRyYW5zbGF0ZSgtMjUuNzUgNjUuNTQpIHJvdGF0ZSgtNi40NSkiLz4KICA8cmVjdCBjbGFzcz0iY2xzLTEiIHg9IjU0Ni40MSIgeT0iMjE1Ljc2IiB3aWR0aD0iMjguNjMiIGhlaWdodD0iOS41NyIgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoLTM4LjAxIDE1Mi45NCkgcm90YXRlKC0xNS4wMykiLz4KICA8cmVjdCBjbGFzcz0iY2xzLTEiIHg9IjUzMy4wNSIgeT0iMTc3LjQ5IiB3aWR0aD0iMjguNjQiIGhlaWdodD0iOS41NyIgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoLTI3LjM0IDIzMi43OCkgcm90YXRlKC0yMy40NCkiLz4KICA8cG9seWdvbiBjbGFzcz0iY2xzLTEiIHBvaW50cz0iNTE5LjE2IDE1OC4zOSA1NDMuNTIgMTQzLjMzIDUzOC40OCAxMzUuMiA1MTQuMTQgMTUwLjI1IDUxOS4xNiAxNTguMzkiLz4KICA8cmVjdCBjbGFzcz0iY2xzLTEiIHg9IjQ5MS4yMiIgeT0iMTA5Ljc2IiB3aWR0aD0iMjguNjQiIGhlaWdodD0iOS41NyIgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoNDQuMjggMzUxLjA0KSByb3RhdGUoLTM5LjkxKSIvPgogIDxyZWN0IGNsYXNzPSJjbHMtMSIgeD0iNDYzLjY3IiB5PSI4MS4yMSIgd2lkdGg9IjI4LjY1IiBoZWlnaHQ9IjkuNTYiIHRyYW5zZm9ybT0idHJhbnNsYXRlKDk0LjUzIDM4NC4wNCkgcm90YXRlKC00OC4wNSkiLz4KICA8cmVjdCBjbGFzcz0iY2xzLTEiIHg9IjQzMi4zMSIgeT0iNTYuODIiIHdpZHRoPSIyOC42NCIgaGVpZ2h0PSI5LjU2IiB0cmFuc2Zvcm09InRyYW5zbGF0ZSgxNDcuMDQgMzk4LjUzKSByb3RhdGUoLTU2LjIxKSIvPgogIDxyZWN0IGNsYXNzPSJjbHMtMSIgeD0iMzk3LjU5IiB5PSIzNy4wNCIgd2lkdGg9IjI4LjY0IiBoZWlnaHQ9IjkuNTciIHRyYW5zZm9ybT0idHJhbnNsYXRlKDE5Ni43OSAzOTUuNTgpIHJvdGF0ZSgtNjQuNDkpIi8+CiAgPHJlY3QgY2xhc3M9ImNscy0xIiB4PSIzNTkuOTgiIHk9IjIyLjM1IiB3aWR0aD0iMjguNjQiIGhlaWdodD0iOS41NyIgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoMjM4LjIxIDM3Ni44Nykgcm90YXRlKC03Mi44OCkiLz4KPC9zdmc+' },
+  kbw: { color: '#8c084d', logo: 'data:image/svg+xml;base64,PHN2ZyBpZD0iRWJlbmVfMSIgZGF0YS1uYW1lPSJFYmVuZSAxIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNDAuNTcgMTA0LjYiPgogIDxkZWZzPjxzdHlsZT4uY2xzLTF7ZmlsbDojOGMwODRkO30uY2xzLTJ7ZmlsbDojZWI1ZTUwO308L3N0eWxlPjwvZGVmcz4KICA8cGF0aCBjbGFzcz0iY2xzLTIiIGQ9Ik0yMzEuNTgsMTAzLjAxYzUsMCw4Ljk5LTMuOCw4Ljk5LTguNzlzLTQtOC43OS04Ljk5LTguNzktOC45OSwzLjgtOC45OSw4Ljc5LDQsOC43OSw4Ljk5LDguNzloMFoiLz4KICA8cGF0aCBjbGFzcz0iY2xzLTEiIGQ9Ik00NC45OSwxMDEuODFsLTMwLjY0LTMxLjYyLDI5LjI1LTI4Ljk3aC04LjkxbC0yOC4xMywyOC40MVYwTDAsMS42N3YxMDAuMTRoNi41NXYtMzAuNzhsMjkuMzksMzAuNzhoOS4wNVpNOTAuNTMsMzkuOTdjLTExLjE0LDAtMjAuMzMsNS40My0yNS40OSwxMy45M1YwbC02LjY4LDEuNjd2NjkuNWMwLDE4LjUyLDEzLjc5LDMxLjg5LDMxLjc1LDMxLjg5czMyLjAzLTEzLjc5LDMyLjAzLTMxLjYyLTEzLjkzLTMxLjQ4LTMxLjYyLTMxLjQ4aDBaTTkwLjExLDk2Ljk0Yy0xNC4yMSwwLTI1LjA3LTExLjE0LTI1LjA3LTI1LjM1czExLjE0LTI1LjQ5LDI1LjM1LTI1LjQ5LDI1LjA3LDExLjE0LDI1LjA3LDI1LjM1LTExLjE0LDI1LjQ5LTI1LjM1LDI1LjQ5aDBaTTIyOS4yNSw0MS4yM2gtNy4yNGwtMTkuNzgsNDguMzMtMjIuOTgtNTEuMTEtMjIuOTgsNTEuMzktMTkuOTItNDguNjFoLTcuMWwyNi44OCw2My4zNywyMy4xMi01MS41MywyMy4xMiw1MS41MywyNi44OC02My4zN2gwWiIvPgo8L3N2Zz4=' },
+};
+
+// ── SETTERS ──
+function setSchema(s, btn) {
+  state.schema = s;
+  document.querySelectorAll('.schema-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  document.documentElement.style.setProperty('--ci', CI[s].color);
+  document.getElementById('appHeader').style.background = CI[s].color;
+  generate();
+}
+
+function setMode(m, btn) {
+  state.mode = m;
+  document.querySelectorAll('.toggle-btn[onclick^="setMode"]').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('groupUrl').classList.toggle('active', m === 'url');
+  document.getElementById('groupWifi').classList.toggle('active', m === 'wifi');
+  generate();
+}
+
+function setSize(s, btn) {
+  state.size = s;
+  document.querySelectorAll('.toggle-btn[onclick^="setSize"]').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  generate();
+}
+
+// ── QR CONTENT ──
+function getContent() {
+  if (state.mode === 'url') {
+    return document.getElementById('inputUrl').value.trim();
+  } else {
+    const ssid = document.getElementById('inputSsid').value.trim();
+    const pass = document.getElementById('inputPassword').value.trim();
+    const enc  = document.getElementById('inputEncryption').value;
+    if (!ssid) return '';
+    // WiFi QR format
+    return `WIFI:T:${enc};S:${ssid};P:${pass};;`;
+  }
+}
+
+// ── GENERATE ──
+function generate() {
+  const content = getContent();
+
+  if (!content) {
+    document.getElementById('emptyHint').style.display = 'block';
+    document.getElementById('qrOutput').style.display  = 'none';
+    document.getElementById('btnPng').disabled = true;
+    document.getElementById('btnSvg').disabled = true;
+    return;
+  }
+
+  document.getElementById('emptyHint').style.display = 'none';
+  document.getElementById('qrOutput').style.display  = 'flex';
+
+  const canvas = document.getElementById('qrCanvas');
+  const ci     = CI[state.schema];
+  const size   = state.size;
+
+  const schemaAtGenerate = state.schema; // Schema zum Zeitpunkt des Aufrufs merken
+
+  // QRCode auf Canvas zeichnen
+  const tempDiv = document.createElement('div');
+  tempDiv.style.display = 'none';
+  document.body.appendChild(tempDiv);
+
+  new QRCode(tempDiv, {
+    text:         content,
+    width:        size,
+    height:       size,
+    colorDark:    ci.color,
+    colorLight:   '#ffffff',
+    correctLevel: QRCode.CorrectLevel.H,
+  });
+
+  setTimeout(() => {
+    const srcCanvas = tempDiv.querySelector('canvas');
+    if (!srcCanvas) { document.body.removeChild(tempDiv); return; }
+
+    const ctx = canvas.getContext('2d');
+    canvas.width  = size;
+    canvas.height = size;
+    ctx.drawImage(srcCanvas, 0, 0);
+    document.body.removeChild(tempDiv);
+
+    // Logo als Overlay-Element statt drawImage — zuverlässiger bei Schema-Wechsel
+    const overlay = document.getElementById('logoOverlay');
+    overlay.innerHTML = '';
+    if (state.logo) {
+      const logoCI   = CI[schemaAtGenerate];
+      const logoSize = Math.round(size * 0.22);
+      const pad      = 6;
+      const bgSize   = logoSize + pad * 2;
+      const bgOffset = Math.round((size - bgSize) / 2);
+
+      overlay.style.cssText = `
+        position:absolute;
+        left:${bgOffset}px; top:${bgOffset}px;
+        width:${bgSize}px; height:${bgSize}px;
+        background:white;
+        border-radius:6px;
+        display:flex; align-items:center; justify-content:center;
+        padding:${pad}px;
+      `;
+
+      const img = document.createElement('img');
+      img.src   = logoCI.logo;
+      img.style.cssText = `width:${logoSize}px; height:${logoSize}px; object-fit:contain; display:block;`;
+      overlay.appendChild(img);
+    }
+
+    document.getElementById('btnPng').disabled = false;
+    document.getElementById('btnSvg').disabled = false;
+  }, 50);
+}
+
+// ── DOWNLOADS ──
+function downloadPNG() {
+  const canvas = document.getElementById('qrCanvas');
+  const label  = getLabel() || 'qrcode';
+  const link   = document.createElement('a');
+  link.download = `QR_${label.replace(/\s+/g,'_') || 'code'}.png`;
+  link.href     = canvas.toDataURL('image/png');
+  link.click();
+}
+
+function downloadSVG() {
+  const content = getContent();
+  const ci      = CI[state.schema];
+  const size    = state.size;
+
+  // SVG via QRCode-Canvas → SVG-Pfad nachbauen
+  // Wir konvertieren die Canvas-Pixel in SVG-Rechtecke
+  const canvas  = document.getElementById('qrCanvas');
+  const ctx     = canvas.getContext('2d');
+  const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+  const pixels  = imgData.data;
+  const w = canvas.width;
+  const h = canvas.height;
+
+  let rects = '';
+  const cellSize = 1;
+
+  for (let y = 0; y < h; y++) {
+    for (let x = 0; x < w; x++) {
+      const i = (y * w + x) * 4;
+      const r = pixels[i], g = pixels[i+1], b = pixels[i+2];
+      // Dunkle Pixel = QR-Modul
+      if (r < 128 && g < 128 && b < 128) {
+        rects += `<rect x="${x}" y="${y}" width="1" height="1" fill="${ci.color}"/>`;
+      }
+    }
+  }
+
+  const totalH = size;
+
+  const svg = `<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${totalH}" viewBox="0 0 ${size} ${totalH}">
+  <rect width="${size}" height="${size}" fill="white"/>
+  ${rects}
+</svg>`;
+
+  const blob = new Blob([svg], { type: 'image/svg+xml;charset=utf-8' });
+  const link = document.createElement('a');
+  link.download = `QR_kbw_${state.schema}_${state.mode}.svg`;
+  link.href = URL.createObjectURL(blob);
+  link.click();
+}
+
+// ── INIT ──
+document.documentElement.style.setProperty('--ci', CI['pe'].color);
+</script>
+</body>
+</html>

@@ -1,6 +1,6 @@
 {
   "guenther": {
-    "version": "0.1703.26",
+    "version": "2026-03-15",
     "name": "GÜNTHER",
     "fullName": "Gesamtübersicht Nützlicher Tools für Hospitality, Events und Restaurantbetrieb"
   },
@@ -18,22 +18,27 @@
     "accent": "#EB5E50",
     "lightLilac": "#b6b6cb"
   },
+  "contact": {
+    "name": "Nati Kasemir",
+    "email": "kasemir@kbw.de",
+    "phone": "030 29 33 50 1031"
+  },
   "tools": {
     "kartengenerator": {
       "name": "Getränkekarten-Generator",
-      "version": "2026-03-17",
+      "version": "2026-03-15",
       "path": "Bistro/kartengenerator.html",
       "status": "live"
     },
     "schildgenerator": {
       "name": "Schild-Generator",
-      "version": "2026-03-17",
+      "version": "2026-03-15",
       "path": "Event/schildgenerator.html",
       "status": "live"
     },
     "schliessrunde": {
-      "name": "Schließrunden-Checkliste",
-      "version": "2026-03-17",
+      "name": "Schließrunde",
+      "version": "2026-03-15",
       "path": "Tools/schliessrunde.html",
       "status": "live"
     },
@@ -49,5 +54,16 @@
       "path": null,
       "status": "planned"
     }
+  },
+  "categoryOrder": {
+    "_comment": "Kategorien die immer zuerst erscheinen (in dieser Reihenfolge), dann alle mittleren nach Größe, dann immer zuletzt.",
+    "first": [
+      "Alkoholfreie Getränke",
+      "Heißgetränke"
+    ],
+    "last": [
+      "Shots",
+      "Snacks"
+    ]
   }
 }

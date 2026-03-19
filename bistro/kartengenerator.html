@@ -192,7 +192,7 @@ main { display: flex; align-items: center; justify-content: center; padding: 28p
 <div class="app">
 
 <header>
-  <a href="../index.html" style="background:white; color:var(--pe-blue); font-size:11px; font-weight:700; text-decoration:none; letter-spacing:0.05em; display:flex; align-items:center; gap:5px; flex-shrink:0; padding:5px 10px; border-radius:4px;">← Zurück zum Toolset</a>
+  <a href="../index.html" style="background:white; color:var(--pe-blue); font-size:11px; font-weight:700; text-decoration:none; letter-spacing:0.05em; display:flex; align-items:center; gap:5px; flex-shrink:0; padding:5px 10px; border-radius:4px;">← Übersicht</a>
   <div class="accent-dot"></div>
   <h1>Getränkekarten-Generator</h1>
   <span style="margin-left:auto; color:rgba(255,255,255,0.45); font-size:10px; font-weight:500; letter-spacing:0.08em;"><strong>Letztes Kartenupdate </strong>2026-03-15</span>
@@ -314,11 +314,11 @@ main { display: flex; align-items: center; justify-content: center; padding: 28p
     <ol class="help-steps">
       <li><span class="help-step-num">1</span><span><strong>Vorlage runterladen über „↓ Vorlage herunterladen"</strong><br>Die Vorlage entspricht immer der aktuell gültigen Karte (siehe Kartenversion oben rechts)</span></li>
       <li><span class="help-step-num">2</span><span>Angebot in der CSV-Datei prüfen, ggf. ändern und speichern.</span></li>
-      <li><span class="help-step-num">3</span><span>Gespeicherte Vorlage wieder hochladen.</span></li>
-      <li><span class="help-step-num">4</span><span>Angebotsvariante (Inhalt der Karte) im Generator auswählen</span></li>
-      <li><span class="help-step-num">5</span><span>Format/Größe wählen</span></li>
-      <li><span class="help-step-num">5</span><span>Allergen-Hinweis wählen</span></li>
-      <li><span class="help-step-num">5</span><span>PDF drucken — fertig!</span></li>
+      <li><span class="help-step-num">3</span><span>Gespeicherte Vorlage <strong>wieder hochladen.</strong></span></li>
+      <li><span class="help-step-num">4</span><span><strong>Angebotsvariante</strong> (Inhalt der Karte) im Generator auswählen</span></li>
+      <li><span class="help-step-num">5</span><span><strong>Format/Größe</strong> wählen</span></li>
+      <li><span class="help-step-num">5</span><span><strong>Länge des Allergen-Hinweis</strong> wählen</span></li>
+      <li><span class="help-step-num">5</span><span><strong>PDF drucken</strong> — fertig!</span></li>
     </ol>
     <div class="help-footer">Happy Kartendrucken! 🎉</div>
     <button class="help-close" onclick="hideHelp()">Verstanden, los geht's!</button>
@@ -363,7 +363,8 @@ const state = {
   showPrices: true,
   format: 'A4P',
   allergen: 'none',  // 'none' | 'general' | 'detailed'
-  data: []
+  data: [],
+  categoryOrder: { first: [], last: [] }  // wird aus config.json geladen
 };
 
 function clearActive(sel) { document.querySelectorAll(sel).forEach(b=>b.classList.remove('active')); }
@@ -580,20 +581,37 @@ function downloadTemplate() {
 function getFilteredData() {
   if (!state.data.length) return {};
 
-  // Filtere Zeilen: Behalte Zeilen, deren 'Angebotsvariante'-Spalte den aktuellen Variant-Key enthält
   const filtered = state.data.filter(row => {
     const variantenDieserZeile = (row['Angebotsvariante'] || '').split(',').map(v => v.trim().toLowerCase());
     return variantenDieserZeile.includes(state.variant);
   });
 
-  // Group by category, preserving original order
+  // Kategorien gruppieren
   const cats = {};
   filtered.forEach(row => {
     const cat = row['Kategorie'] || 'Sonstiges';
     if (!cats[cat]) cats[cat] = [];
     cats[cat].push(row);
   });
-  return cats;
+
+  // Sortierung: first → mitte (nach Größe desc) → last
+  const { first, last } = state.categoryOrder;
+  const allKeys = Object.keys(cats);
+
+  const firstKeys  = first.filter(k => cats[k]);
+  const lastKeys   = last.filter(k => cats[k]);
+  const firstSet   = new Set(firstKeys);
+  const lastSet    = new Set(lastKeys);
+  const middleKeys = allKeys
+    .filter(k => !firstSet.has(k) && !lastSet.has(k))
+    .sort((a, b) => cats[b].length - cats[a].length); // absteigend nach Anzahl
+
+  const sortedKeys = [...firstKeys, ...middleKeys, ...lastKeys];
+
+  // Sortiertes Objekt zurückgeben
+  const sorted = {};
+  sortedKeys.forEach(k => { sorted[k] = cats[k]; });
+  return sorted;
 }
 
 // ── ALLERGEN-TEXT ──
@@ -963,10 +981,24 @@ function hideHelp(e) {
   }
 }
 
-// Init
-applyDimensions();
-window.addEventListener('resize', applyDimensions);
-showHelp(); // Kurzanleitung beim ersten Start anzeigen
+// Init — config.json laden, dann App starten
+(async () => {
+  try {
+    const cfg = await fetch('/Hub/config.json').then(r => r.json());
+    if (cfg.categoryOrder) {
+      state.categoryOrder = {
+        first: cfg.categoryOrder.first || [],
+        last:  cfg.categoryOrder.last  || [],
+      };
+    }
+  } catch(e) {
+    // config.json nicht erreichbar (z.B. lokal via file://) — Defaults bleiben
+    console.warn('config.json nicht geladen, Standard-Reihenfolge wird verwendet.', e);
+  }
+  applyDimensions();
+  window.addEventListener('resize', applyDimensions);
+  showHelp();
+})();
 </script>
 </body>
 </html>

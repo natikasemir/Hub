@@ -15,14 +15,14 @@
 
 
 /* ── POSTER (Druckbereich) ──
-   overflow: visible ist wichtig, damit das Logo
-   (das auf der Rahmenlinie sitzt und leicht übersteht)
-   nicht abgeschnitten wird — besonders bei kbw.
+   overflow: hidden ist wichtig für sauberen html2canvas-Export.
+   Das Logo wird in JS so positioniert, dass es komplett
+   innerhalb der Poster-Box bleibt (kein Clipping-Problem).
    ── */
 .poster {
   background: white;
   position: relative;
-  overflow: visible;
+  overflow: hidden;
 }
 
 
@@ -100,7 +100,9 @@
 
 /* ── LOGO-WRAP ──
    Zentriert auf der unteren Rahmenlinie.
-   translateY(50%) positioniert das Logo halb über, halb unter der Linie.
+   Die vertikale Positionierung wird in JS berechnet (applyAll),
+   damit das Logo komplett innerhalb der Poster-Box bleibt
+   und von html2canvas nicht abgeschnitten wird.
    z-index: 20 damit es über dem Rahmen liegt.
    ── */
 .poster-logo-wrap {
@@ -109,7 +111,6 @@
   display: flex;
   justify-content: center;
   align-items: center;
-  transform: translateY(50%);
   z-index: 20;
 }
 

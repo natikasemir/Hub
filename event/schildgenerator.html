@@ -166,10 +166,6 @@ function applyAll() {
     el.style.top = ms; el.style.left = ms; el.style.right = ms; el.style.bottom = ms;
   });
 
-  // Logo-Wrap: bottom = margin, damit es auf der Rahmenlinie sitzt
-  const logoWrap = document.getElementById('posterLogoWrap');
-  logoWrap.style.bottom = ms;
-
   // Rahmen: durchgezogene Linie auf allen 4 Seiten
   const bw = BORDER_WIDTHS[state.schema][state.format];
   const bwPx = bw + 'px';
@@ -178,17 +174,37 @@ function applyAll() {
   const r = Math.round(w * 0.12) + 'px';
   frame.style.borderRadius = state.schema === 'kbw' ? r + ' 0 ' + r + ' 0' : '0';
 
-  // Logo-Größe
-  const logoH = Math.min(w * 0.07, 52) * (state.schema === 'kbw' ? 0.6 : 1);
+  // Logo-Größe — skaliert mit der Posterbreite, größer als vorher
+  const logoH = Math.round(w * 0.09) * (state.schema === 'kbw' ? 0.65 : 1);
   const logoEl = document.getElementById('posterLogo');
   logoEl.style.height = logoH + 'px';
 
-  // Weißer Kreis hinter dem Logo — überdeckt die untere Rahmenlinie
+  // Logo-Wrap: Das Logo soll mittig auf der unteren Rahmenlinie sitzen,
+  // ABER komplett innerhalb der Poster-Box bleiben (html2canvas clippt
+  // am Element-Rand, egal was overflow sagt).
+  // Rahmenlinie = margin vom unteren Poster-Rand.
+  // Logo-Mitte soll auf dieser Linie liegen.
+  // → bottom des Wraps = margin - halbe Logo-Wrap-Höhe
+  const logoWrap = document.getElementById('posterLogoWrap');
+  const logoWrapBottom = Math.max(0, margin - Math.round(logoH / 2));
+  logoWrap.style.bottom = logoWrapBottom + 'px';
+
+  // Weißer Hintergrund hinter dem Logo: überdeckt die Rahmenlinie
   const circle = document.getElementById('posterLogoCircle');
-  // Kreis-Durchmesser = Logo-Höhe + etwas Padding
-  const circleDia = logoH + Math.max(8, logoH * 0.4);
-  circle.style.width  = circleDia + 'px';
-  circle.style.height = circleDia + 'px';
+  if (state.schema === 'pe') {
+    // PE: kreisrunder weißer Hintergrund
+    const circleDia = logoH + Math.max(10, logoH * 0.5);
+    circle.style.width  = circleDia + 'px';
+    circle.style.height = circleDia + 'px';
+    circle.style.borderRadius = '50%';
+  } else {
+    // kbw: rechteckiger weißer Hintergrund (Logo ist breiter als hoch)
+    const bgW = logoH * 4.5;
+    const bgH = logoH + Math.max(8, logoH * 0.4);
+    circle.style.width  = bgW + 'px';
+    circle.style.height = bgH + 'px';
+    circle.style.borderRadius = '4px';
+  }
 
   // Typografie
   document.getElementById('posterHeadline').style.fontSize = Math.round(w * 0.07) + 'px';

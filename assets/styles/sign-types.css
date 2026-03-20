@@ -1,7 +1,7 @@
 /* ============================================================
    PETER EDEL – Toolbox · Schild-Generator
    sign-types.css
-   Einbinden via: <link rel="stylesheet" href="../sign-types.css">
+   Einbinden via: <link rel="stylesheet" href="sign-types.css">
    Benötigt: stylesheet.css (muss zuerst geladen werden)
    ============================================================ */
 
@@ -14,18 +14,23 @@
 }
 
 
-/* ── POSTER (Druckbereich) ── */
+/* ── POSTER (Druckbereich) ──
+   overflow: visible ist wichtig, damit das Logo
+   (das auf der Rahmenlinie sitzt und leicht übersteht)
+   nicht abgeschnitten wird — besonders bei kbw.
+   ── */
 .poster {
   background: white;
   position: relative;
-  overflow: hidden;
+  overflow: visible;
 }
 
 
 /* ── RAHMEN ──
-   Dünne Linie mit ~4% Abstand zum Blattrand (per JS gesetzt).
-   Schema PE:  keine Eckenrundung, untere Linie geteilt (Logo sitzt dazwischen)
-   Schema kbw: oben-links & unten-rechts abgerundet
+   Durchgezogene Linie auf allen 4 Seiten.
+   Die Unterbrechung für das PE-Logo wird durch einen
+   weißen Kreis hinter dem Logo erzeugt (nicht durch
+   geteilte Segmente), weil html2canvas das zuverlässig rendert.
    ── */
 .poster-frame {
   position: absolute;
@@ -42,22 +47,6 @@
 .poster.schema-kbw .poster-frame {
   color: var(--kbw-magenta);
 }
-
-
-/* ── PE-SCHEMA: Untere Rahmensegmente ──
-   Echte DOM-Elemente statt ::before/::after,
-   weil html2canvas Pseudo-Elemente nicht zuverlässig rendert.
-   Zwei Linien-Segmente links und rechts, die vor dem Logo enden.
-   ── */
-.poster-frame-seg {
-  display: none;
-  position: absolute;
-  bottom: -1px;
-  background: currentColor;
-}
-
-.poster-frame-seg-left  { left: 0; }
-.poster-frame-seg-right { right: 0; }
 
 
 /* ── INHALTSBEREICH (innerhalb des Rahmens) ── */
@@ -109,33 +98,42 @@
 }
 
 
-/* ── LOGO: zentriert auf unterer Rahmenlinie ──
-   translateY(40%) lässt das Logo über der Linie schweben.
-   Der weiße Hintergrund "unterbricht" die Linie.
+/* ── LOGO-WRAP ──
+   Zentriert auf der unteren Rahmenlinie.
+   translateY(50%) positioniert das Logo halb über, halb unter der Linie.
+   z-index: 20 damit es über dem Rahmen liegt.
    ── */
 .poster-logo-wrap {
   position: absolute;
   left: 0; right: 0;
   display: flex;
   justify-content: center;
-  transform: translateY(40%);
+  align-items: center;
+  transform: translateY(50%);
   z-index: 20;
 }
 
-.poster-logo-bg {
+/* Weißer Kreis hinter dem Logo.
+   Überdeckt die durchgezogene untere Rahmenlinie genau dort,
+   wo das Logo sitzt. Sieht identisch aus mit einer geteilten Linie,
+   ist aber technisch viel robuster (html2canvas-kompatibel).
+   ── */
+.poster-logo-circle {
+  position: absolute;
   background: white;
-  padding: 0 16px;
-  display: flex;
-  align-items: center;
+  border-radius: 50%;
+  z-index: 1;
 }
 
 .poster-logo {
   display: block;
   object-fit: contain;
+  position: relative;
+  z-index: 2;
 }
 
 
-/* ── USER-BILD ── */
+/* ── USER-BILD / QR-CODE ── */
 .poster-user-img {
   display: none;
   max-width: 100%;
@@ -205,6 +203,62 @@
 }
 
 
+/* ── MEDIA-TOGGLE (Bild / QR-Code) ── */
+.media-toggle {
+  display: flex;
+  background: var(--gray-100);
+  border-radius: var(--radius-ui);
+  padding: 3px;
+  gap: 3px;
+  margin-bottom: 8px;
+}
+
+.media-toggle-btn {
+  flex: 1;
+  border: none;
+  background: transparent;
+  border-radius: 3px;
+  padding: 6px 4px;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  color: var(--gray-500);
+  transition: all 0.15s;
+  font-family: inherit;
+}
+
+.media-toggle-btn.active {
+  background: white;
+  color: #222;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+
+/* ── QR-CODE CONTROLS ── */
+.qr-controls {
+  display: none;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.qr-controls .field input {
+  border: 1.5px solid var(--gray-200);
+  border-radius: var(--radius-ui);
+  padding: 7px 10px;
+  font-size: 12px;
+  font-family: inherit;
+  color: #222;
+  background: white;
+  outline: none;
+  transition: border-color 0.15s;
+  width: 100%;
+}
+
+.qr-controls .field input:focus {
+  border-color: var(--accent);
+}
+
+
 /* ── FORMAT-ICON GRÖẞEN ── */
 .fmt-icon-a6 { width: 16px; height: 23px; }
 .fmt-icon-a5 { width: 18px; height: 26px; }
@@ -257,14 +311,14 @@
   font-size: 10px;
 }
 
-/* Kleiner Button (z.B. "Bild entfernen") */
+/* Kleiner Button */
 .btn-sm {
   font-size: 11px;
   padding: 7px 10px;
 }
 
 
-/* ── PRINT-GRID (nur für PDF-Export sichtbar) ── */
+/* ── PRINT-GRID ── */
 #_printGrid {
   display: none;
 }
@@ -275,8 +329,6 @@
   @page { margin: 0; }
 }
 
-
-/* ── DRUCK ── */
 @media print {
   .poster-wrap { transform: none !important; filter: none; }
   .poster { width: 100% !important; height: 100% !important; }

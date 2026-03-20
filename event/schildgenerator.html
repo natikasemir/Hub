@@ -28,7 +28,7 @@
     </div>
     <div>
       <div class="section-label">Format</div>
-      <div class="format-grid">
+      <div class="format-grid format-grid-4">
         <button class="format-btn active" onclick="setFormat('A6',this)"><div class="fmt-icon fmt-icon-a6"></div>A6</button>
         <button class="format-btn" onclick="setFormat('A5',this)"><div class="fmt-icon fmt-icon-a5"></div>A5</button>
         <button class="format-btn" onclick="setFormat('A4',this)"><div class="fmt-icon fmt-icon-a4"></div>A4</button>
@@ -55,14 +55,22 @@
     </div>
     <div class="field">
       <label>Haupttext</label>
-      <input type="text" id="headline" placeholder="z.B. Willkommen!" oninput="updateText()">
+      <textarea id="headline" rows="2" placeholder="z.B. Willkommen!" oninput="updateText()"></textarea>
     </div>
     <div class="field" id="bodyField" style="display:none;">
       <label>Subtext</label>
       <textarea id="bodytext" rows="4" placeholder="Weiterer Text..." oninput="updateText()"></textarea>
     </div>
+
+    <!-- Bild / QR-Code -->
     <div id="imgSection">
-      <div class="section-label">Bild</div>
+      <div class="section-label">Bild / QR-Code</div>
+      <div class="media-toggle">
+        <button class="media-toggle-btn active" onclick="setMediaMode('image',this)">Bild</button>
+        <button class="media-toggle-btn" onclick="setMediaMode('qr',this)">QR-Code</button>
+      </div>
+
+      <!-- Bild-Modus -->
       <div class="img-controls" id="imgControls">
         <label class="img-drop" id="imgDrop" onclick="document.getElementById('imgFileInput').click()">
           <input type="file" id="imgFileInput" accept="image/*" onchange="loadUserImg(event)">
@@ -76,7 +84,21 @@
           <button class="btn btn-secondary btn-sm" onclick="removeUserImg()">Bild entfernen</button>
         </div>
       </div>
+
+      <!-- QR-Code-Modus -->
+      <div class="qr-controls" id="qrControls" style="display:none;">
+        <div class="field">
+          <label>URL / Text für QR-Code</label>
+          <input type="text" id="qrInput" placeholder="https://..." oninput="generateQR()">
+        </div>
+        <div class="img-pos-toggle">
+          <button class="img-pos-btn active" onclick="setImgPos('top',this)">Oben</button>
+          <button class="img-pos-btn" onclick="setImgPos('bottom',this)">Unten</button>
+        </div>
+        <button class="btn btn-secondary btn-sm" onclick="clearQR()">QR-Code entfernen</button>
+      </div>
     </div>
+
     <div class="actions">
       <button class="btn btn-primary" id="btnPrint" onclick="doPrint()">↓ Als PDF speichern</button>
     </div>
@@ -84,21 +106,17 @@
   <main id="mainArea">
     <div class="poster-wrap" id="posterWrap">
       <div class="poster schema-pe" id="poster">
-        <div class="poster-frame">
-          <!-- Echte DOM-Elemente statt ::before/::after,
-               weil html2canvas Pseudo-Elemente nicht zuverlässig rendert -->
-          <div class="poster-frame-seg poster-frame-seg-left" id="frameSegLeft"></div>
-          <div class="poster-frame-seg poster-frame-seg-right" id="frameSegRight"></div>
-        </div>
+        <!-- Durchgezogener Rahmen auf allen 4 Seiten -->
+        <div class="poster-frame" id="posterFrame"></div>
         <div class="poster-content">
           <img class="poster-user-img" id="posterUserImg" alt="">
           <div class="poster-headline" id="posterHeadline">Haupttext</div>
           <div class="poster-bodytext" id="posterBodytext"></div>
         </div>
-        <div class="poster-logo-wrap">
-          <div class="poster-logo-bg">
-            <img class="poster-logo" id="posterLogo" alt="Logo" src="../assets/logos/PE_Logo_v2_blau.svg">
-          </div>
+        <!-- Logo mit weißem Kreis-Hintergrund, der die untere Linie überdeckt -->
+        <div class="poster-logo-wrap" id="posterLogoWrap">
+          <div class="poster-logo-circle" id="posterLogoCircle"></div>
+          <img class="poster-logo" id="posterLogo" alt="Logo" src="../assets/logos/PE_Logo_v2_blau.svg">
         </div>
       </div>
     </div>
@@ -106,13 +124,15 @@
 </div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.min.js"></script>
 <script>
 const LOGOS = { pe: '../assets/logos/PE_Logo_v2_blau.svg', kbw: '../assets/logos/kbw_logo_brombeere.svg' };
 const FORMATS = {
   A6: { w: 298, h: 420 }, A5: { w: 420, h: 595 },
   A4: { w: 595, h: 842 }, A3: { w: 842, h: 1191 }
 };
-const state = { schema: 'pe', format: 'A6', orient: 'portrait', mode: 'headline' };
+const CI_COLORS = { pe: '#173557', kbw: '#8c084d' };
+const state = { schema: 'pe', format: 'A6', orient: 'portrait', mode: 'headline', mediaMode: 'image' };
 const BORDER_WIDTHS = {
   pe:  { A6: 1, A5: 1.5, A4: 2,   A3: 3 },
   kbw: { A6: 1, A5: 1.25, A4: 1.5, A3: 2 }
@@ -140,48 +160,41 @@ function applyAll() {
 
   const margin = Math.round(w * 0.04);
   const ms = margin + 'px';
-  const frame = poster.querySelector('.poster-frame');
+  const frame   = document.getElementById('posterFrame');
   const content = poster.querySelector('.poster-content');
   [frame, content].forEach(el => {
     el.style.top = ms; el.style.left = ms; el.style.right = ms; el.style.bottom = ms;
   });
-  poster.querySelector('.poster-logo-wrap').style.bottom = ms;
 
-  const bw = BORDER_WIDTHS[state.schema][state.format] + 'px';
-  frame.style.setProperty('--frame-bw', bw);
-  frame.style.borderTop    = bw + ' solid currentColor';
-  frame.style.borderLeft   = bw + ' solid currentColor';
-  frame.style.borderRight  = bw + ' solid currentColor';
-  frame.style.borderBottom = state.schema === 'pe' ? 'none' : bw + ' solid currentColor';
+  // Logo-Wrap: bottom = margin, damit es auf der Rahmenlinie sitzt
+  const logoWrap = document.getElementById('posterLogoWrap');
+  logoWrap.style.bottom = ms;
+
+  // Rahmen: durchgezogene Linie auf allen 4 Seiten
+  const bw = BORDER_WIDTHS[state.schema][state.format];
+  const bwPx = bw + 'px';
+  frame.style.border = bwPx + ' solid currentColor';
 
   const r = Math.round(w * 0.12) + 'px';
   frame.style.borderRadius = state.schema === 'kbw' ? r + ' 0 ' + r + ' 0' : '0';
 
-  // PE-Schema: untere Liniensegmente als echte DOM-Elemente
-  const segLeft  = document.getElementById('frameSegLeft');
-  const segRight = document.getElementById('frameSegRight');
-  if (state.schema === 'pe') {
-    segLeft.style.display  = 'block';
-    segRight.style.display = 'block';
-    segLeft.style.height   = bw;
-    segRight.style.height  = bw;
-    // Segmentbreite: vom Rand bis kurz vor das Logo
-    const logoBg = poster.querySelector('.poster-logo-bg');
-    const frameW = w - 2 * margin;
-    const logoW = logoBg.offsetWidth > 0 ? logoBg.offsetWidth : Math.round(Math.min(w * 0.07, 52) * 3.5) + 32;
-    const segW = Math.max(12, (frameW - logoW) / 2 - 8);
-    segLeft.style.width  = Math.round(segW) + 'px';
-    segRight.style.width = Math.round(segW) + 'px';
-  } else {
-    segLeft.style.display  = 'none';
-    segRight.style.display = 'none';
-  }
-
+  // Logo-Größe
   const logoH = Math.min(w * 0.07, 52) * (state.schema === 'kbw' ? 0.6 : 1);
-  document.getElementById('posterLogo').style.height = logoH + 'px';
+  const logoEl = document.getElementById('posterLogo');
+  logoEl.style.height = logoH + 'px';
+
+  // Weißer Kreis hinter dem Logo — überdeckt die untere Rahmenlinie
+  const circle = document.getElementById('posterLogoCircle');
+  // Kreis-Durchmesser = Logo-Höhe + etwas Padding
+  const circleDia = logoH + Math.max(8, logoH * 0.4);
+  circle.style.width  = circleDia + 'px';
+  circle.style.height = circleDia + 'px';
+
+  // Typografie
   document.getElementById('posterHeadline').style.fontSize = Math.round(w * 0.07) + 'px';
   document.getElementById('posterBodytext').style.fontSize  = Math.round(w * 0.036) + 'px';
 
+  // User-Bild/QR-Größe
   const userImg = document.getElementById('posterUserImg');
   if (userImg.style.display !== 'none') {
     const imgMaxH = state.orient === 'portrait' ? h * 0.175 : h * 0.35;
@@ -194,6 +207,8 @@ function setSchema(s, btn) {
   clearActive('.schema-btn'); btn.classList.add('active');
   document.getElementById('poster').className = 'poster schema-' + s;
   document.getElementById('posterLogo').src = LOGOS[s];
+  // QR-Code neu generieren wenn vorhanden (Farbe ändert sich)
+  if (state.mediaMode === 'qr') generateQR();
   applyAll();
 }
 function setFormat(f, btn) {
@@ -208,10 +223,43 @@ function setMode(m, btn) {
   document.getElementById('bodyField').style.display    = show ? 'flex'  : 'none';
   document.getElementById('posterBodytext').style.display = show ? 'block' : 'none';
 }
+
 function updateText() {
-  document.getElementById('posterHeadline').textContent = document.getElementById('headline').value  || 'Ihre Ueberschrift';
-  document.getElementById('posterBodytext').textContent  = document.getElementById('bodytext').value  || '';
+  // Headline: Zeilenumbrüche aus Textarea übernehmen
+  const headlineVal = document.getElementById('headline').value || 'Haupttext';
+  const headlineEl  = document.getElementById('posterHeadline');
+  headlineEl.innerHTML = '';
+  headlineVal.split('\n').forEach((line, i, arr) => {
+    headlineEl.appendChild(document.createTextNode(line));
+    if (i < arr.length - 1) headlineEl.appendChild(document.createElement('br'));
+  });
+
+  // Bodytext
+  const bodyVal = document.getElementById('bodytext').value || '';
+  const bodyEl  = document.getElementById('posterBodytext');
+  bodyEl.innerHTML = '';
+  bodyVal.split('\n').forEach((line, i, arr) => {
+    bodyEl.appendChild(document.createTextNode(line));
+    if (i < arr.length - 1) bodyEl.appendChild(document.createElement('br'));
+  });
 }
+
+// ── MEDIA MODE (Bild / QR-Code) ──
+function setMediaMode(mode, btn) {
+  state.mediaMode = mode;
+  clearActive('.media-toggle-btn'); btn.classList.add('active');
+  document.getElementById('imgControls').style.display = mode === 'image' ? 'flex' : 'none';
+  document.getElementById('qrControls').style.display  = mode === 'qr'    ? 'flex' : 'none';
+  // Beim Wechsel: aktuelles Bild/QR ausblenden
+  if (mode === 'image') {
+    clearQR();
+  } else {
+    removeUserImg();
+    generateQR();
+  }
+}
+
+// ── BILD-UPLOAD ──
 const imgState = { pos: 'top' };
 
 function loadUserImg(event) {
@@ -258,18 +306,112 @@ function removeUserImg() {
   applyAll();
 }
 
-// ── PRINT LAYOUT ──
-// Für Kleinformate (A6, A5) werden mehrere Schilder auf ein A4-Blatt
-// gelegt. Dabei werden die Schilder so zentriert, dass der Abstand
-// zu allen Schneidkanten (Papierrand UND Mittellinie) gleich ist.
-//
-// Layout-Logik:
-// A6 portrait  : 2×2 upright   auf A4 portrait
-// A6 landscape : 2×2 rotated   auf A4 portrait
-// A5 portrait  : 1×2 rotated   auf A4 portrait
-// A5 landscape : 1×2 upright   auf A4 portrait
-// A4/A3        : 1×1 direkt
+// ── QR-CODE GENERATOR ──
+// Nutzt die gleiche Logik wie der QR-Generator-Tool:
+// qrcode-generator Bibliothek, Error Correction H, CI-Farbe
+function generateQR() {
+  const input = document.getElementById('qrInput').value.trim();
+  const img   = document.getElementById('posterUserImg');
 
+  if (!input) {
+    img.src = '';
+    img.style.display = 'none';
+    applyAll();
+    return;
+  }
+
+  const color = CI_COLORS[state.schema];
+  const size  = 360; // Feste Größe (wie QR-Generator)
+
+  const qr = qrcode(0, 'H');
+  qr.addData(input);
+  qr.make();
+
+  const modules = qr.getModuleCount();
+  const cell    = size / modules;
+
+  const canvas = document.createElement('canvas');
+  canvas.width  = size;
+  canvas.height = size;
+  const ctx = canvas.getContext('2d');
+
+  // Weißer Hintergrund (für Einbettung im Poster)
+  ctx.fillStyle = '#ffffff';
+  ctx.fillRect(0, 0, size, size);
+
+  // Finder-Pattern Positionen
+  const fpSize = 7;
+  const fps = [
+    { r: 0,                c: 0 },
+    { r: 0,                c: modules - fpSize },
+    { r: modules - fpSize, c: 0 },
+  ];
+
+  function isFP(r, c) {
+    return fps.some(fp =>
+      r >= fp.r && r < fp.r + fpSize &&
+      c >= fp.c && c < fp.c + fpSize
+    );
+  }
+
+  // Normale Module
+  ctx.fillStyle = color;
+  for (let r = 0; r < modules; r++) {
+    for (let c = 0; c < modules; c++) {
+      if (qr.isDark(r, c) && !isFP(r, c)) {
+        ctx.fillRect(c * cell, r * cell, Math.ceil(cell), Math.ceil(cell));
+      }
+    }
+  }
+
+  // Styled Finder Patterns (abgerundete Ecken)
+  function roundRect(x, y, w, h, rad) {
+    ctx.beginPath();
+    ctx.moveTo(x + rad, y);
+    ctx.lineTo(x + w - rad, y);
+    ctx.quadraticCurveTo(x + w, y, x + w, y + rad);
+    ctx.lineTo(x + w, y + h - rad);
+    ctx.quadraticCurveTo(x + w, y + h, x + w - rad, y + h);
+    ctx.lineTo(x + rad, y + h);
+    ctx.quadraticCurveTo(x, y + h, x, y + h - rad);
+    ctx.lineTo(x, y + rad);
+    ctx.quadraticCurveTo(x, y, x + rad, y);
+    ctx.closePath();
+  }
+
+  fps.forEach(fp => {
+    const x = fp.c * cell, y = fp.r * cell;
+    const s = fpSize * cell, rad = cell * 1.2;
+
+    ctx.fillStyle = color;
+    roundRect(x, y, s, s, rad);
+    ctx.fill();
+
+    ctx.fillStyle = '#ffffff';
+    roundRect(x + cell, y + cell, s - 2*cell, s - 2*cell, rad * 0.6);
+    ctx.fill();
+
+    ctx.fillStyle = color;
+    roundRect(x + 2*cell, y + 2*cell, s - 4*cell, s - 4*cell, rad * 0.5);
+    ctx.fill();
+  });
+
+  // Canvas als Bild in das Poster einfügen
+  img.src = canvas.toDataURL('image/png');
+  img.style.display = 'block';
+  applyImgPos();
+  applyAll();
+}
+
+function clearQR() {
+  document.getElementById('qrInput').value = '';
+  const img = document.getElementById('posterUserImg');
+  img.src = '';
+  img.style.display = 'none';
+  applyAll();
+}
+
+// ── PRINT LAYOUT ──
 function getPrintLayout() {
   const f = state.format, o = state.orient;
   if (f === 'A6') return { cols: 2, rows: 2, paperW: 210, paperH: 297, rotate: o === 'landscape' };
@@ -281,34 +423,24 @@ function getPrintLayout() {
 function buildPrintGrid(layout) {
   const { w, h } = getDims();
 
-  // Zell-Maße in mm
   const cellW_mm = layout.paperW / layout.cols;
   const cellH_mm = layout.paperH / layout.rows;
 
-  // Poster-Maße in mm (aus 72dpi-Pixel umrechnen)
   const posterW_mm = (state.orient === 'portrait' ? FORMATS[state.format].w : FORMATS[state.format].h) * 25.4 / 72;
   const posterH_mm = (state.orient === 'portrait' ? FORMATS[state.format].h : FORMATS[state.format].w) * 25.4 / 72;
 
-  // Skalierung: Poster soll in die Zelle passen mit gleichmäßigem Rand
-  // Bei Rotation: die Breite des Posters muss in die Zellbreite passen
   const fitW = layout.rotate ? posterH_mm : posterW_mm;
   const fitH = layout.rotate ? posterW_mm : posterH_mm;
   const scaleFactor = Math.min(cellW_mm / fitW, cellH_mm / fitH);
 
-  // Skalierte Poster-Maße in mm (nach Rotation betrachtet)
   const scaledW = fitW * scaleFactor;
   const scaledH = fitH * scaleFactor;
 
-  // Zentrierung: gleicher Abstand auf allen Seiten
   const offsetX_mm = (cellW_mm - scaledW) / 2;
   const offsetY_mm = (cellH_mm - scaledH) / 2;
 
-  // In Pixel umrechnen (96dpi für CSS)
   const px = v => v * 96 / 25.4;
-  const cellW_px = px(cellW_mm);
-  const cellH_px = px(cellH_mm);
 
-  // Scale from poster pixel dimensions to target pixel size
   const scale = layout.rotate ? px(scaledW) / h : px(scaledW) / w;
 
   const grid = document.createElement('div');
@@ -329,15 +461,11 @@ function buildPrintGrid(layout) {
     const cell = document.createElement('div');
     cell.style.cssText = 'width:' + cellW_mm + 'mm; height:' + cellH_mm + 'mm; overflow:hidden; position:relative;';
 
-    // Scaler-Element: positioniert das Poster zentriert in der Zelle
     const scaler = document.createElement('div');
     const offX = Math.round(px(offsetX_mm));
     const offY = Math.round(px(offsetY_mm));
 
     if (layout.rotate) {
-      // Bei Rotation (-90°) mit transform-origin 0 0:
-      // Nach rotate(-90deg) wird das Element um seinen Ursprung gedreht,
-      // dann muss top um die skalierte Breite (= scale * w) versetzt werden
       const topPx = Math.round(scale * w) + offY;
       scaler.style.cssText =
         'position:absolute; left:' + offX + 'px; top:' + topPx + 'px;' +

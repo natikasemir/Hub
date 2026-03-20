@@ -2,7 +2,7 @@
    PETER EDEL – Toolbox · Schild-Generator
    sign-types.css
    Einbinden via: <link rel="stylesheet" href="../sign-types.css">
-   Benötigt: pe-toolbox.css (muss zuerst geladen werden)
+   Benötigt: stylesheet.css (muss zuerst geladen werden)
    ============================================================ */
 
 
@@ -23,13 +23,12 @@
 
 
 /* ── RAHMEN ──
-   Dünne Linie mit 2,5% Abstand zum Blattrand.
-   Schema PE:  keine Eckenrundung
+   Dünne Linie mit ~4% Abstand zum Blattrand (per JS gesetzt).
+   Schema PE:  keine Eckenrundung, untere Linie geteilt (Logo sitzt dazwischen)
    Schema kbw: oben-links & unten-rechts abgerundet
    ── */
 .poster-frame {
   position: absolute;
-  top: 2.5%; left: 2.5%; right: 2.5%; bottom: 2.5%;
   border: 1.5px solid currentColor;
   pointer-events: none;
   z-index: 10;
@@ -42,20 +41,35 @@
 
 .poster.schema-kbw .poster-frame {
   color: var(--kbw-magenta);
-  border-radius: 12% 0 12% 0;
 }
+
+
+/* ── PE-SCHEMA: Untere Rahmensegmente ──
+   Echte DOM-Elemente statt ::before/::after,
+   weil html2canvas Pseudo-Elemente nicht zuverlässig rendert.
+   Zwei Linien-Segmente links und rechts, die vor dem Logo enden.
+   ── */
+.poster-frame-seg {
+  display: none;
+  position: absolute;
+  bottom: -1px;
+  background: currentColor;
+}
+
+.poster-frame-seg-left  { left: 0; }
+.poster-frame-seg-right { right: 0; }
 
 
 /* ── INHALTSBEREICH (innerhalb des Rahmens) ── */
 .poster-content {
   position: absolute;
-  top: 2.5%; left: 2.5%; right: 2.5%; bottom: 2.5%;
   display: flex;
   flex-direction: column;
   justify-content: center;
   align-items: center;
   padding: 8% 10%;
   text-align: center;
+  gap: 0.6em;
 }
 
 
@@ -63,7 +77,6 @@
 .poster-headline {
   line-height: 1.1;
   font-weight: 700;
-  margin-bottom: 0.4em;
   word-break: break-word;
 }
 
@@ -97,17 +110,15 @@
 
 
 /* ── LOGO: zentriert auf unterer Rahmenlinie ──
-   translateY(50%) lässt das Logo halb über,
-   halb unter der Linie schweben.
+   translateY(40%) lässt das Logo über der Linie schweben.
    Der weiße Hintergrund "unterbricht" die Linie.
    ── */
 .poster-logo-wrap {
   position: absolute;
-  bottom: 2.5%;
   left: 0; right: 0;
   display: flex;
   justify-content: center;
-  transform: translateY(50%);
+  transform: translateY(40%);
   z-index: 20;
 }
 
@@ -121,6 +132,147 @@
 .poster-logo {
   display: block;
   object-fit: contain;
+}
+
+
+/* ── USER-BILD ── */
+.poster-user-img {
+  display: none;
+  max-width: 100%;
+  object-fit: contain;
+  flex-shrink: 0;
+}
+
+
+/* ── BILD-UPLOAD UI ── */
+.img-drop {
+  border: 1.5px dashed var(--gray-200);
+  border-radius: var(--radius-ui);
+  padding: 12px 10px;
+  text-align: center;
+  cursor: pointer;
+  color: var(--gray-500);
+  font-size: 11px;
+  transition: border-color 0.15s;
+}
+
+.img-drop:hover {
+  border-color: var(--accent);
+}
+
+.img-drop input[type="file"] {
+  display: none;
+}
+
+.img-options {
+  display: none;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.img-pos-toggle {
+  display: flex;
+  background: var(--gray-100);
+  border-radius: var(--radius-ui);
+  padding: 3px;
+  gap: 3px;
+}
+
+.img-pos-btn {
+  flex: 1;
+  border: none;
+  background: transparent;
+  border-radius: 3px;
+  padding: 6px 4px;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  color: var(--gray-500);
+  transition: all 0.15s;
+  font-family: inherit;
+}
+
+.img-pos-btn.active {
+  background: white;
+  color: #222;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.img-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+
+/* ── FORMAT-ICON GRÖẞEN ── */
+.fmt-icon-a6 { width: 16px; height: 23px; }
+.fmt-icon-a5 { width: 18px; height: 26px; }
+.fmt-icon-a4 { width: 21px; height: 30px; }
+.fmt-icon-a3 { width: 24px; height: 34px; }
+
+
+/* ── ORIENTIERUNGS-ICON GRÖẞEN ── */
+.orient-icon-portrait  { width: 16px; height: 22px; }
+.orient-icon-landscape { width: 22px; height: 16px; }
+
+
+/* ── SIDEBAR-ERWEITERUNGEN (Schildgenerator) ── */
+.orient-toggle,
+.mode-toggle {
+  display: flex;
+  background: var(--gray-100);
+  border-radius: var(--radius-ui);
+  padding: 3px;
+  gap: 3px;
+}
+
+.orient-btn,
+.mode-btn {
+  flex: 1;
+  border: none;
+  background: transparent;
+  border-radius: 3px;
+  padding: 7px 4px;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  color: var(--gray-500);
+  transition: all 0.15s;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  font-family: inherit;
+}
+
+.orient-btn.active,
+.mode-btn.active {
+  background: white;
+  color: #222;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.mode-btn {
+  font-size: 10px;
+}
+
+/* Kleiner Button (z.B. "Bild entfernen") */
+.btn-sm {
+  font-size: 11px;
+  padding: 7px 10px;
+}
+
+
+/* ── PRINT-GRID (nur für PDF-Export sichtbar) ── */
+#_printGrid {
+  display: none;
+}
+
+@media print {
+  .app { display: none !important; }
+  #_printGrid { display: grid !important; }
+  @page { margin: 0; }
 }
 
 

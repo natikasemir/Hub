@@ -6,98 +6,11 @@
 <title>PETER EDEL Schild-Generator</title>
 <link rel="stylesheet" href="assets/styles/stylesheet.css">
 <link rel="stylesheet" href="assets/styles/sign-types.css">
-<style>
-  :root {
-    --pe-blue: #173557;
-    --kbw-magenta: #8c084d;
-    --accent: #EB5E50;
-    --gray-100: #f4f4f4;
-    --gray-200: #e4e4e4;
-    --gray-500: #999;
-    --radius-ui: 4px;
-  }
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { font-family: 'Source Sans 3', Arial, sans-serif; background: var(--gray-100); color: #222; height: 100vh; overflow: hidden; }
-  .app { display: grid; grid-template-columns: 320px 1fr; grid-template-rows: 56px 1fr; height: 100vh; }
-  header { grid-column: 1 / -1; background: var(--pe-blue); display: flex; align-items: center; padding: 0 24px; gap: 12px; }
-  header h1 { color: white; font-size: 13px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; }
-  .accent-dot { width: 7px; height: 7px; background: var(--accent); border-radius: 50%; }
-  aside { background: white; border-right: 1px solid var(--gray-200); padding: 20px 18px; overflow-y: auto; display: flex; flex-direction: column; gap: 18px; }
-  .section-label { font-size: 9.5px; font-weight: 700; letter-spacing: 0.13em; text-transform: uppercase; color: var(--gray-500); margin-bottom: 7px; }
-  .schema-switcher { display: grid; grid-template-columns: 1fr 1fr; gap: 7px; }
-  .schema-btn { border: 2px solid var(--gray-200); background: white; border-radius: var(--radius-ui); padding: 9px 6px; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 5px; font-size: 11px; font-weight: 600; color: #555; transition: all 0.15s; }
-  .schema-btn .swatch { width: 24px; height: 24px; border-radius: 50%; }
-  .schema-btn.active { border-color: var(--accent); color: var(--accent); }
-  .format-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 5px; }
-  .format-btn { border: 2px solid var(--gray-200); background: white; border-radius: var(--radius-ui); padding: 7px 3px; cursor: pointer; font-size: 11px; font-weight: 700; color: #555; display: flex; flex-direction: column; align-items: center; gap: 4px; transition: all 0.15s; }
-  .format-btn .fmt-icon { background: var(--gray-200); border-radius: 2px; transition: background 0.15s; }
-  .format-btn.active { border-color: var(--accent); color: var(--accent); }
-  .format-btn.active .fmt-icon { background: var(--accent); opacity: 0.35; }
-  .orient-toggle, .mode-toggle { display: flex; background: var(--gray-100); border-radius: var(--radius-ui); padding: 3px; gap: 3px; }
-  .orient-btn, .mode-btn { flex: 1; border: none; background: transparent; border-radius: 3px; padding: 7px 4px; font-size: 11px; font-weight: 600; cursor: pointer; color: var(--gray-500); transition: all 0.15s; display: flex; flex-direction: column; align-items: center; gap: 4px; font-family: inherit; }
-  .orient-btn.active, .mode-btn.active { background: white; color: #222; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
-  .orient-icon { background: var(--gray-200); border-radius: 1px; }
-  .field { display: flex; flex-direction: column; gap: 5px; }
-  label { font-size: 11px; font-weight: 600; color: #555; }
-  input[type="text"], textarea { border: 1.5px solid var(--gray-200); border-radius: var(--radius-ui); padding: 8px 10px; font-family: inherit; font-size: 13px; color: #222; resize: vertical; outline: none; transition: border-color 0.15s; }
-  input[type="text"]:focus, textarea:focus { border-color: var(--accent); }
-  .actions { display: flex; flex-direction: column; gap: 7px; margin-top: auto; padding-top: 4px; }
-  .btn { display: flex; align-items: center; justify-content: center; gap: 8px; border: none; border-radius: var(--radius-ui); padding: 10px 14px; font-family: inherit; font-size: 12px; font-weight: 600; cursor: pointer; transition: all 0.15s; }
-  .btn-primary { background: var(--accent); color: white; }
-  .btn-primary:hover { background: #d4473a; }
-  .btn-secondary { background: var(--gray-100); color: #333; border: 1.5px solid var(--gray-200); }
-  .btn-secondary:hover { background: var(--gray-200); }
-  main { display: flex; align-items: center; justify-content: center; padding: 32px; overflow: hidden; background: repeating-conic-gradient(#ddd 0% 25%, #e8e8e8 0% 50%) 0 0 / 18px 18px; }
-  .poster-wrap { transform-origin: center center; transition: transform 0.25s ease; filter: drop-shadow(0 6px 32px rgba(0,0,0,0.22)); }
-  /* THE POSTER */
-  .poster { background: white; position: relative; overflow: hidden; }
-  .poster-frame { position: absolute; top: 2.5%; left: 2.5%; right: 2.5%; bottom: 2.5%; border: 1.5px solid currentColor; pointer-events: none; z-index: 10; }
-  .poster.schema-pe .poster-frame { color: var(--pe-blue); border-radius: 0; border-bottom: none; }
-  .poster.schema-pe .poster-frame::before,
-  .poster.schema-pe .poster-frame::after {
-    content: '';
-    position: absolute;
-    bottom: -1px;
-    height: var(--frame-bw, 1.5px);
-    background: currentColor;
-    width: var(--frame-bottom-seg, 35%);
-  }
-  .poster.schema-pe .poster-frame::before { left: 0; }
-  .poster.schema-pe .poster-frame::after  { right: 0; }
-  .poster.schema-kbw .poster-frame { color: var(--kbw-magenta); }
-  .poster-content { position: absolute; top: 2.5%; left: 2.5%; right: 2.5%; bottom: 2.5%; display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 8% 10%; text-align: center; gap: 0.6em; }
-  .poster-headline { line-height: 1.1; font-weight: 700; word-break: break-word; }
-  .poster-bodytext { line-height: 1.6; font-weight: 400; word-break: break-word; }
-  .poster.schema-pe .poster-headline { color: var(--pe-blue); font-family: 'URW DIN', 'Source Sans 3', Arial, sans-serif; }
-  .poster.schema-pe .poster-bodytext { color: #222; font-family: 'URW DIN', 'Source Sans 3', Arial, sans-serif; }
-  .poster.schema-kbw .poster-headline { color: var(--kbw-magenta); }
-  .poster.schema-kbw .poster-bodytext { color: #222; }
-  /* Logo sits on the bottom frame line, centered */
-  .poster-logo-wrap { position: absolute; bottom: 2.5%; left: 0; right: 0; display: flex; justify-content: center; transform: translateY(40%); z-index: 20; }
-  .poster-logo-bg { background: white; padding: 0 16px; display: flex; align-items: center; }
-  .poster-logo { display: block; object-fit: contain; }
-  /* User image */
-  .poster-user-img { display: block; max-width: 100%; object-fit: contain; flex-shrink: 0; }
-  /* Image upload UI */
-  .img-drop { border: 1.5px dashed var(--gray-200); border-radius: var(--radius-ui); padding: 12px 10px; text-align: center; cursor: pointer; color: var(--gray-500); font-size: 11px; transition: border-color 0.15s; }
-  .img-drop:hover { border-color: var(--accent); }
-  .img-drop input[type="file"] { display: none; }
-  .img-pos-toggle { display: flex; background: var(--gray-100); border-radius: var(--radius-ui); padding: 3px; gap: 3px; }
-  .img-pos-btn { flex: 1; border: none; background: transparent; border-radius: 3px; padding: 6px 4px; font-size: 11px; font-weight: 600; cursor: pointer; color: var(--gray-500); transition: all 0.15s; font-family: inherit; }
-  .img-pos-btn.active { background: white; color: #222; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
-  .img-controls { display: flex; flex-direction: column; gap: 7px; }
-  #_printGrid { display: none; }
-  @media print {
-    .app { display: none !important; }
-    #_printGrid { display: grid !important; }
-    @page { margin: 0; }
-  }
-</style>
 </head>
 <body>
 <div class="app">
   <header>
-    <a href="../index.html" style="background:white; color:var(--pe-blue); font-size:11px; font-weight:700; text-decoration:none; letter-spacing:0.05em; display:flex; align-items:center; gap:5px; flex-shrink:0; padding:5px 10px; border-radius:4px;">← Zurück zum Toolset</a>
+    <a href="../index.html" class="header-back-link">← Zurück zum Toolset</a>
     <div class="accent-dot"></div>
     <h1>Schild-Generator</h1>
   </header>
@@ -106,38 +19,38 @@
       <div class="section-label">CI-Schema</div>
       <div class="schema-switcher">
         <button class="schema-btn active" onclick="setSchema('pe',this)">
-          <div class="swatch" style="background:#173557;"></div>PE
+          <div class="swatch swatch-pe"></div>PE
         </button>
         <button class="schema-btn" onclick="setSchema('kbw',this)">
-          <div class="swatch" style="background:#8c084d;"></div>kbw.
+          <div class="swatch swatch-kbw"></div>kbw.
         </button>
       </div>
     </div>
     <div>
       <div class="section-label">Format</div>
       <div class="format-grid">
-        <button class="format-btn active" onclick="setFormat('A6',this)"><div class="fmt-icon" style="width:16px;height:23px;"></div>A6</button>
-        <button class="format-btn" onclick="setFormat('A5',this)"><div class="fmt-icon" style="width:18px;height:26px;"></div>A5</button>
-        <button class="format-btn" onclick="setFormat('A4',this)"><div class="fmt-icon" style="width:21px;height:30px;"></div>A4</button>
-        <button class="format-btn" onclick="setFormat('A3',this)"><div class="fmt-icon" style="width:24px;height:34px;"></div>A3</button>
+        <button class="format-btn active" onclick="setFormat('A6',this)"><div class="fmt-icon fmt-icon-a6"></div>A6</button>
+        <button class="format-btn" onclick="setFormat('A5',this)"><div class="fmt-icon fmt-icon-a5"></div>A5</button>
+        <button class="format-btn" onclick="setFormat('A4',this)"><div class="fmt-icon fmt-icon-a4"></div>A4</button>
+        <button class="format-btn" onclick="setFormat('A3',this)"><div class="fmt-icon fmt-icon-a3"></div>A3</button>
       </div>
     </div>
     <div>
       <div class="section-label">Ausrichtung</div>
       <div class="orient-toggle">
         <button class="orient-btn active" onclick="setOrient('portrait',this)">
-          <div class="orient-icon" style="width:16px;height:22px;"></div>Hoch
+          <div class="orient-icon orient-icon-portrait"></div>Hoch
         </button>
         <button class="orient-btn" onclick="setOrient('landscape',this)">
-          <div class="orient-icon" style="width:22px;height:16px;"></div>Quer
+          <div class="orient-icon orient-icon-landscape"></div>Quer
         </button>
       </div>
     </div>
     <div>
       <div class="section-label">Inhalt</div>
       <div class="mode-toggle">
-        <button class="mode-btn active" onclick="setMode('headline',this)" style="font-size:10px;">Nur Titel</button>
-        <button class="mode-btn" onclick="setMode('full',this)" style="font-size:10px;">Titel + Text</button>
+        <button class="mode-btn active" onclick="setMode('headline',this)">Nur Titel</button>
+        <button class="mode-btn" onclick="setMode('full',this)">Titel + Text</button>
       </div>
     </div>
     <div class="field">
@@ -155,28 +68,32 @@
           <input type="file" id="imgFileInput" accept="image/*" onchange="loadUserImg(event)">
           Bild auswählen oder hier ablegen
         </label>
-        <div id="imgOptions" style="display:none; flex-direction:column; gap:7px;">
+        <div class="img-options" id="imgOptions">
           <div class="img-pos-toggle">
             <button class="img-pos-btn active" onclick="setImgPos('top',this)">Oben</button>
             <button class="img-pos-btn" onclick="setImgPos('bottom',this)">Unten</button>
           </div>
-          <button class="btn btn-secondary" style="font-size:11px; padding:7px 10px;" onclick="removeUserImg()">Bild entfernen</button>
+          <button class="btn btn-secondary btn-sm" onclick="removeUserImg()">Bild entfernen</button>
         </div>
       </div>
     </div>
     <div class="actions">
-      <button class="btn btn-primary" id="btnPrint" onclick="doPrint()">↓ Als PDF drucken</button>
-      <button class="btn btn-secondary" id="btnPDF" onclick="doPDF()">↓ Als PDF speichern</button>
+      <button class="btn btn-primary" id="btnPrint" onclick="doPrint()">↓ Als PDF speichern</button>
     </div>
   </aside>
   <main id="mainArea">
     <div class="poster-wrap" id="posterWrap">
       <div class="poster schema-pe" id="poster">
-        <div class="poster-frame"></div>
+        <div class="poster-frame">
+          <!-- Echte DOM-Elemente statt ::before/::after,
+               weil html2canvas Pseudo-Elemente nicht zuverlässig rendert -->
+          <div class="poster-frame-seg poster-frame-seg-left" id="frameSegLeft"></div>
+          <div class="poster-frame-seg poster-frame-seg-right" id="frameSegRight"></div>
+        </div>
         <div class="poster-content">
-          <img class="poster-user-img" id="posterUserImg" style="display:none;" alt="">
+          <img class="poster-user-img" id="posterUserImg" alt="">
           <div class="poster-headline" id="posterHeadline">Haupttext</div>
-          <div class="poster-bodytext" id="posterBodytext" style="display:none;"></div>
+          <div class="poster-bodytext" id="posterBodytext"></div>
         </div>
         <div class="poster-logo-wrap">
           <div class="poster-logo-bg">
@@ -220,6 +137,7 @@ function applyAll() {
   wrap.style.width    = w + 'px';
   wrap.style.height   = h + 'px';
   wrap.style.transform = 'scale(' + scale + ')';
+
   const margin = Math.round(w * 0.04);
   const ms = margin + 'px';
   const frame = poster.querySelector('.poster-frame');
@@ -228,30 +146,46 @@ function applyAll() {
     el.style.top = ms; el.style.left = ms; el.style.right = ms; el.style.bottom = ms;
   });
   poster.querySelector('.poster-logo-wrap').style.bottom = ms;
+
   const bw = BORDER_WIDTHS[state.schema][state.format] + 'px';
   frame.style.setProperty('--frame-bw', bw);
   frame.style.borderTop    = bw + ' solid currentColor';
   frame.style.borderLeft   = bw + ' solid currentColor';
   frame.style.borderRight  = bw + ' solid currentColor';
   frame.style.borderBottom = state.schema === 'pe' ? 'none' : bw + ' solid currentColor';
+
   const r = Math.round(w * 0.12) + 'px';
   frame.style.borderRadius = state.schema === 'kbw' ? r + ' 0 ' + r + ' 0' : '0';
+
+  // PE-Schema: untere Liniensegmente als echte DOM-Elemente
+  const segLeft  = document.getElementById('frameSegLeft');
+  const segRight = document.getElementById('frameSegRight');
+  if (state.schema === 'pe') {
+    segLeft.style.display  = 'block';
+    segRight.style.display = 'block';
+    segLeft.style.height   = bw;
+    segRight.style.height  = bw;
+    // Segmentbreite: vom Rand bis kurz vor das Logo
+    const logoBg = poster.querySelector('.poster-logo-bg');
+    const frameW = w - 2 * margin;
+    const logoW = logoBg.offsetWidth > 0 ? logoBg.offsetWidth : Math.round(Math.min(w * 0.07, 52) * 3.5) + 32;
+    const segW = Math.max(12, (frameW - logoW) / 2 - 8);
+    segLeft.style.width  = Math.round(segW) + 'px';
+    segRight.style.width = Math.round(segW) + 'px';
+  } else {
+    segLeft.style.display  = 'none';
+    segRight.style.display = 'none';
+  }
+
   const logoH = Math.min(w * 0.07, 52) * (state.schema === 'kbw' ? 0.6 : 1);
   document.getElementById('posterLogo').style.height = logoH + 'px';
   document.getElementById('posterHeadline').style.fontSize = Math.round(w * 0.07) + 'px';
   document.getElementById('posterBodytext').style.fontSize  = Math.round(w * 0.036) + 'px';
+
   const userImg = document.getElementById('posterUserImg');
   if (userImg.style.display !== 'none') {
     const imgMaxH = state.orient === 'portrait' ? h * 0.175 : h * 0.35;
     userImg.style.maxHeight = Math.round(imgMaxH) + 'px';
-  }
-  // PE schema: compute bottom line segments so they end near the logo
-  if (state.schema === 'pe') {
-    const logoBg = poster.querySelector('.poster-logo-bg');
-    const frameW = w - 2 * margin;
-    const logoW = logoBg.offsetWidth > 0 ? logoBg.offsetWidth : Math.round(logoH * 3.5) + 32;
-    const segW = Math.max(12, (frameW - logoW) / 2 - 8);
-    frame.style.setProperty('--frame-bottom-seg', Math.round(segW) + 'px');
   }
 }
 
@@ -324,19 +258,18 @@ function removeUserImg() {
   applyAll();
 }
 
-// Print layout
-// Landscape variants are rotated -90° so all layouts use portrait paper.
-// rotate:true  → poster is rotated -90°; scale uses poster.h as the width dimension
-// rotate:false → poster is placed upright; scale uses poster.w as the width dimension
+// ── PRINT LAYOUT ──
+// Für Kleinformate (A6, A5) werden mehrere Schilder auf ein A4-Blatt
+// gelegt. Dabei werden die Schilder so zentriert, dass der Abstand
+// zu allen Schneidkanten (Papierrand UND Mittellinie) gleich ist.
 //
-// A6 portrait  : 2×2 upright   on A4 portrait (210×297)
-// A6 landscape : 2×2 rotated   on A4 portrait (210×297)
-// A5 portrait  : 1×2 rotated   on A4 portrait (210×297)
-// A5 landscape : 1×2 upright   on A4 portrait (210×297)
-// A4 portrait  : 1×1 upright   on A4 portrait (210×297)
-// A4 landscape : 1×1 rotated   on A4 portrait (210×297)
-// A3 portrait  : 1×1 upright   on A3 portrait (297×420)
-// A3 landscape : 1×1 rotated   on A3 portrait (297×420)
+// Layout-Logik:
+// A6 portrait  : 2×2 upright   auf A4 portrait
+// A6 landscape : 2×2 rotated   auf A4 portrait
+// A5 portrait  : 1×2 rotated   auf A4 portrait
+// A5 landscape : 1×2 upright   auf A4 portrait
+// A4/A3        : 1×1 direkt
+
 function getPrintLayout() {
   const f = state.format, o = state.orient;
   if (f === 'A6') return { cols: 2, rows: 2, paperW: 210, paperH: 297, rotate: o === 'landscape' };
@@ -345,40 +278,78 @@ function getPrintLayout() {
   /* A3 */        return { cols: 1, rows: 1, paperW: 297, paperH: 420, rotate: o === 'landscape' };
 }
 
-// Scale factor derivation (print CSS reference = 96 dpi; our pixel dims = 72 dpi equivalent):
-//   non-rotated: poster.w px must fill cellW mm  → scale = (cellW × 96/25.4) / w
-//   rotated    : poster.h px must fill cellW mm  → scale = (cellW × 96/25.4) / h
-//
-// Rotation (-90°) positioning: with transform-origin 0 0 and top = scale×w,
-//   the rotated+scaled element occupies exactly x∈[0, cellW_px], y∈[0, scale×w] in the cell.
 function buildPrintGrid(layout) {
   const { w, h } = getDims();
-  const cellW    = layout.paperW / layout.cols;        // mm
-  const cellH    = layout.paperH / layout.rows;        // mm
-  const cellW_px = cellW * 96 / 25.4;
-  const scale    = layout.rotate ? cellW_px / h : cellW_px / w;
-  const topPx    = layout.rotate ? Math.round(scale * w) : 0;
-  const tfm      = layout.rotate
-    ? 'rotate(-90deg) scale(' + scale.toFixed(5) + ')'
-    : 'scale(' + scale.toFixed(5) + ')';
+
+  // Zell-Maße in mm
+  const cellW_mm = layout.paperW / layout.cols;
+  const cellH_mm = layout.paperH / layout.rows;
+
+  // Poster-Maße in mm (aus 72dpi-Pixel umrechnen)
+  const posterW_mm = (state.orient === 'portrait' ? FORMATS[state.format].w : FORMATS[state.format].h) * 25.4 / 72;
+  const posterH_mm = (state.orient === 'portrait' ? FORMATS[state.format].h : FORMATS[state.format].w) * 25.4 / 72;
+
+  // Skalierung: Poster soll in die Zelle passen mit gleichmäßigem Rand
+  // Bei Rotation: die Breite des Posters muss in die Zellbreite passen
+  const fitW = layout.rotate ? posterH_mm : posterW_mm;
+  const fitH = layout.rotate ? posterW_mm : posterH_mm;
+  const scaleFactor = Math.min(cellW_mm / fitW, cellH_mm / fitH);
+
+  // Skalierte Poster-Maße in mm (nach Rotation betrachtet)
+  const scaledW = fitW * scaleFactor;
+  const scaledH = fitH * scaleFactor;
+
+  // Zentrierung: gleicher Abstand auf allen Seiten
+  const offsetX_mm = (cellW_mm - scaledW) / 2;
+  const offsetY_mm = (cellH_mm - scaledH) / 2;
+
+  // In Pixel umrechnen (96dpi für CSS)
+  const px = v => v * 96 / 25.4;
+  const cellW_px = px(cellW_mm);
+  const cellH_px = px(cellH_mm);
+
+  // Scale from poster pixel dimensions to target pixel size
+  const scale = layout.rotate ? px(scaledW) / h : px(scaledW) / w;
+
   const grid = document.createElement('div');
   grid.id = '_printGrid';
   grid.style.width               = layout.paperW + 'mm';
   grid.style.height              = layout.paperH + 'mm';
-  grid.style.gridTemplateColumns = 'repeat(' + layout.cols + ', ' + cellW + 'mm)';
-  grid.style.gridTemplateRows    = 'repeat(' + layout.rows + ', ' + cellH + 'mm)';
+  grid.style.display             = 'grid';
+  grid.style.gridTemplateColumns = 'repeat(' + layout.cols + ', ' + cellW_mm + 'mm)';
+  grid.style.gridTemplateRows    = 'repeat(' + layout.rows + ', ' + cellH_mm + 'mm)';
+
   const poster = document.getElementById('poster');
+
   for (let i = 0; i < layout.cols * layout.rows; i++) {
     const clone = poster.cloneNode(true);
     clone.removeAttribute('id');
     clone.querySelectorAll('[id]').forEach(el => el.removeAttribute('id'));
+
     const cell = document.createElement('div');
-    cell.style.cssText = 'width:' + cellW + 'mm; height:' + cellH + 'mm; overflow:hidden; position:relative;';
+    cell.style.cssText = 'width:' + cellW_mm + 'mm; height:' + cellH_mm + 'mm; overflow:hidden; position:relative;';
+
+    // Scaler-Element: positioniert das Poster zentriert in der Zelle
     const scaler = document.createElement('div');
-    scaler.style.cssText =
-      'position:absolute; left:0; top:' + topPx + 'px;' +
-      'width:' + w + 'px; height:' + h + 'px;' +
-      'transform-origin:0 0; transform:' + tfm + ';';
+    const offX = Math.round(px(offsetX_mm));
+    const offY = Math.round(px(offsetY_mm));
+
+    if (layout.rotate) {
+      // Bei Rotation (-90°) mit transform-origin 0 0:
+      // Nach rotate(-90deg) wird das Element um seinen Ursprung gedreht,
+      // dann muss top um die skalierte Breite (= scale * w) versetzt werden
+      const topPx = Math.round(scale * w) + offY;
+      scaler.style.cssText =
+        'position:absolute; left:' + offX + 'px; top:' + topPx + 'px;' +
+        'width:' + w + 'px; height:' + h + 'px;' +
+        'transform-origin:0 0; transform:rotate(-90deg) scale(' + scale.toFixed(5) + ');';
+    } else {
+      scaler.style.cssText =
+        'position:absolute; left:' + offX + 'px; top:' + offY + 'px;' +
+        'width:' + w + 'px; height:' + h + 'px;' +
+        'transform-origin:0 0; transform:scale(' + scale.toFixed(5) + ');';
+    }
+
     scaler.appendChild(clone);
     cell.appendChild(scaler);
     grid.appendChild(cell);
@@ -386,22 +357,18 @@ function buildPrintGrid(layout) {
   return grid;
 }
 
-async function _execExport(layout, filename) {
+async function doPrint() {
+  const layout = getPrintLayout();
   const { jsPDF } = window.jspdf;
 
-  // Print-Grid kurz ins DOM einsetzen (außerhalb des sichtbaren Bereichs)
   const grid = buildPrintGrid(layout);
   grid.style.cssText += '; position:fixed; left:-9999px; top:0; display:grid;';
   document.body.appendChild(grid);
 
-  // Buttons deaktivieren
-  ['btnPrint', 'btnPDF'].forEach(id => {
-    const el = document.getElementById(id);
-    if (el) el.disabled = true;
-  });
+  const btn = document.getElementById('btnPrint');
+  if (btn) btn.disabled = true;
 
   try {
-    // Papiergröße in px bei 96dpi berechnen
     const pxW = Math.round(layout.paperW * 96 / 25.4);
     const pxH = Math.round(layout.paperH * 96 / 25.4);
 
@@ -425,28 +392,16 @@ async function _execExport(layout, filename) {
     });
 
     pdf.addImage(imgData, 'JPEG', 0, 0, layout.paperW, layout.paperH, '', 'FAST');
-    pdf.save((filename || 'Schild') + '.pdf');
+    pdf.save('Schild_' + state.schema.toUpperCase() + '_' + state.format + '_' + (state.orient === 'landscape' ? 'Q' : 'H') + '.pdf');
 
   } catch(err) {
     alert('PDF-Export fehlgeschlagen: ' + err.message);
   } finally {
     grid.remove();
-    ['btnPrint', 'btnPDF'].forEach(id => {
-      const el = document.getElementById(id);
-      if (el) el.disabled = false;
-    });
+    if (btn) btn.disabled = false;
   }
 }
 
-function doPrint() {
-  const layout = getPrintLayout();
-  _execExport(layout, 'Schild_' + state.schema.toUpperCase() + '_' + state.format + '_' + (state.orient === 'landscape' ? 'Q' : 'H'));
-}
-
-function doPDF() {
-  const layout = getPrintLayout();
-  _execExport(layout, 'Poster_' + state.schema.toUpperCase() + '_' + state.format + '_' + (state.orient === 'landscape' ? 'Q' : 'H'));
-}
 applyAll();
 window.addEventListener('resize', applyAll);
 document.getElementById('posterLogo').addEventListener('load', applyAll);

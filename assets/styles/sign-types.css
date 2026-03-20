@@ -98,12 +98,11 @@
 }
 
 
-/* ── LOGO-WRAP ──
+/* ── LOGO ──
    Zentriert auf der unteren Rahmenlinie.
-   Die vertikale Positionierung wird in JS berechnet (applyAll),
-   damit das Logo komplett innerhalb der Poster-Box bleibt
-   und von html2canvas nicht abgeschnitten wird.
-   z-index: 20 damit es über dem Rahmen liegt.
+   Position (bottom) wird in JS berechnet.
+   Kein transform — alles über bottom-Offset, damit
+   html2canvas nichts abschneidet.
    ── */
 .poster-logo-wrap {
   position: absolute;
@@ -114,15 +113,12 @@
   z-index: 20;
 }
 
-/* Weißer Kreis hinter dem Logo.
-   Überdeckt die durchgezogene untere Rahmenlinie genau dort,
-   wo das Logo sitzt. Sieht identisch aus mit einer geteilten Linie,
-   ist aber technisch viel robuster (html2canvas-kompatibel).
-   ── */
-.poster-logo-circle {
+/* Weißer Hintergrund hinter dem Logo.
+   Überdeckt die Rahmenlinie und erzeugt den
+   optischen Durchbruch-Effekt. */
+.poster-logo-mask {
   position: absolute;
   background: white;
-  border-radius: 50%;
   z-index: 1;
 }
 

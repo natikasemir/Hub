@@ -4,8 +4,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>PETER EDEL Schild-Generator</title>
-<link rel="stylesheet" href="../assets/styles/stylesheet.css">
-<link rel="stylesheet" href="../assets/styles/sign-types.css">
+<link rel="stylesheet" href="assets/styles/stylesheet.css">
+<link rel="stylesheet" href="assets/styles/sign-types.css">
 </head>
 <body>
 <div class="app">
@@ -113,9 +113,8 @@
           <div class="poster-headline" id="posterHeadline">Haupttext</div>
           <div class="poster-bodytext" id="posterBodytext"></div>
         </div>
-        <!-- Logo mit weißem Kreis-Hintergrund, der die untere Linie überdeckt -->
         <div class="poster-logo-wrap" id="posterLogoWrap">
-          <div class="poster-logo-circle" id="posterLogoCircle"></div>
+          <div class="poster-logo-mask" id="posterLogoMask"></div>
           <img class="poster-logo" id="posterLogo" alt="Logo" src="../assets/logos/PE_Logo_v2_blau.svg">
         </div>
       </div>
@@ -174,57 +173,45 @@ function applyAll() {
   const r = Math.round(w * 0.12) + 'px';
   frame.style.borderRadius = state.schema === 'kbw' ? r + ' 0 ' + r + ' 0' : '0';
 
-  // Logo-Größe
-  // PE: markant groß (Gebäude-Silhouette braucht Platz)
-  // kbw: deutlich kleiner (Wortmarke, filigran)
-  const logoH = state.schema === 'pe'
-    ? Math.round(w * 0.12)
-    : Math.round(w * 0.04);
+  // ── LOGO ──
+  // Klein gehalten. PE = Gebäude-Silhouette (quadratisch), kbw = Wortmarke (breit).
+  const logoH = state.schema === 'pe' ? Math.round(w * 0.05) : Math.round(w * 0.025);
   const logoEl = document.getElementById('posterLogo');
   logoEl.style.height = logoH + 'px';
 
-  // Weißer Hintergrund hinter dem Logo: überdeckt die Rahmenlinie
-  const circle = document.getElementById('posterLogoCircle');
+  // Nach dem Setzen der Höhe: tatsächliche Breite des Logos auslesen
+  // (getBoundingClientRect gibt die skalierte Größe, wir brauchen die unskalierte)
+  const logoBounds = logoEl.getBoundingClientRect();
+  const viewScale = Math.min(avW / w, avH / h, 1) || 1;
+  const logoRealW = logoBounds.width > 0 ? logoBounds.width / viewScale : logoH;
+  const logoRealH = logoH;
+
+  // Weißer Hintergrund hinter dem Logo (überdeckt die Rahmenlinie)
+  const mask = document.getElementById('posterLogoMask');
   if (state.schema === 'pe') {
-    // PE: kreisrunder weißer Hintergrund, 60% größer als Logo
-    // — muss groß genug sein, damit der Kreis die Linie großzügig
-    //   überdeckt und der Durchbruch-Effekt elegant wirkt
-    const circleDia = Math.round(logoH * 1.6);
-    circle.style.width  = circleDia + 'px';
-    circle.style.height = circleDia + 'px';
-    circle.style.borderRadius = '50%';
+    // Kreis, 5% größer als das Logo
+    const dia = Math.round(Math.max(logoRealW, logoRealH) * 1.05);
+    mask.style.width  = dia + 'px';
+    mask.style.height = dia + 'px';
+    mask.style.borderRadius = '50%';
   } else {
-    // kbw: rechteckiger weißer Hintergrund
-    // Breite: Logo-Breite + 8% (3% je Seite extra → Faktor 1.08 auf die reale Breite)
-    const logoBounds = logoEl.getBoundingClientRect();
-    const logoRealW = logoBounds.width > 0 ? logoBounds.width / (Math.min((main.clientWidth - 64) / w, (main.clientHeight - 64) / h, 1) || 1) : logoH * 2.5;
-    const bgW = Math.round(logoRealW * 1.11);
-    const bgH = Math.round(logoH * 1.05);
-    circle.style.width  = bgW + 'px';
-    circle.style.height = bgH + 'px';
-    circle.style.borderRadius = '4px';
+    // Rechteck, links+rechts je 2.5% breiter, Höhe = Logo-Höhe * 1.05
+    const bgW = Math.round(logoRealW * 1.05);
+    const bgH = Math.round(logoRealH * 1.05);
+    mask.style.width  = bgW + 'px';
+    mask.style.height = bgH + 'px';
+    mask.style.borderRadius = '2px';
   }
 
-  // Logo-Wrap Positionierung:
-  // Rahmenlinie = margin px vom unteren Poster-Rand.
+  // Positionierung: Logo-Wrap zentriert auf der unteren Rahmenlinie.
+  // Rahmenlinie liegt bei `margin` px vom unteren Poster-Rand.
+  // Das Wrap bekommt eine feste Höhe = Logo-Höhe, und bottom wird so gesetzt,
+  // dass die Wrap-Mitte exakt auf der Linie liegt.
+  // kbw: zusätzlich 2px nach oben (leichter Offset wie gewünscht).
   const logoWrap = document.getElementById('posterLogoWrap');
-  const wrapH = state.schema === 'pe'
-    ? Math.round(logoH * 1.6)   // Kreis-Durchmesser
-    : Math.round(logoH * 1.05); // Kasten-Höhe
-  logoWrap.style.height = wrapH + 'px';
-
-  if (state.schema === 'pe') {
-    // PE: Logo-Mitte soll exakt auf der Rahmenlinie liegen.
-    // bottom = margin - wrapH/2 → Wrap-Mitte auf Rahmenlinie.
-    // Zusätzlich 15% der Logo-Höhe nach unten, damit das Logo optisch
-    // auf der Linie "sitzt" statt darüber zu schweben.
-    const logoWrapBottom = Math.max(0, margin - Math.round(wrapH / 2) - Math.round(logoH * 0.15));
-    logoWrap.style.bottom = logoWrapBottom + 'px';
-  } else {
-    // kbw: 5% höher als die mathematische Mitte
-    const logoWrapBottom = Math.max(0, margin - Math.round(wrapH / 2) + Math.round(logoH * 0.05));
-    logoWrap.style.bottom = logoWrapBottom + 'px';
-  }
+  logoWrap.style.height = logoH + 'px';
+  const kbwNudge = state.schema === 'kbw' ? 2 : 0;
+  logoWrap.style.bottom = (margin - Math.round(logoH / 2) + kbwNudge) + 'px';
 
   // Typografie
   document.getElementById('posterHeadline').style.fontSize = Math.round(w * 0.07) + 'px';
@@ -243,7 +230,6 @@ function setSchema(s, btn) {
   clearActive('.schema-btn'); btn.classList.add('active');
   document.getElementById('poster').className = 'poster schema-' + s;
   document.getElementById('posterLogo').src = LOGOS[s];
-  // QR-Code neu generieren wenn vorhanden (Farbe ändert sich)
   if (state.mediaMode === 'qr') generateQR();
   applyAll();
 }

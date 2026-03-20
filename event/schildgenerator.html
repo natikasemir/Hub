@@ -4,8 +4,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>PETER EDEL Schild-Generator</title>
-<link rel="stylesheet" href="../assets/styles/stylesheet.css">
-<link rel="stylesheet" href="../assets/styles/sign-types.css">
+<link rel="stylesheet" href="assets/styles/stylesheet.css">
+<link rel="stylesheet" href="assets/styles/sign-types.css">
 </head>
 <body>
 <div class="app">
@@ -186,35 +186,45 @@ function applyAll() {
   // Weißer Hintergrund hinter dem Logo: überdeckt die Rahmenlinie
   const circle = document.getElementById('posterLogoCircle');
   if (state.schema === 'pe') {
-    // PE: kreisrunder weißer Hintergrund, 20% größer als Logo
-    const circleDia = Math.round(logoH * 1.2);
+    // PE: kreisrunder weißer Hintergrund, 60% größer als Logo
+    // — muss groß genug sein, damit der Kreis die Linie großzügig
+    //   überdeckt und der Durchbruch-Effekt elegant wirkt
+    const circleDia = Math.round(logoH * 1.6);
     circle.style.width  = circleDia + 'px';
     circle.style.height = circleDia + 'px';
     circle.style.borderRadius = '50%';
   } else {
-    // kbw: rechteckiger weißer Hintergrund, nur 5% größer als Logo
-    // Logo-Wrap messen wir nach dem Setzen der Logo-Höhe
+    // kbw: rechteckiger weißer Hintergrund
+    // Breite: Logo-Breite + 8% (3% je Seite extra → Faktor 1.08 auf die reale Breite)
     const logoBounds = logoEl.getBoundingClientRect();
     const logoRealW = logoBounds.width > 0 ? logoBounds.width / (Math.min((main.clientWidth - 64) / w, (main.clientHeight - 64) / h, 1) || 1) : logoH * 2.5;
-    const bgW = Math.round(logoRealW * 1.05);
+    const bgW = Math.round(logoRealW * 1.11);
     const bgH = Math.round(logoH * 1.05);
     circle.style.width  = bgW + 'px';
     circle.style.height = bgH + 'px';
     circle.style.borderRadius = '4px';
   }
 
-  // Logo-Wrap Positionierung: Logo-Mitte soll exakt auf der Rahmenlinie liegen.
+  // Logo-Wrap Positionierung:
   // Rahmenlinie = margin px vom unteren Poster-Rand.
-  // Wir setzen die Wrap-Höhe explizit auf die Kreis/Kasten-Höhe (das größere Element),
-  // damit bottom korrekt berechnet werden kann.
   const logoWrap = document.getElementById('posterLogoWrap');
   const wrapH = state.schema === 'pe'
-    ? Math.round(logoH * 1.2)   // Kreis-Durchmesser
+    ? Math.round(logoH * 1.6)   // Kreis-Durchmesser
     : Math.round(logoH * 1.05); // Kasten-Höhe
   logoWrap.style.height = wrapH + 'px';
-  // bottom = margin - halbe Wrap-Höhe → Wrap-Mitte liegt auf der Rahmenlinie
-  const logoWrapBottom = Math.max(0, margin - Math.round(wrapH / 2));
-  logoWrap.style.bottom = logoWrapBottom + 'px';
+
+  if (state.schema === 'pe') {
+    // PE: Logo-Mitte soll exakt auf der Rahmenlinie liegen.
+    // bottom = margin - wrapH/2 → Wrap-Mitte auf Rahmenlinie.
+    // Zusätzlich 15% der Logo-Höhe nach unten, damit das Logo optisch
+    // auf der Linie "sitzt" statt darüber zu schweben.
+    const logoWrapBottom = Math.max(0, margin - Math.round(wrapH / 2) - Math.round(logoH * 0.15));
+    logoWrap.style.bottom = logoWrapBottom + 'px';
+  } else {
+    // kbw: 5% höher als die mathematische Mitte
+    const logoWrapBottom = Math.max(0, margin - Math.round(wrapH / 2) + Math.round(logoH * 0.05));
+    logoWrap.style.bottom = logoWrapBottom + 'px';
+  }
 
   // Typografie
   document.getElementById('posterHeadline').style.fontSize = Math.round(w * 0.07) + 'px';

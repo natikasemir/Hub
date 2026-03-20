@@ -946,3 +946,123 @@ body.landingpage {
   .tools-section  { padding: 40px 24px 56px; }
   .lp-footer      { padding: 24px; flex-direction: column; align-items: flex-start; }
 }
+
+
+/* ── 9. HEADER-ERWEITERUNGEN (Tool-Seiten) ── */
+
+header {
+  transition: background 0.3s;
+}
+
+.header-back-link {
+  background: white;
+  color: var(--pe-blue);
+  font-size: 11px;
+  font-weight: 700;
+  text-decoration: none;
+  letter-spacing: 0.05em;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  flex-shrink: 0;
+  padding: 5px 10px;
+  border-radius: var(--radius-ui);
+}
+
+.header-version {
+  margin-left: auto;
+  color: rgba(255, 255, 255, 0.45);
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+}
+
+
+/* ── 10. QR-GENERATOR ── */
+
+/* Swatch-Farben für CI-Schema-Buttons */
+.swatch-pe  { background: #173557; }
+.swatch-kbw { background: #8c084d; }
+
+/* Felder: Input & Select (Tool-übergreifend nutzbar) */
+.field input,
+.field select {
+  border: 1.5px solid var(--gray-200);
+  border-radius: var(--radius-ui);
+  padding: 7px 10px;
+  font-size: 12px;
+  font-family: inherit;
+  color: #222;
+  background: white;
+  outline: none;
+  transition: border-color 0.15s;
+}
+
+.field input:focus,
+.field select:focus {
+  border-color: var(--pe-blue);
+}
+
+/* Feld-Gruppen (umschaltbare Bereiche) */
+.field-group {
+  display: none;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.field-group.active {
+  display: flex;
+}
+
+/* QR-Vorschau-Card */
+.qr-card {
+  background: white;
+  border-radius: 8px;
+  padding: 32px;
+  box-shadow: 0 6px 32px rgba(0, 0, 0, 0.15);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  min-width: 280px;
+}
+
+.qr-card-label {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--pe-blue);
+  text-align: center;
+}
+
+.qr-wrap {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+#qrCanvas {
+  display: block;
+  border-radius: 4px;
+}
+
+.qr-output {
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+}
+
+.empty-hint {
+  text-align: center;
+  color: var(--gray-400);
+  font-size: 13px;
+  padding: 40px;
+}
+
+.empty-hint .big {
+  font-size: 40px;
+  margin-bottom: 10px;
+}

@@ -4,238 +4,16 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>QR-Generator – GÜNTHER</title>
-<style>
-:root {
-  --pe-blue:     #173557;
-  --kbw-magenta: #8c084d;
-  --accent:      #EB5E50;
-  --accent-hover:#d4473a;
-  --gray-50:     #fafafa;
-  --gray-100:    #f4f4f4;
-  --gray-200:    #e4e4e4;
-  --gray-300:    #d0d0d0;
-  --gray-400:    #bbb;
-  --gray-500:    #999;
-  --gray-700:    #444;
-  --gray-900:    #1a1a1a;
-  --ci:          var(--pe-blue);
-  --radius:      4px;
-}
-
-* { box-sizing: border-box; margin: 0; padding: 0; }
-
-body {
-  font-family: 'Source Sans 3', 'Segoe UI', Arial, sans-serif;
-  background: var(--gray-100);
-  color: var(--gray-900);
-  height: 100vh;
-  overflow: hidden;
-}
-
-/* ── APP SHELL ── */
-.app {
-  display: grid;
-  grid-template-columns: 300px 1fr;
-  grid-template-rows: 56px 1fr;
-  height: 100vh;
-}
-
-header {
-  grid-column: 1/-1;
-  background: var(--ci);
-  display: flex;
-  align-items: center;
-  padding: 0 24px;
-  gap: 12px;
-  transition: background 0.3s;
-}
-
-header h1 {
-  color: white;
-  font-size: 13px;
-  font-weight: 600;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-}
-
-.accent-dot {
-  width: 7px; height: 7px;
-  background: var(--accent);
-  border-radius: 50%;
-  flex-shrink: 0;
-}
-
-.header-version {
-  margin-left: auto;
-  color: rgba(255,255,255,0.45);
-  font-size: 10px;
-  font-weight: 500;
-  letter-spacing: 0.08em;
-}
-
-/* ── SIDEBAR ── */
-aside {
-  background: white;
-  border-right: 1px solid var(--gray-200);
-  padding: 18px 16px;
-  overflow-y: auto;
-  display: flex;
-  flex-direction: column;
-  gap: 18px;
-}
-
-.section-label {
-  font-size: 9.5px;
-  font-weight: 700;
-  letter-spacing: 0.13em;
-  text-transform: uppercase;
-  color: var(--gray-500);
-  margin-bottom: 7px;
-}
-
-/* Schema-Switcher */
-.schema-switcher { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
-.schema-btn {
-  border: 2px solid var(--gray-200);
-  background: white;
-  border-radius: var(--radius);
-  padding: 8px 5px;
-  cursor: pointer;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 4px;
-  font-size: 11px;
-  font-weight: 600;
-  color: #555;
-  transition: all 0.15s;
-  font-family: inherit;
-}
-.schema-btn .swatch { width: 22px; height: 22px; border-radius: 50%; }
-.schema-btn.active { border-color: var(--accent); color: var(--accent); }
-
-/* Mode-Switcher */
-.toggle-group {
-  display: flex;
-  background: var(--gray-100);
-  border-radius: var(--radius);
-  padding: 3px;
-  gap: 3px;
-}
-.toggle-btn {
-  flex: 1;
-  border: none;
-  background: transparent;
-  border-radius: 3px;
-  padding: 6px 3px;
-  font-size: 10.5px;
-  font-weight: 600;
-  cursor: pointer;
-  color: var(--gray-500);
-  transition: all 0.15s;
-  font-family: inherit;
-  white-space: nowrap;
-}
-.toggle-btn.active {
-  background: white;
-  color: #222;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-}
-
-/* Inputs */
-.field { display: flex; flex-direction: column; gap: 5px; }
-.field label { font-size: 10.5px; font-weight: 600; color: var(--gray-500); letter-spacing: 0.05em; }
-.field input, .field select {
-  border: 1.5px solid var(--gray-200);
-  border-radius: var(--radius);
-  padding: 7px 10px;
-  font-size: 12px;
-  font-family: inherit;
-  color: var(--gray-900);
-  background: white;
-  outline: none;
-  transition: border-color 0.15s;
-}
-.field input:focus, .field select:focus { border-color: var(--ci); }
-
-.field-group { display: none; flex-direction: column; gap: 10px; }
-.field-group.active { display: flex; }
-
-/* Logo toggle */
-/* Actions */
-.actions { display: flex; flex-direction: column; gap: 6px; margin-top: auto; }
-.btn {
-  display: flex; align-items: center; justify-content: center;
-  gap: 7px; border: none; border-radius: var(--radius);
-  padding: 10px 14px; font-family: inherit; font-size: 12px;
-  font-weight: 600; cursor: pointer; transition: all 0.15s;
-}
-.btn-primary { background: var(--accent); color: white; }
-.btn-primary:hover { background: var(--accent-hover); }
-.btn-secondary { background: var(--gray-100); color: #333; border: 1.5px solid var(--gray-200); }
-.btn-secondary:hover { background: var(--gray-200); }
-.btn:disabled { opacity: 0.4; cursor: not-allowed; }
-
-/* ── MAIN PREVIEW ── */
-main {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: repeating-conic-gradient(#ddd 0% 25%, #e8e8e8 0% 50%) 0 0/18px 18px;
-  overflow: hidden;
-}
-
-.qr-card {
-  background: white;
-  border-radius: 8px;
-  padding: 32px;
-  box-shadow: 0 6px 32px rgba(0,0,0,0.15);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 16px;
-  min-width: 280px;
-}
-
-.qr-card-label {
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: var(--ci);
-  text-align: center;
-}
-
-.qr-wrap {
-  position: relative;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-}
-
-#qrCanvas {
-  display: block;
-  border-radius: 4px;
-}
-
-.empty-hint {
-  text-align: center;
-  color: var(--gray-400);
-  font-size: 13px;
-  padding: 40px;
-}
-
-.empty-hint .big { font-size: 40px; margin-bottom: 10px; }
-</style>
+<link rel="stylesheet" href="../stylesheet.css">
 </head>
 <body>
 <div class="app">
 
 <header id="appHeader">
-  <a href="../index.html" style="background:white; color:var(--pe-blue); font-size:11px; font-weight:700; text-decoration:none; letter-spacing:0.05em; display:flex; align-items:center; gap:5px; flex-shrink:0; padding:5px 10px; border-radius:4px;">← Zurück zum Toolset</a>
+  <a href="../index.html" class="header-back-link">← Zurück zum Toolset</a>
   <div class="accent-dot"></div>
   <h1>QR-Generator</h1>
-  <span class="header-version">GÜNTHER 2026-03-15</span>
+  <span class="header-version">GÜNTHER 2026-03-20</span>
 </header>
 
 <aside>
@@ -245,10 +23,10 @@ main {
     <div class="section-label">CI-Schema</div>
     <div class="schema-switcher">
       <button class="schema-btn active" onclick="setSchema('pe', this)">
-        <div class="swatch" style="background:#173557"></div>PE
+        <div class="swatch swatch-pe"></div>PE
       </button>
       <button class="schema-btn" onclick="setSchema('kbw', this)">
-        <div class="swatch" style="background:#8c084d"></div>kbw.
+        <div class="swatch swatch-kbw"></div>kbw.
       </button>
     </div>
   </div>
@@ -295,7 +73,7 @@ main {
   <div class="field-group" id="groupVcard">
     <div class="field">
       <label>Vorname</label>
-      <input type="text" id="inputVcardFirst" placeholder="Vorame" oninput="generate()">
+      <input type="text" id="inputVcardFirst" placeholder="Vorname" oninput="generate()">
     </div>
     <div class="field">
       <label>Nachname</label>
@@ -336,6 +114,7 @@ main {
   <!-- Actions -->
   <div class="actions">
     <button class="btn btn-primary" id="btnPng" onclick="downloadPNG()" disabled>↓ Als PNG speichern</button>
+    <button class="btn btn-secondary" id="btnJpg" onclick="downloadJPG()" disabled>↓ Als JPG speichern</button>
     <button class="btn btn-secondary" id="btnSvg" onclick="downloadSVG()" disabled>↓ Als SVG speichern</button>
   </div>
 
@@ -347,12 +126,10 @@ main {
       <div class="big">🔲</div>
       Inhalt eingeben um QR-Code zu generieren
     </div>
-    <div id="qrOutput" style="display:none; flex-direction:column; align-items:center; gap:16px;">
+    <div class="qr-output" id="qrOutput">
       <div class="qr-wrap" id="qrWrap">
         <canvas id="qrCanvas"></canvas>
-
       </div>
-
     </div>
   </div>
 </main>
@@ -431,7 +208,7 @@ function getContent() {
       phone ? `TEL:${phone}`   : '',
       url   ? `URL:${url}`     : '',
       'END:VCARD',
-    ].filter(Boolean).join('');
+    ].filter(Boolean).join('\n');
   }
   return '';
 }
@@ -444,6 +221,7 @@ function generate() {
     document.getElementById('emptyHint').style.display = 'block';
     document.getElementById('qrOutput').style.display  = 'none';
     document.getElementById('btnPng').disabled = true;
+    document.getElementById('btnJpg').disabled = true;
     document.getElementById('btnSvg').disabled = true;
     return;
   }
@@ -455,7 +233,6 @@ function generate() {
   const ci     = CI[state.schema];
   const size   = state.size;
 
-  // qrcode-generator gibt uns direkt isDark(r, c) — kein Pixel-Auslesen
   const qr = qrcode(0, 'H');
   qr.addData(content);
   qr.make();
@@ -467,15 +244,15 @@ function generate() {
   canvas.width  = size;
   canvas.height = size;
 
-  // Weißer Hintergrund
-  ctx.fillStyle = '#ffffff';
-  ctx.fillRect(0, 0, size, size);
+  // Transparenter Hintergrund: clearRect statt fillRect.
+  // Die weiße Optik in der Vorschau kommt vom CSS-Background der .qr-card.
+  ctx.clearRect(0, 0, size, size);
 
   // Finder-Pattern Positionen
   const fpSize = 7;
   const fps = [
-    { r: 0,           c: 0 },
-    { r: 0,           c: modules - fpSize },
+    { r: 0,                c: 0 },
+    { r: 0,                c: modules - fpSize },
     { r: modules - fpSize, c: 0 },
   ];
 
@@ -524,7 +301,7 @@ function generate() {
     roundRect(x, y, s, s, r);
     ctx.fill();
 
-    // Weißer Zwischenring
+    // Weißer Zwischenring — bleibt #fff, weil es Teil der QR-Struktur ist
     ctx.fillStyle = '#ffffff';
     roundRect(x + cell, y + cell, s - 2*cell, s - 2*cell, r * 0.6);
     ctx.fill();
@@ -538,10 +315,13 @@ function generate() {
   fps.forEach(fp => drawFinderPattern(fp.r, fp.c));
 
   document.getElementById('btnPng').disabled = false;
+  document.getElementById('btnJpg').disabled = false;
   document.getElementById('btnSvg').disabled = false;
 }
 
 // ── DOWNLOADS ──
+
+// PNG: Transparenter Hintergrund (Canvas hat keinen weißen BG mehr)
 function downloadPNG() {
   const canvas = document.getElementById('qrCanvas');
   const link   = document.createElement('a');
@@ -550,13 +330,34 @@ function downloadPNG() {
   link.click();
 }
 
-function downloadSVG() {
-  const content = getContent();
-  const ci      = CI[state.schema];
-  const size    = state.size;
+// JPG: Weißer Hintergrund + Padding (wie die Vorschau-Card)
+function downloadJPG() {
+  const canvas  = document.getElementById('qrCanvas');
+  const padding = 32; // identisch mit .qr-card padding
+  const w       = canvas.width  + padding * 2;
+  const h       = canvas.height + padding * 2;
 
-  // SVG via QRCode-Canvas → SVG-Pfad nachbauen
-  // Wir konvertieren die Canvas-Pixel in SVG-Rechtecke
+  // Offscreen-Canvas: erst weiß füllen, dann QR-Code zentriert reinmalen
+  const offscreen = document.createElement('canvas');
+  offscreen.width  = w;
+  offscreen.height = h;
+  const ctx = offscreen.getContext('2d');
+
+  ctx.fillStyle = '#ffffff';
+  ctx.fillRect(0, 0, w, h);
+  ctx.drawImage(canvas, padding, padding);
+
+  const link = document.createElement('a');
+  link.download = `QR_${state.schema}_${state.mode}.jpg`;
+  link.href     = offscreen.toDataURL('image/jpeg', 0.95);
+  link.click();
+}
+
+// SVG: Weißer Hintergrund (SVG-Konvention)
+function downloadSVG() {
+  const ci   = CI[state.schema];
+  const size = state.size;
+
   const canvas  = document.getElementById('qrCanvas');
   const ctx     = canvas.getContext('2d');
   const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
@@ -565,30 +366,27 @@ function downloadSVG() {
   const h = canvas.height;
 
   let rects = '';
-  const cellSize = 1;
 
   for (let y = 0; y < h; y++) {
     for (let x = 0; x < w; x++) {
       const i = (y * w + x) * 4;
-      const r = pixels[i], g = pixels[i+1], b = pixels[i+2];
-      // Dunkle Pixel = QR-Modul
-      if (r < 128 && g < 128 && b < 128) {
+      const a = pixels[i + 3]; // Alpha-Kanal: nur sichtbare Pixel
+      const r = pixels[i], g = pixels[i + 1], b = pixels[i + 2];
+      if (a > 128 && r < 128 && g < 128 && b < 128) {
         rects += `<rect x="${x}" y="${y}" width="1" height="1" fill="${ci.color}"/>`;
       }
     }
   }
 
-  const totalH = size;
-
   const svg = `<?xml version="1.0" encoding="UTF-8"?>
-<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${totalH}" viewBox="0 0 ${size} ${totalH}">
+<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 ${size} ${size}">
   <rect width="${size}" height="${size}" fill="white"/>
   ${rects}
 </svg>`;
 
   const blob = new Blob([svg], { type: 'image/svg+xml;charset=utf-8' });
   const link = document.createElement('a');
-  link.download = `QR_kbw_${state.schema}_${state.mode}.svg`;
+  link.download = `QR_${state.schema}_${state.mode}.svg`;
   link.href = URL.createObjectURL(blob);
   link.click();
 }

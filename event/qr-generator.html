@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>QR-Generator – GÜNTHER</title>
-<link rel="stylesheet" href="../assets/styles/stylesheet.css">
+<link rel="stylesheet" href="../stylesheet.css">
 </head>
 <body>
 <div class="app">
@@ -101,16 +101,6 @@
     </div>
   </div>
 
-  <!-- Größe -->
-  <div>
-    <div class="section-label">Größe</div>
-    <div class="toggle-group">
-      <button class="toggle-btn" onclick="setSize(200, this)">S</button>
-      <button class="toggle-btn active" onclick="setSize(280, this)">M</button>
-      <button class="toggle-btn" onclick="setSize(360, this)">L</button>
-    </div>
-  </div>
-
   <!-- Actions -->
   <div class="actions">
     <button class="btn btn-primary" id="btnPng" onclick="downloadPNG()" disabled>↓ Als PNG speichern</button>
@@ -143,7 +133,7 @@
 const state = {
   schema: 'pe',
   mode:   'url',
-  size:   280,
+  size:   360,
 };
 
 const CI = {
@@ -168,13 +158,6 @@ function setMode(m, btn) {
   document.getElementById('groupUrl').classList.toggle('active',   m === 'url');
   document.getElementById('groupWifi').classList.toggle('active',  m === 'wifi');
   document.getElementById('groupVcard').classList.toggle('active', m === 'vcard');
-  generate();
-}
-
-function setSize(s, btn) {
-  state.size = s;
-  document.querySelectorAll('.toggle-btn[onclick^="setSize"]').forEach(b => b.classList.remove('active'));
-  btn.classList.add('active');
   generate();
 }
 
@@ -296,17 +279,23 @@ function generate() {
     const s = fpSize * cell;
     const r = cell * 1.2;
 
-    // Äußerer Ring
+    // Erst den gesamten FP-Bereich transparent machen,
+    // damit keine darunter liegenden Module durchscheinen
+    ctx.clearRect(x, y, s, s);
+
+    // Äußerer Ring: Farbigen Rahmen zeichnen, dann Inneres ausstanzen
     ctx.fillStyle = ci.color;
     roundRect(x, y, s, s, r);
     ctx.fill();
 
-    // Weißer Zwischenring — bleibt #fff, weil es Teil der QR-Struktur ist
-    ctx.fillStyle = '#ffffff';
+    // Zwischenring: transparent ausstanzen (destination-out löscht Pixel)
+    ctx.save();
+    ctx.globalCompositeOperation = 'destination-out';
     roundRect(x + cell, y + cell, s - 2*cell, s - 2*cell, r * 0.6);
     ctx.fill();
+    ctx.restore();
 
-    // Inneres Quadrat abgerundet
+    // Inneres Quadrat abgerundet (wieder normal drüber malen)
     ctx.fillStyle = ci.color;
     roundRect(x + 2*cell, y + 2*cell, s - 4*cell, s - 4*cell, r * 0.5);
     ctx.fill();
@@ -353,35 +342,76 @@ function downloadJPG() {
   link.click();
 }
 
-// SVG: Weißer Hintergrund (SVG-Konvention)
+// SVG: Direkt aus QR-Datenstruktur generieren (saubere Vektoren)
 function downloadSVG() {
+  const content = getContent();
+  if (!content) return;
+
   const ci   = CI[state.schema];
   const size = state.size;
 
-  const canvas  = document.getElementById('qrCanvas');
-  const ctx     = canvas.getContext('2d');
-  const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-  const pixels  = imgData.data;
-  const w = canvas.width;
-  const h = canvas.height;
+  // QR-Code neu berechnen (gleiche Parameter wie in generate())
+  const qr = qrcode(0, 'H');
+  qr.addData(content);
+  qr.make();
 
-  let rects = '';
+  const modules = qr.getModuleCount();
+  const cell    = size / modules;
 
-  for (let y = 0; y < h; y++) {
-    for (let x = 0; x < w; x++) {
-      const i = (y * w + x) * 4;
-      const a = pixels[i + 3]; // Alpha-Kanal: nur sichtbare Pixel
-      const r = pixels[i], g = pixels[i + 1], b = pixels[i + 2];
-      if (a > 128 && r < 128 && g < 128 && b < 128) {
-        rects += `<rect x="${x}" y="${y}" width="1" height="1" fill="${ci.color}"/>`;
+  const fpSize = 7;
+  const fps = [
+    { r: 0,                c: 0 },
+    { r: 0,                c: modules - fpSize },
+    { r: modules - fpSize, c: 0 },
+  ];
+
+  function isFP(r, c) {
+    return fps.some(fp =>
+      r >= fp.r && r < fp.r + fpSize &&
+      c >= fp.c && c < fp.c + fpSize
+    );
+  }
+
+  // Hilfsfunktion: abgerundetes Rechteck als SVG-Pfad
+  function svgRoundRect(x, y, w, h, r) {
+    return `M${x+r},${y} h${w-2*r} a${r},${r} 0 0 1 ${r},${r} v${h-2*r} a${r},${r} 0 0 1 -${r},${r} h-${w-2*r} a${r},${r} 0 0 1 -${r},-${r} v-${h-2*r} a${r},${r} 0 0 1 ${r},-${r}z`;
+  }
+
+  let elements = '';
+
+  // 1. Normale Module als Rects
+  for (let r = 0; r < modules; r++) {
+    for (let c = 0; c < modules; c++) {
+      if (qr.isDark(r, c) && !isFP(r, c)) {
+        const x = (c * cell).toFixed(2);
+        const y = (r * cell).toFixed(2);
+        const s = Math.ceil(cell);
+        elements += `<rect x="${x}" y="${y}" width="${s}" height="${s}" fill="${ci.color}"/>`;
       }
     }
   }
 
+  // 2. Finder Patterns als abgerundete Pfade
+  fps.forEach(fp => {
+    const x = fp.c * cell;
+    const y = fp.r * cell;
+    const s = fpSize * cell;
+    const rad = cell * 1.2;
+
+    // Äußerer Ring = äußeres Rect minus inneres Rect (Loch)
+    const outer = svgRoundRect(x, y, s, s, rad);
+    const hole  = svgRoundRect(x + cell, y + cell, s - 2*cell, s - 2*cell, rad * 0.6);
+    elements += `<path d="${outer} ${hole}" fill="${ci.color}" fill-rule="evenodd"/>`;
+
+    // Inneres Quadrat
+    const inner = svgRoundRect(x + 2*cell, y + 2*cell, s - 4*cell, s - 4*cell, rad * 0.5);
+    elements += `<path d="${inner}" fill="${ci.color}"/>`;
+  });
+
   const svg = `<?xml version="1.0" encoding="UTF-8"?>
 <svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 ${size} ${size}">
   <rect width="${size}" height="${size}" fill="white"/>
-  ${rects}
+  ${elements}
 </svg>`;
 
   const blob = new Blob([svg], { type: 'image/svg+xml;charset=utf-8' });

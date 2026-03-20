@@ -174,37 +174,47 @@ function applyAll() {
   const r = Math.round(w * 0.12) + 'px';
   frame.style.borderRadius = state.schema === 'kbw' ? r + ' 0 ' + r + ' 0' : '0';
 
-  // Logo-Größe — skaliert mit der Posterbreite, größer als vorher
-  const logoH = Math.round(w * 0.09) * (state.schema === 'kbw' ? 0.65 : 1);
+  // Logo-Größe
+  // PE: markant groß (Gebäude-Silhouette braucht Platz)
+  // kbw: deutlich kleiner (Wortmarke, filigran)
+  const logoH = state.schema === 'pe'
+    ? Math.round(w * 0.12)
+    : Math.round(w * 0.04);
   const logoEl = document.getElementById('posterLogo');
   logoEl.style.height = logoH + 'px';
-
-  // Logo-Wrap: Das Logo soll mittig auf der unteren Rahmenlinie sitzen,
-  // ABER komplett innerhalb der Poster-Box bleiben (html2canvas clippt
-  // am Element-Rand, egal was overflow sagt).
-  // Rahmenlinie = margin vom unteren Poster-Rand.
-  // Logo-Mitte soll auf dieser Linie liegen.
-  // → bottom des Wraps = margin - halbe Logo-Wrap-Höhe
-  const logoWrap = document.getElementById('posterLogoWrap');
-  const logoWrapBottom = Math.max(0, margin - Math.round(logoH / 2));
-  logoWrap.style.bottom = logoWrapBottom + 'px';
 
   // Weißer Hintergrund hinter dem Logo: überdeckt die Rahmenlinie
   const circle = document.getElementById('posterLogoCircle');
   if (state.schema === 'pe') {
-    // PE: kreisrunder weißer Hintergrund
-    const circleDia = logoH + Math.max(10, logoH * 0.5);
+    // PE: kreisrunder weißer Hintergrund, 20% größer als Logo
+    const circleDia = Math.round(logoH * 1.2);
     circle.style.width  = circleDia + 'px';
     circle.style.height = circleDia + 'px';
     circle.style.borderRadius = '50%';
   } else {
-    // kbw: rechteckiger weißer Hintergrund (Logo ist breiter als hoch)
-    const bgW = logoH * 4.5;
-    const bgH = logoH + Math.max(8, logoH * 0.4);
+    // kbw: rechteckiger weißer Hintergrund, nur 5% größer als Logo
+    // Logo-Wrap messen wir nach dem Setzen der Logo-Höhe
+    const logoBounds = logoEl.getBoundingClientRect();
+    const logoRealW = logoBounds.width > 0 ? logoBounds.width / (Math.min((main.clientWidth - 64) / w, (main.clientHeight - 64) / h, 1) || 1) : logoH * 2.5;
+    const bgW = Math.round(logoRealW * 1.05);
+    const bgH = Math.round(logoH * 1.05);
     circle.style.width  = bgW + 'px';
     circle.style.height = bgH + 'px';
     circle.style.borderRadius = '4px';
   }
+
+  // Logo-Wrap Positionierung: Logo-Mitte soll exakt auf der Rahmenlinie liegen.
+  // Rahmenlinie = margin px vom unteren Poster-Rand.
+  // Wir setzen die Wrap-Höhe explizit auf die Kreis/Kasten-Höhe (das größere Element),
+  // damit bottom korrekt berechnet werden kann.
+  const logoWrap = document.getElementById('posterLogoWrap');
+  const wrapH = state.schema === 'pe'
+    ? Math.round(logoH * 1.2)   // Kreis-Durchmesser
+    : Math.round(logoH * 1.05); // Kasten-Höhe
+  logoWrap.style.height = wrapH + 'px';
+  // bottom = margin - halbe Wrap-Höhe → Wrap-Mitte liegt auf der Rahmenlinie
+  const logoWrapBottom = Math.max(0, margin - Math.round(wrapH / 2));
+  logoWrap.style.bottom = logoWrapBottom + 'px';
 
   // Typografie
   document.getElementById('posterHeadline').style.fontSize = Math.round(w * 0.07) + 'px';

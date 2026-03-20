@@ -13,7 +13,7 @@
   <a href="../index.html" class="header-back-link">← Zurück zum Toolset</a>
   <div class="accent-dot"></div>
   <h1>QR-Generator</h1>
-  <span class="header-version">GÜNTHER 2026-03-20</span>
+  <span class="header-version" id="appVersion">GÜNTHER</span>
 </header>
 
 <aside>
@@ -393,6 +393,19 @@ function downloadSVG() {
 
 // ── INIT ──
 document.documentElement.style.setProperty('--ci', CI['pe'].color);
+
+// Version aus config.json laden (Single Source of Truth)
+fetch('../config.json')
+  .then(res => res.json())
+  .then(config => {
+    const version = config.qrgenerator?.version;
+    if (version) {
+      document.getElementById('appVersion').textContent = `GÜNTHER ${version}`;
+    }
+  })
+  .catch(() => {
+    // Fallback: bleibt bei "GÜNTHER" ohne Versionsnummer
+  });
 </script>
 </body>
 </html>

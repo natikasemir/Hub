@@ -302,7 +302,7 @@ main { display: flex; align-items: center; justify-content: center; padding: 28p
       <p>Klicken oder Datei hierher ziehen</p>
     </div>
     <div class="upload-status" id="uploadStatus"></div>
-    <button class="template-link" onclick="downloadTemplate()">↓ Vorlage herunterladen</button>
+    <button class="template-link" onclick="downloadTemplate()">↓ Vorlage herunterladen (.xlsx)</button>
   </div>
 
   <div class="actions">
@@ -579,91 +579,112 @@ function parseCSV(text) {
 }
 
 function downloadTemplate() {
-  const rows = [
-    'Kategorie\tName\tVariante\tBeschreibung\tPreis FoBi\tPreis Kultur\tAllergene\tTag',
-    'Alkoholfreie Getränke\tBauer Apfelsaft\t0,2l\t\t2,50 €\t\t\tnur-bistro',
-    'Alkoholfreie Getränke\tBauer Orangensaft\t0,2l\t\t2,50 €\t\t\tnur-bistro',
-    'Alkoholfreie Getränke\tSpreequell Wasser\t0,33l\tClassic | Naturell\t3,00 €\t3,00 €\t\t',
-    'Alkoholfreie Getränke\tSpreequell Wasser\t0,75l\tClassic | Naturell\t4,50 €\t\t\tnur-bistro',
-    'Alkoholfreie Getränke\tfritz-kola\t0,33l\tORIGINAL | SUPER ZERO\t2,80 €\t4,00 €\t1,11\t',
-    'Alkoholfreie Getränke\tfritz-kola SUPER ZERO\t0,33l\t\t2,80 €\t\t1,9,10,11\tnur-bistro',
-    'Alkoholfreie Getränke\tfritz-limo\t0,33l\tINGWER-LIMETTE | ORANGE | ZITRONE | APFEL-KIRSCH-HOLUNDER\t\t4,00 €\t\tnur-kultur',
-    'Alkoholfreie Getränke\tfritz-limo HONIGMELONE\t0,33l\t\t2,80 €\t\t\tnur-bistro',
-    'Alkoholfreie Getränke\tfritz-limo APFEL-KIRSCH-HOLUNDER\t0,33l\t\t2,80 €\t\t\tnur-bistro',
-    'Alkoholfreie Getränke\tfritz-limo ZITRONE\t0,33l\t\t2,80 €\t\t\tnur-bistro',
-    'Alkoholfreie Getränke\tfritz-limo ORANGE\t0,33l\t\t2,80 €\t\t\tnur-bistro',
-    'Alkoholfreie Getränke\tfritz-spritz\t0,33l\tBIO RHABARBERSCHORLE | BIO APFELSCHORLE\t\t4,00 €\t\tnur-kultur',
-    'Alkoholfreie Getränke\tfritz-spritz RHABARBER\t0,33l\t\t2,80 €\t\t\tnur-bistro',
-    'Alkoholfreie Getränke\tfritz-spritz APFELSCHORLE\t0,33l\t\t2,80 €\t\t\tnur-bistro',
-    'Alkoholfreie Getränke\tfritz-spritz TRAUBENSCHORLE\t0,33l\t\t2,80 €\t\t\tnur-bistro',
-    'Alkoholfreie Getränke\tELEPHANT BAY EISTEE Peach\t0,33l\t\t3,40 €\t\t3\tnur-bistro',
-    'Alkoholfreie Getränke\tELEPHANT BAY EISTEE Granat\t0,33l\t\t3,40 €\t\t3\tnur-bistro',
-    'Alkoholfreie Getränke\tClub Mate\t0,33l\t\t4,00 €\t4,00 €\t11\t',
-    'Alkoholfreie Getränke\tRed Bull\t0,25l\t\t3,50 €\t4,50 €\t1,2,11,13\t',
-    'Alkoholfreie Getränke\tLammsbräu Pils (alkoholfrei)\t0,33l\t\t3,20 €\t4,00 €\t16,a\t',
-    'Alkoholfreie Getränke\tSpritz alkoholfrei\t0,3l\tLaori Ruby No. 4, Vaux Bio Träublein, Wasser, Alkohol <0,3%\t\t7,50 €\t\tnur-kultur',
-    'Alkoholfreie Getränke\tGin Tonic alkoholfrei\t0,3l\tMampe 00, Thomas Henry Tonic Water, Alkohol <0,3%\t\t7,50 €\t\tnur-kultur',
-    'Heißgetränke\tKaffee Créme\t\t\t3,50 €\t\t\t',
-    'Heißgetränke\tAmericano\t\t\t3,00 €\t\t\t',
-    'Heißgetränke\tEspresso\t\t\t2,50 €\t\t\t',
-    'Heißgetränke\tEspresso doppelt\t\t\t4,00 €\t\t\t',
-    'Heißgetränke\tEspresso Macchiato\t\t\t2,80 €\t\t\t',
-    'Heißgetränke\tCappuccino\t\t\t3,50 €\t\t\t',
-    'Heißgetränke\tLatte Macchiato\t\t\t3,50 €\t\t\t',
-    'Heißgetränke\tMilchkaffee\t\t\t3,50 €\t\t\t',
-    'Heißgetränke\tTee\t\t\t3,00 €\t\t\t',
-    'Heißgetränke\tEspresso Shot\t\t\t1,00 €\t\t\t',
-    'Heißgetränke\tFlavour Shot\t\tVanille | Weiße Schokolade | Karamell\t0,50 €\t\t1\t',
-    'Wein & Sekt\tWeißwein trocken\t0,2l\tGrauer Burgunder\t\t7,00 €\t\t',
-    'Wein & Sekt\tRotwein trocken\t0,2l\tPrimitivo salento\t\t7,00 €\t\t',
-    'Wein & Sekt\tRosé trocken\t0,2l\t50° Pinot Noir\t\t7,00 €\t\t',
-    'Wein & Sekt\tWeiß- & Roséweinschorle trocken\t0,2l\t\t\t4,00 €\t\t',
-    'Wein & Sekt\tSekt Piccolo trocken\t0,2l\tZekt\t\t7,00 €\t\t',
-    'Wein & Sekt\tSekt trocken\t0,1l\tZekt\t\t3,50 €\t\t',
-    'Bier\tBerliner Pilsner | Naturradler\t0,33l\t\t\t4,00 €\t\t',
-    'Bier\tQ-Bier aus Pankow\t0,33l\tPils | Pale Ale | Red Lager\t\t4,50 €\t\t',
-    'Bier\tSchöfferhofer Grapefruit\t0,33l\t\t\t4,50 €\t\t',
-    "Bier\tHelles\t0,5l\tBrewer's Tribute\t\t5,00 €\t\t",
-    'Longdrinks\tClub Mate Vodka\t0,3l\tMampe Vodka, Club Mate\t\t7,50 €\t\t',
-    'Longdrinks\tVodka Lemon\t0,3l\tMampe Vodka, Thomas Henry Bitter Lemon\t\t7,50 €\t\t',
-    'Longdrinks\tGin Tonic\t0,3l\tMampe Gin, Thomas Henry Tonic Water\t\t7,50 €\t\t',
-    'Longdrinks\tAperol Spritz\t0,3l\tAperol, Sekt, Sodawasser\t\t7,50 €\t\t',
-    'Longdrinks\tLimoncello Spritz\t0,3l\tLimoncello, Sekt, Sodawasser\t\t7,50 €\t\t',
-    'Longdrinks\tLillet Vive | Lillet Berry\t0,3l\tLillet, Thomas Henry Tonic Water | Lillet, Thomas Henry Wild Berry\t\t7,50 €\t\t',
-    'Longdrinks\tCuba Libre\t0,3l\tHavana Club Añejo 3 Años Rum, Coca-Cola\t\t7,50 €\t\t',
-    'Longdrinks\tWhiskey Cola\t0,3l\tJack Daniels, Coca Cola\t\t7,50 €\t\t',
-    'Longdrinks\tVodka Red Bull\t0,3l\tMampe Vodka, Red Bull\t\t8,00 €\t\t',
-    'Longdrinks\tMoscow Mule\t0,3l\tMampe Vodka, Thomas Henry Ginger Beer, Limette, Angostura Bitter\t\t8,50 €\t\t',
-    'Longdrinks\tGrapefruit Royal\t0,3l\tMampe Fliegercocktail, Thomas Henry Pink Grapefruit, Sekt\t\t8,50 €\t\t',
-    'Shots\tKleiner Feigling\t\t\t\t3,00 €\t\t',
-    'Shots\tBerliner Luft\t\t\t\t3,00 €\t\t',
-    'Shots\tMampe Popcorn\t2cl\t\t\t3,00 €\t\t',
-    'Snacks\tHalbes Brötchen\t\tverschieden belegt\t1,80 €\t\t\t',
-    'Snacks\tHalbes Brötchen\t\tmit Lachs\t2,80 €\t\t\t',
-    'Snacks\tGanzes Brötchen\t\tverschieden belegt\t2,50 €\t\t\t',
-    'Snacks\tGanzes Brötchen\t\tmit Lachs\t3,50 €\t\t\t',
-    'Snacks\tStulle\t\tverschieden belegt\t3,00 €\t\t\t',
-    'Snacks\tLaugenstange\t\tverschieden belegt\t3,00 €\t\t\t',
-    'Snacks\tHandobst\t\tverschiedene Sorten\t1,00 €\t\t\t',
-    'Snacks\tBircher Müsli\t\thausgemacht\t3,50 €\t\t\t',
-    'Snacks\tMilchreis\t\tlaktosefrei\t3,50 €\t\t\t',
-    'Snacks\tNachtisch\t\tverschiedene Sorten\t1,50 €\t\t\t',
-    'Snacks\tKuchen\t\tverschiedene Sorten\t2,50 €\t\t\t',
-    'Snacks\tTorte\t\tverschiedene Sorten\t3,50 €\t\t\t',
-    'Snacks\tKekse\t\tverschiedene Sorten\t1,80 €\t\t\t',
-    'Snacks\tPringles\t40g\t\t\t2,50 €\t\tnur-kultur',
-    'Snacks\tErdnüsse\t50g\t\t\t2,50 €\t\tnur-kultur',
-    'Snacks\tChips\t40g\t\t\t2,50 €\t\tnur-kultur',
-    "Snacks\tBrez'n\t\t\t\t3,00 €\t\tnur-kultur",
-    "Snacks\tKäsebrez'n\t\t\t\t3,00 €\t\tnur-kultur",
-    'Specials\tHerrengedeck\t\tBerliner Pils 0,33l und Glas Wein oder Sekt (je 0,2l)\t\t9,00 €\t\ttanztee',
+  // Daten als Array-of-Arrays (Header + Rows)
+  const data = [
+    ['Kategorie', 'Name', 'Variante', 'Beschreibung', 'Preis FoBi', 'Preis Kultur', 'Allergene', 'Tag'],
+    ['Alkoholfreie Getränke','Bauer Apfelsaft','0,2l','','2,50 €','','','nur-bistro'],
+    ['Alkoholfreie Getränke','Bauer Orangensaft','0,2l','','2,50 €','','','nur-bistro'],
+    ['Alkoholfreie Getränke','Spreequell Wasser','0,33l','Classic | Naturell','3,00 €','3,00 €','',''],
+    ['Alkoholfreie Getränke','Spreequell Wasser','0,75l','Classic | Naturell','4,50 €','','','nur-bistro'],
+    ['Alkoholfreie Getränke','fritz-kola','0,33l','ORIGINAL | SUPER ZERO','2,80 €','4,00 €','1,11',''],
+    ['Alkoholfreie Getränke','fritz-kola SUPER ZERO','0,33l','','2,80 €','','1,9,10,11','nur-bistro'],
+    ['Alkoholfreie Getränke','fritz-limo','0,33l','INGWER-LIMETTE | ORANGE | ZITRONE | APFEL-KIRSCH-HOLUNDER','','4,00 €','','nur-kultur'],
+    ['Alkoholfreie Getränke','fritz-limo HONIGMELONE','0,33l','','2,80 €','','','nur-bistro'],
+    ['Alkoholfreie Getränke','fritz-limo APFEL-KIRSCH-HOLUNDER','0,33l','','2,80 €','','','nur-bistro'],
+    ['Alkoholfreie Getränke','fritz-limo ZITRONE','0,33l','','2,80 €','','','nur-bistro'],
+    ['Alkoholfreie Getränke','fritz-limo ORANGE','0,33l','','2,80 €','','','nur-bistro'],
+    ['Alkoholfreie Getränke','fritz-spritz','0,33l','BIO RHABARBERSCHORLE | BIO APFELSCHORLE','','4,00 €','','nur-kultur'],
+    ['Alkoholfreie Getränke','fritz-spritz RHABARBER','0,33l','','2,80 €','','','nur-bistro'],
+    ['Alkoholfreie Getränke','fritz-spritz APFELSCHORLE','0,33l','','2,80 €','','','nur-bistro'],
+    ['Alkoholfreie Getränke','fritz-spritz TRAUBENSCHORLE','0,33l','','2,80 €','','','nur-bistro'],
+    ['Alkoholfreie Getränke','ELEPHANT BAY EISTEE Peach','0,33l','','3,40 €','','3','nur-bistro'],
+    ['Alkoholfreie Getränke','ELEPHANT BAY EISTEE Granat','0,33l','','3,40 €','','3','nur-bistro'],
+    ['Alkoholfreie Getränke','Club Mate','0,33l','','4,00 €','4,00 €','11',''],
+    ['Alkoholfreie Getränke','Red Bull','0,25l','','3,50 €','4,50 €','1,2,11,13',''],
+    ['Alkoholfreie Getränke','Lammsbräu Pils (alkoholfrei)','0,33l','','3,20 €','4,00 €','16,a',''],
+    ['Alkoholfreie Getränke','Spritz alkoholfrei','0,3l','Laori Ruby No. 4, Vaux Bio Träublein, Wasser, Alkohol <0,3%','','7,50 €','','nur-kultur'],
+    ['Alkoholfreie Getränke','Gin Tonic alkoholfrei','0,3l','Mampe 00, Thomas Henry Tonic Water, Alkohol <0,3%','','7,50 €','','nur-kultur'],
+    ['Heißgetränke','Kaffee Créme','','','3,50 €','','',''],
+    ['Heißgetränke','Americano','','','3,00 €','','',''],
+    ['Heißgetränke','Espresso','','','2,50 €','','',''],
+    ['Heißgetränke','Espresso doppelt','','','4,00 €','','',''],
+    ['Heißgetränke','Espresso Macchiato','','','2,80 €','','',''],
+    ['Heißgetränke','Cappuccino','','','3,50 €','','',''],
+    ['Heißgetränke','Latte Macchiato','','','3,50 €','','',''],
+    ['Heißgetränke','Milchkaffee','','','3,50 €','','',''],
+    ['Heißgetränke','Tee','','','3,00 €','','',''],
+    ['Heißgetränke','Espresso Shot','','','1,00 €','','',''],
+    ['Heißgetränke','Flavour Shot','','Vanille | Weiße Schokolade | Karamell','0,50 €','','1',''],
+    ['Wein & Sekt','Weißwein trocken','0,2l','Grauer Burgunder','','7,00 €','',''],
+    ['Wein & Sekt','Rotwein trocken','0,2l','Primitivo salento','','7,00 €','',''],
+    ['Wein & Sekt','Rosé trocken','0,2l','50° Pinot Noir','','7,00 €','',''],
+    ['Wein & Sekt','Weiß- & Roséweinschorle trocken','0,2l','','','4,00 €','',''],
+    ['Wein & Sekt','Sekt Piccolo trocken','0,2l','Zekt','','7,00 €','',''],
+    ['Wein & Sekt','Sekt trocken','0,1l','Zekt','','3,50 €','',''],
+    ['Bier','Berliner Pilsner | Naturradler','0,33l','','','4,00 €','',''],
+    ['Bier','Q-Bier aus Pankow','0,33l','Pils | Pale Ale | Red Lager','','4,50 €','',''],
+    ['Bier','Schöfferhofer Grapefruit','0,33l','','','4,50 €','',''],
+    ['Bier','Helles','0,5l',"Brewer's Tribute",'','5,00 €','',''],
+    ['Longdrinks','Club Mate Vodka','0,3l','Mampe Vodka, Club Mate','','7,50 €','',''],
+    ['Longdrinks','Vodka Lemon','0,3l','Mampe Vodka, Thomas Henry Bitter Lemon','','7,50 €','',''],
+    ['Longdrinks','Gin Tonic','0,3l','Mampe Gin, Thomas Henry Tonic Water','','7,50 €','',''],
+    ['Longdrinks','Aperol Spritz','0,3l','Aperol, Sekt, Sodawasser','','7,50 €','',''],
+    ['Longdrinks','Limoncello Spritz','0,3l','Limoncello, Sekt, Sodawasser','','7,50 €','',''],
+    ['Longdrinks','Lillet Vive | Lillet Berry','0,3l','Lillet, Thomas Henry Tonic Water | Lillet, Thomas Henry Wild Berry','','7,50 €','',''],
+    ['Longdrinks','Cuba Libre','0,3l','Havana Club Añejo 3 Años Rum, Coca-Cola','','7,50 €','',''],
+    ['Longdrinks','Whiskey Cola','0,3l','Jack Daniels, Coca Cola','','7,50 €','',''],
+    ['Longdrinks','Vodka Red Bull','0,3l','Mampe Vodka, Red Bull','','8,00 €','',''],
+    ['Longdrinks','Moscow Mule','0,3l','Mampe Vodka, Thomas Henry Ginger Beer, Limette, Angostura Bitter','','8,50 €','',''],
+    ['Longdrinks','Grapefruit Royal','0,3l','Mampe Fliegercocktail, Thomas Henry Pink Grapefruit, Sekt','','8,50 €','',''],
+    ['Shots','Kleiner Feigling','','','','3,00 €','',''],
+    ['Shots','Berliner Luft','','','','3,00 €','',''],
+    ['Shots','Mampe Popcorn','2cl','','','3,00 €','',''],
+    ['Snacks','Halbes Brötchen','','verschieden belegt','1,80 €','','',''],
+    ['Snacks','Halbes Brötchen','','mit Lachs','2,80 €','','',''],
+    ['Snacks','Ganzes Brötchen','','verschieden belegt','2,50 €','','',''],
+    ['Snacks','Ganzes Brötchen','','mit Lachs','3,50 €','','',''],
+    ['Snacks','Stulle','','verschieden belegt','3,00 €','','',''],
+    ['Snacks','Laugenstange','','verschieden belegt','3,00 €','','',''],
+    ['Snacks','Handobst','','verschiedene Sorten','1,00 €','','',''],
+    ['Snacks','Bircher Müsli','','hausgemacht','3,50 €','','',''],
+    ['Snacks','Milchreis','','laktosefrei','3,50 €','','',''],
+    ['Snacks','Nachtisch','','verschiedene Sorten','1,50 €','','',''],
+    ['Snacks','Kuchen','','verschiedene Sorten','2,50 €','','',''],
+    ['Snacks','Torte','','verschiedene Sorten','3,50 €','','',''],
+    ['Snacks','Kekse','','verschiedene Sorten','1,80 €','','',''],
+    ['Snacks','Pringles','40g','','','2,50 €','','nur-kultur'],
+    ['Snacks','Erdnüsse','50g','','','2,50 €','','nur-kultur'],
+    ['Snacks','Chips','40g','','','2,50 €','','nur-kultur'],
+    ['Snacks',"Brez'n",'','','','3,00 €','','nur-kultur'],
+    ['Snacks',"Käsebrez'n",'','','','3,00 €','','nur-kultur'],
+    ['Specials','Herrengedeck','','Berliner Pils 0,33l und Glas Wein oder Sekt (je 0,2l)','','9,00 €','','tanztee'],
   ];
-  const csv = rows.join('\n');
-  const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
-  a.download = 'getraenkekarte_vorlage_2026-03-23.csv';
-  a.click();
+
+  // Worksheet erstellen
+  const ws = XLSX.utils.aoa_to_sheet(data);
+
+  // Spaltenbreiten
+  ws['!cols'] = [
+    { wch: 24 },  // Kategorie
+    { wch: 34 },  // Name
+    { wch: 8 },   // Variante
+    { wch: 50 },  // Beschreibung
+    { wch: 12 },  // Preis FoBi
+    { wch: 12 },  // Preis Kultur
+    { wch: 14 },  // Allergene
+    { wch: 14 },  // Tag
+  ];
+
+  // Zeile 1 fixieren (Freeze Pane)
+  ws['!freeze'] = { xSplit: 0, ySplit: 1 };
+
+  // AutoFilter auf den gesamten Datenbereich
+  ws['!autofilter'] = { ref: `A1:H${data.length}` };
+
+  // Workbook erstellen und speichern
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'Getränkekarte');
+  XLSX.writeFile(wb, 'getraenkekarte_vorlage_2026-03-23.xlsx');
 }
 
 // ── RENDER ──

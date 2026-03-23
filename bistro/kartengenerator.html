@@ -977,14 +977,14 @@ function buildCard_SCREEN() {
   const logoSrc = LOGOS[state.schema];
   const title = state.title || 'Getränke';
 
-  // Schriftgrößen SCREEN: deutlich größer für 4K-Auflösung
+  // Schriftgrößen SCREEN: groß für 4K-Auflösung (3840×2160)
   const pt = 1.333;
   const sizes = {
-    titleSz:    Math.round(36 * pt),
-    catTitleSz: Math.round(22 * pt),
-    itemSz:     Math.round(19 * pt),
-    descSz:     Math.round(14 * pt),
-    headerLogoH: Math.round(W * 0.032),
+    titleSz:    Math.round(52 * pt),   // ~69px
+    catTitleSz: Math.round(30 * pt),   // ~40px
+    itemSz:     Math.round(24 * pt),   // ~32px
+    descSz:     Math.round(18 * pt),   // ~24px
+    headerLogoH: Math.round(W * 0.038),
   };
 
   const columnsHTML = buildColumnsHTML(cats, 3, sizes, state.priceLevel !== 'none');

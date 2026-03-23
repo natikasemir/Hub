@@ -365,17 +365,14 @@
   border-bottom: none !important;
 }
 
-/* Erste Kategorie: kein margin-top → Spalten starten auf gleicher Höhe */
-.std-category:first-child .std-cat-title {
-  margin-top: 0;
-}
-
 .std-cat-title::after {
   display: none !important;
 }
 
-.std-category:first-child .std-cat-title {
-  margin-top: 0;
+/* Masonry-Container: gleicher margin-top wie Kategorie-Titel,
+   damit Spalte 2+ auf gleicher Höhe wie Spalte 1 starten */
+.std-masonry {
+  margin-top: 0.9em;
 }
 
 /* Item: kein Dots-Platzhalter */

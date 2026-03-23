@@ -182,8 +182,8 @@
 .getraenkekarte.format-screen .gk-footer::before { background: rgba(255,255,255,0.4) !important; }
 
 .getraenkekarte.format-screen .gk-title,
-.getraenkekarte.format-screen .gk-subtitle,
-.getraenkekarte.format-screen .gk-cat-title { color: #fff !important; }
+.getraenkekarte.format-screen .gk-subtitle { color: #fff !important; }
+.getraenkekarte.format-screen .gk-cat-title { color: #eb5e50 !important; }
 .getraenkekarte.format-screen .gk-item-name    { color: #fff !important; }
 .getraenkekarte.format-screen .gk-item-variant { color: rgba(255,255,255,0.65) !important; }
 .getraenkekarte.format-screen .gk-item-desc    { color: rgba(255,255,255,0.55) !important; }

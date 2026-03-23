@@ -975,31 +975,31 @@ function buildCard_SCREEN() {
   const cats = getFilteredData();
   const W    = fmt.w;
   const logoSrc = LOGOS[state.schema];
-  const title = state.title || 'Getränke';
 
-  // Schriftgrößen SCREEN: groß für 4K-Auflösung (3840×2160)
+  // Schriftgrößen SCREEN (4K: 3840×2160)
+  // Fibonacci-Verhältnis: catTitle = itemSz × 1.6
   const pt = 1.333;
+  const itemSz   = Math.round(28 * pt);   // ~37px
+  const catSz    = Math.round(itemSz * 1.6); // ~60px (Fibonacci)
+  const descSz   = Math.round(20 * pt);   // ~27px
+  const allergenSz = 32;                  // px
+
   const sizes = {
-    titleSz:    Math.round(52 * pt),   // ~69px
-    catTitleSz: Math.round(30 * pt),   // ~40px
-    itemSz:     Math.round(24 * pt),   // ~32px
-    descSz:     Math.round(18 * pt),   // ~24px
-    headerLogoH: Math.round(W * 0.038),
+    titleSz:    0, // nicht verwendet — kein Header bei SCREEN
+    catTitleSz: catSz,
+    itemSz:     itemSz,
+    descSz:     descSz,
+    headerLogoH: 0,
   };
 
   const columnsHTML = buildColumnsHTML(cats, 3, sizes, state.priceLevel !== 'none');
   const allergen = getAllergenText();
 
+  // Kein Header bei SCREEN — nur Body + Allergen
   return `
     <div class="gk-inner gk-inner-std">
-      <div class="gk-header no-line">
-        <div>
-          <div class="gk-title" style="font-size:${sizes.titleSz}px;">${title}</div>
-        </div>
-        <img class="gk-logo" src="${logoSrc}" alt="Logo" style="height:${sizes.headerLogoH}px;max-width:${Math.round(W*0.15)}px;">
-      </div>
-      <div class="gk-body">${columnsHTML}</div>
-      ${allergen ? `<div class="gk-allergen">${allergen}</div>` : ''}
+      <div class="gk-body" style="height:100%;">${columnsHTML}</div>
+      ${allergen ? `<div class="gk-allergen" style="font-size:${allergenSz}px;">${allergen}</div>` : ''}
     </div>`;
 }
 
@@ -1105,24 +1105,23 @@ async function doJPEG() {
   const card = document.getElementById('card');
   const fmt  = FORMATS[state.format];
 
-  // Kurz die transform-Scale entfernen damit html2canvas die Originalgröße rendert
   const wrap = document.getElementById('cardWrap');
   const prevTransform = wrap.style.transform;
-  wrap.style.transform = 'scale(1)';
+  wrap.style.transform = 'none';
   wrap.style.transformOrigin = 'top left';
 
   try {
+    const isScreen = fmt.screen;
     const canvas = await html2canvas(card, {
-      scale: 2,
+      scale: isScreen ? 1 : 2,
       useCORS: true,
       allowTaint: true,
-      backgroundColor: fmt.screen ? '#000000' : '#ffffff',
+      backgroundColor: isScreen ? '#000000' : '#ffffff',
       width:  fmt.w,
       height: fmt.h,
       logging: false
     });
 
-    // Als JPEG herunterladen
     const link = document.createElement('a');
     link.download = `Getraenkekarte_${state.priceLevel}_${state.format}.jpg`;
     link.href = canvas.toDataURL('image/jpeg', 0.95);
@@ -1130,7 +1129,6 @@ async function doJPEG() {
   } catch(err) {
     alert('JPEG-Export fehlgeschlagen: ' + err.message);
   } finally {
-    // transform wiederherstellen
     wrap.style.transform = prevTransform;
     wrap.style.transformOrigin = 'center center';
   }

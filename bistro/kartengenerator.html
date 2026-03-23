@@ -286,7 +286,6 @@ main { display: flex; align-items: center; justify-content: center; padding: 28p
 
   <div class="actions">
     <button class="btn btn-primary" id="btnPrint" onclick="doPrint()" disabled>↓ Als PDF drucken</button>
-    <button class="btn btn-secondary" id="btnPDF" onclick="doPDF()" disabled>↓ Als PDF speichern</button>
     <button class="btn btn-secondary" id="btnJPEG" onclick="doJPEG()" disabled>↓ Als JPEG speichern</button>
   </div>
 
@@ -446,7 +445,6 @@ function handleFile(e) {
       showStatus(statusMsg);
 
       document.getElementById('btnPrint').disabled = false;
-      document.getElementById('btnPDF').disabled = false;
       document.getElementById('btnJPEG').disabled = false;
       renderCard();
     } catch(err) {
@@ -624,30 +622,93 @@ function getAllergenText() { return ALLERGEN_TEXTS[state.allergen] || ''; }
 
 // ── GEMEINSAME HILFSFUNKTIONEN ──
 
-function calcSizes(W) {
-  const clamp = (val, min) => Math.max(Math.round(val), min);
-  return {
-    clamp,
-    titleSz:    clamp(W * 0.038, 18),
-    catTitleSz: clamp(W * 0.022, 11),
-    itemSz:     clamp(W * 0.016, 9.5),
-    descSz:     clamp(W * 0.013, 9.5),
-    logoH:      Math.round(W * 0.05),
-    headerLogoH: Math.round(W * 0.055),
-  };
-}
-
 function buildEmptyState() {
   return '<div class="empty-state"><div class="big-icon">🍹</div><p>Keine Einträge für diese Angebotsvariante gefunden.</p></div>';
 }
 
-// Item-HTML — einheitlicher Stil für alle Formate
+// ── ROUTER: Welches Template? ──
+function buildCard() {
+  switch(state.format) {
+    case 'A4P':    return buildCard_A4P();
+    case 'A4L':    return buildCard_A4L();
+    case 'A3P':    return buildCard_A3P();
+    case 'A3L':    return buildCard_A3L();
+    case 'DINLANG':return buildCard_DL();
+    case 'SCREEN': return buildCard_SCREEN();
+    default:       return buildCard_A4P();
+  }
+}
+
+// ── FORMAT-SPEZIFISCHE GRÖSSEN ──
+// Jedes Format bekommt eigene Schriftgrößen, angepasst an seine Dimensionen.
+// A3 ist proportional größer als A4, DINLANG ist kompakt.
+
+function calcSizes_A4P(W) {
+  const clamp = (val, min) => Math.max(Math.round(val), min);
+  return {
+    titleSz:     clamp(W * 0.052, 24),
+    catTitleSz:  clamp(W * 0.022, 11),
+    itemSz:      clamp(W * 0.016, 9.5),
+    descSz:      clamp(W * 0.013, 9.5),
+    headerLogoH: Math.round(W * 0.055),
+  };
+}
+
+function calcSizes_A4L(W) {
+  const clamp = (val, min) => Math.max(Math.round(val), min);
+  return {
+    titleSz:     clamp(W * 0.032, 20),    // etwas kleiner relativ — Quer ist breiter
+    catTitleSz:  clamp(W * 0.017, 11),
+    itemSz:      clamp(W * 0.013, 9.5),
+    descSz:      clamp(W * 0.011, 8.5),
+    headerLogoH: Math.round(W * 0.04),
+  };
+}
+
+function calcSizes_A3P(W) {
+  // A3 Hoch: W=842px — proportional größer als A4P (W=595)
+  const clamp = (val, min) => Math.max(Math.round(val), min);
+  return {
+    titleSz:     clamp(W * 0.046, 30),
+    catTitleSz:  clamp(W * 0.020, 14),
+    itemSz:      clamp(W * 0.015, 11),
+    descSz:      clamp(W * 0.012, 10),
+    headerLogoH: Math.round(W * 0.05),
+  };
+}
+
+function calcSizes_A3L(W) {
+  // A3 Quer: W=1191px — breit, 3 Spalten
+  const clamp = (val, min) => Math.max(Math.round(val), min);
+  return {
+    titleSz:     clamp(W * 0.028, 26),
+    catTitleSz:  clamp(W * 0.015, 13),
+    itemSz:      clamp(W * 0.012, 11),
+    descSz:      clamp(W * 0.010, 9.5),
+    headerLogoH: Math.round(W * 0.035),
+  };
+}
+
+function calcSizes_DL(W) {
+  // DIN Lang: W=297px — sehr schmal, kompakt
+  const clamp = (val, min) => Math.max(Math.round(val), min);
+  return {
+    titleSz:     clamp(W * 0.058, 14),    // kompakt
+    catTitleSz:  clamp(W * 0.032, 8),
+    itemSz:      clamp(W * 0.026, 7),
+    descSz:      clamp(W * 0.022, 6.5),
+    headerLogoH: Math.round(W * 0.07),
+  };
+}
+
+// ── GEMEINSAMER ITEM-HTML-BUILDER ──
+// Einheitlicher Stil für alle Druck-Formate (nicht SCREEN).
+// Basiert auf dem A4P-Design: kein Dots-Platzhalter, Trennlinien, Allergene als Superscripts.
 function buildItemHTML(row, sizes, showPrices) {
   const name    = row['Name']         || '';
   const variant = row['Variante']     || '';
   const desc    = row['Beschreibung'] || '';
   const price   = row['Preis']        || '';
-  // Kein Dots-Platzhalter — kein fill zwischen Name und Preis
   const priceEl    = showPrices ? `<span class="gk-item-price">${price}</span>` : '';
   const descEl     = desc ? `<div class="gk-item-desc std-desc" style="font-size:${sizes.descSz}px">${desc}</div>` : '';
   const allergen   = row['Allergene'] || '';
@@ -665,13 +726,12 @@ function buildItemHTML(row, sizes, showPrices) {
     <div class="gk-item-separator"></div>`;
 }
 
-// Standard-Spalten-HTML — Masonry für alle Formate
-function buildColumnsHTML(cats, fmt, sizes, showPrices) {
+// ── GEMEINSAMER MASONRY-SPALTEN-BUILDER ──
+function buildColumnsHTML(cats, colCount, sizes, showPrices) {
   const catKeys = Object.keys(cats);
   if (catKeys.length === 0) return buildEmptyState();
-  const colCount = Math.min(fmt.cols, catKeys.length);
-  // Masonry via CSS columns — gleicher Ansatz wie A4P
-  let html = `<div class="gk-columns std-masonry" style="--col-count:${colCount};">`;
+  const cols = Math.min(colCount, catKeys.length);
+  let html = `<div class="gk-columns std-masonry" style="--col-count:${cols};">`;
   catKeys.forEach(catName => {
     let itemsHTML = '';
     cats[catName].forEach(row => { itemsHTML += buildItemHTML(row, sizes, showPrices); });
@@ -684,83 +744,91 @@ function buildColumnsHTML(cats, fmt, sizes, showPrices) {
   return html + '</div>';
 }
 
-// ── ROUTER: Welches Template? ──
-function buildCard() {
-  switch(state.format) {
-    case 'A4P':    return buildCard_A4P();
-    case 'SCREEN': return buildCard_SCREEN();
-    default:       return buildCard_default();
-  }
-}
-
-// ── TEMPLATE: A4 HOCH (kbw.-Design) ──
-function buildCard_A4P() {
-  const fmt  = FORMATS[state.format];
-  const cats = getFilteredData();
-  const W    = fmt.w;
-  const s    = calcSizes(W);
+// ── GEMEINSAMER KARTEN-WRAPPER ──
+// Erzeugt die Standard-Kartenstruktur (Header mit Titel + Logo, Body, Allergen-Footer).
+// DINLANG bekommt keinen Subtitle (zu schmal).
+function buildCardShell(fmt, sizes, columnsHTML, { showSubtitle = true } = {}) {
   const logoSrc = LOGOS[state.schema];
   const label   = VARIANT_LABELS[state.variant];
   const subtitle = label.includes('·') ? label.split('·')[1].trim() : '';
+  const W = fmt.w;
 
-  // A4P: 2 Spalten, Item-spezifisches HTML
-  const catKeys = Object.keys(cats);
-  let columnsHTML = '';
-  if (catKeys.length === 0) {
-    columnsHTML = buildEmptyState();
-  } else {
-    // Masonry via CSS columns: Kategorien fließen automatisch
-    columnsHTML = `<div class="gk-columns a4p-masonry">`;
-    catKeys.forEach(catName => {
-      let itemsHTML = '';
-      cats[catName].forEach(row => {
-        const name    = row['Name']         || '';
-        const variant = row['Variante']     || '';
-        const desc    = row['Beschreibung'] || '';
-        const price   = row['Preis']        || '';
-        const priceEl    = state.showPrices ? `<span class="gk-item-price">${price}</span>` : '';
-        const descEl     = desc ? `<div class="gk-item-desc a4p-desc" style="font-size:${s.descSz}px">${desc}</div>` : '';
-        const allergen   = row['Allergene'] || '';
-        const allergenEl = allergen.trim()
-          ? allergen.trim().split(',').map(a => `<sup class="gk-allergen-sup">${a.trim()}</sup>`).join('')
-          : '';
-        itemsHTML += `
-          <div class="gk-item a4p-item" style="font-size:${s.itemSz}px;">
-            <span class="gk-item-name">${name}${allergenEl}</span>
-            ${variant ? `<span class="gk-item-variant">${variant}</span>` : ''}
-            <span style="flex:1"></span>
-            ${priceEl}
-          </div>
-          ${descEl}
-          <div class="gk-item-separator"></div>`;
-      });
-      itemsHTML += `<div class="a4p-cat-spacer"></div>`;
-      columnsHTML += `<div class="gk-category a4p-category">
-        <div class="gk-cat-title a4p-cat-title" style="font-size:${s.catTitleSz}px;">${catName}</div>
-        ${itemsHTML}
-      </div>`;
-    });
-    columnsHTML += '</div>';
-  }
-
-  // Titelgröße A4P: etwas größer
-  const titleSzA4P = Math.max(Math.round(W * 0.052), 24);
+  const subtitleEl = (showSubtitle && subtitle)
+    ? `<span class="gk-subtitle" style="font-size:${Math.round(sizes.titleSz*0.4)}px;">${subtitle}</span>`
+    : '';
 
   return `
-    <div class="gk-inner gk-inner-a4p">
-      <div class="gk-header a4p-header">
-        <div class="a4p-title-wrap">
-          <span class="gk-subtitle" style="font-size:${Math.round(titleSzA4P*0.4)}px;">${subtitle}</span>
-          <div class="gk-title" style="font-size:${titleSzA4P}px;">Getränke</div>
+    <div class="gk-inner gk-inner-std">
+      <div class="gk-header">
+        <div>
+          ${subtitleEl}
+          <div class="gk-title" style="font-size:${sizes.titleSz}px;">Getränke</div>
         </div>
-        <img class="gk-logo" src="${logoSrc}" alt="Logo" style="height:${s.headerLogoH}px;max-width:${Math.round(W*0.2)}px;">
+        <img class="gk-logo" src="${logoSrc}" alt="Logo" style="height:${sizes.headerLogoH}px;max-width:${Math.round(W*0.2)}px;">
       </div>
       <div class="gk-body">${columnsHTML}</div>
       ${getAllergenText() ? `<div class="gk-allergen">${getAllergenText()}</div>` : ""}
     </div>`;
 }
 
-// ── TEMPLATE: 16:9 SCREEN (4K) ──
+// ══════════════════════════════════════════════════
+//  TEMPLATE: A4 HOCH (2 Spalten, Masonry)
+// ══════════════════════════════════════════════════
+function buildCard_A4P() {
+  const fmt  = FORMATS['A4P'];
+  const cats = getFilteredData();
+  const s    = calcSizes_A4P(fmt.w);
+  const columnsHTML = buildColumnsHTML(cats, 2, s, state.showPrices);
+  return buildCardShell(fmt, s, columnsHTML);
+}
+
+// ══════════════════════════════════════════════════
+//  TEMPLATE: A4 QUER (3 Spalten)
+// ══════════════════════════════════════════════════
+function buildCard_A4L() {
+  const fmt  = FORMATS['A4L'];
+  const cats = getFilteredData();
+  const s    = calcSizes_A4L(fmt.w);
+  const columnsHTML = buildColumnsHTML(cats, 3, s, state.showPrices);
+  return buildCardShell(fmt, s, columnsHTML);
+}
+
+// ══════════════════════════════════════════════════
+//  TEMPLATE: A3 HOCH (2 Spalten, größere Schrift)
+// ══════════════════════════════════════════════════
+function buildCard_A3P() {
+  const fmt  = FORMATS['A3P'];
+  const cats = getFilteredData();
+  const s    = calcSizes_A3P(fmt.w);
+  const columnsHTML = buildColumnsHTML(cats, 2, s, state.showPrices);
+  return buildCardShell(fmt, s, columnsHTML);
+}
+
+// ══════════════════════════════════════════════════
+//  TEMPLATE: A3 QUER (3 Spalten, größere Schrift)
+// ══════════════════════════════════════════════════
+function buildCard_A3L() {
+  const fmt  = FORMATS['A3L'];
+  const cats = getFilteredData();
+  const s    = calcSizes_A3L(fmt.w);
+  const columnsHTML = buildColumnsHTML(cats, 3, s, state.showPrices);
+  return buildCardShell(fmt, s, columnsHTML);
+}
+
+// ══════════════════════════════════════════════════
+//  TEMPLATE: DIN LANG (1 Spalte, kompakt, kein Subtitle)
+// ══════════════════════════════════════════════════
+function buildCard_DL() {
+  const fmt  = FORMATS['DINLANG'];
+  const cats = getFilteredData();
+  const s    = calcSizes_DL(fmt.w);
+  const columnsHTML = buildColumnsHTML(cats, 1, s, state.showPrices);
+  return buildCardShell(fmt, s, columnsHTML, { showSubtitle: false });
+}
+
+// ══════════════════════════════════════════════════
+//  TEMPLATE: 16:9 SCREEN (4K, invertiert)
+// ══════════════════════════════════════════════════
 function buildCard_SCREEN() {
   const fmt  = FORMATS['SCREEN'];
   const cats = getFilteredData();
@@ -769,60 +837,30 @@ function buildCard_SCREEN() {
   const label   = VARIANT_LABELS[state.variant];
   const subtitle = label.includes('·') ? label.split('·')[1].trim() : '';
 
-  // Schriftgrößen SCREEN: etwas größer da 4K-Auflösung
+  // Schriftgrößen SCREEN: größer für 4K-Auflösung
   const pt = 1.333;
-  const maxItemSz  = Math.round(14 * pt);  // ~19px → skaliert auf 4K gut lesbar
-  const maxCatSz   = Math.round(16 * pt);  // ~21px
-  const maxTitleSz = Math.round(28 * pt);  // ~37px
-
-  const columnsHTML = buildColumnsHTML(cats, fmt, {
-    titleSz:    maxTitleSz,
-    catTitleSz: maxCatSz,
-    itemSz:     maxItemSz,
+  const sizes = {
+    titleSz:    Math.round(28 * pt),
+    catTitleSz: Math.round(16 * pt),
+    itemSz:     Math.round(14 * pt),
     descSz:     Math.round(7.5 * pt),
-    logoH:      Math.round(W * 0.025),
     headerLogoH: Math.round(W * 0.028),
-  }, state.showPrices);
+  };
 
+  const columnsHTML = buildColumnsHTML(cats, 3, sizes, state.showPrices);
   const allergen = getAllergenText();
 
   return `
     <div class="gk-inner gk-inner-std">
       <div class="gk-header">
         <div>
-          <span class="gk-subtitle" style="font-size:${Math.round(maxTitleSz*0.4)}px;">${subtitle}</span>
-          <div class="gk-title" style="font-size:${maxTitleSz}px;">Getränke</div>
+          <span class="gk-subtitle" style="font-size:${Math.round(sizes.titleSz*0.4)}px;">${subtitle}</span>
+          <div class="gk-title" style="font-size:${sizes.titleSz}px;">Getränke</div>
         </div>
-        <img class="gk-logo" src="${logoSrc}" alt="Logo" style="height:${Math.round(W*0.028)}px;max-width:${Math.round(W*0.15)}px;">
+        <img class="gk-logo" src="${logoSrc}" alt="Logo" style="height:${sizes.headerLogoH}px;max-width:${Math.round(W*0.15)}px;">
       </div>
       <div class="gk-body">${columnsHTML}</div>
       ${allergen ? `<div class="gk-allergen">${allergen}</div>` : ''}
-    </div>`;
-}
-
-// ── TEMPLATE: Standard (alle anderen Formate) ──
-function buildCard_default() {
-  const fmt  = FORMATS[state.format];
-  const cats = getFilteredData();
-  const W    = fmt.w;
-  const s    = calcSizes(W);
-  const logoSrc = LOGOS[state.schema];
-  const label   = VARIANT_LABELS[state.variant];
-  const subtitle = label.includes('·') ? label.split('·')[1].trim() : '';
-
-  const columnsHTML = buildColumnsHTML(cats, fmt, s, state.showPrices);
-
-  return `
-    <div class="gk-inner gk-inner-std">
-      <div class="gk-header">
-        <div>
-          <span class="gk-subtitle" style="font-size:${Math.round(s.titleSz*0.4)}px;">${subtitle}</span>
-          <div class="gk-title" style="font-size:${s.titleSz}px;">Getränke</div>
-        </div>
-        <img class="gk-logo" src="${logoSrc}" alt="Logo" style="height:${s.headerLogoH}px;max-width:${Math.round(W*0.2)}px;">
-      </div>
-      <div class="gk-body">${columnsHTML}</div>
-      ${getAllergenText() ? `<div class="gk-allergen">${getAllergenText()}</div>` : ""}
     </div>`;
 }
 
@@ -867,7 +905,7 @@ async function exportPDF() {
   const wrap = document.getElementById('cardWrap');
   const isScreen = fmt.screen;
 
-  const btns = ['btnPrint', 'btnPDF', 'btnJPEG'];
+  const btns = ['btnPrint', 'btnJPEG'];
   btns.forEach(id => document.getElementById(id).disabled = true);
 
   const prevTransform = wrap.style.transform;
@@ -875,11 +913,13 @@ async function exportPDF() {
   wrap.style.transformOrigin = 'top left';
 
   try {
-    // SCREEN: 4K-Auflösung via scale-Faktor auf Basis 1920×1080
-    // Alle anderen: direkte Pixelgröße × scale:2
-    const renderW  = isScreen ? 1920 : fmt.w;
-    const renderH  = isScreen ? 1080 : fmt.h;
-    const scaleFactor = isScreen ? 2 : 2; // 1920×2 = 3840, 1080×2 = 2160
+    // html2canvas width/height = tatsächliche DOM-Größe der Karte
+    // scale-Faktor sorgt für höhere Auflösung des Canvas
+    const renderW  = fmt.w;
+    const renderH  = fmt.h;
+    const scaleFactor = isScreen ? 1 : 2;
+    // SCREEN: fmt.w=3840, fmt.h=2160 → bei scale=1 bereits 4K
+    // Druck: fmt.w/h sind 96dpi-Werte → scale=2 für scharfe PDFs
 
     const canvas = await html2canvas(card, {
       scale: scaleFactor,
@@ -921,7 +961,6 @@ async function exportPDF() {
 }
 
 function doPrint() { exportPDF(); }
-function doPDF()   { exportPDF(); }
 
 async function doJPEG() {
   const card = document.getElementById('card');

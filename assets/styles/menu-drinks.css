@@ -416,6 +416,33 @@
 /* DIN LANG ------------------------------------------------------- */
 .getraenkekarte.format-dinlang { }
 
+/* DIN Lang: engerer inner padding wegen schmaler Breite */
+.getraenkekarte.format-dinlang .gk-inner-std {
+  top: 4%; left: 6%; right: 6%; bottom: 2%;
+}
+
+/* Kompakterer Header */
+.getraenkekarte.format-dinlang .gk-header {
+  padding-bottom: 1%;
+  margin-bottom: 2.5%;
+}
+
+/* Kategorie-Titel enger */
+.getraenkekarte.format-dinlang .std-cat-title {
+  margin-top: 0.5em;
+  margin-bottom: 0.3em;
+}
+
+/* Items enger zusammen */
+.getraenkekarte.format-dinlang .gk-item-separator {
+  margin: 0.15em 0;
+}
+
+/* Kleinerer Allergen-Text */
+.getraenkekarte.format-dinlang .gk-allergen {
+  font-size: 7px;
+}
+
 
 /* ── DRUCK ── */
 @media print {

@@ -1023,7 +1023,7 @@ function hideHelp(e) {
 // Init — config.json laden, dann App starten
 (async () => {
   try {
-    const cfg = await fetch('/Hub/config.json').then(r => r.json());
+    const cfg = await fetch('Hub/config.json').then(r => r.json());
     if (cfg.categoryOrder) {
       state.categoryOrder = {
         first: cfg.categoryOrder.first || [],

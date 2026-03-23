@@ -37,7 +37,7 @@
 /* ── HEADER ── */
 .gk-header {
   display: flex;
-  align-items: flex-end;
+  align-items: center;
   justify-content: space-between;
   padding-bottom: 1.5%;
   margin-bottom: 4%;
@@ -71,7 +71,11 @@
   margin-bottom: 0.2em;
 }
 
-.gk-logo { object-fit: contain; opacity: 0.9; }
+.gk-logo { object-fit: contain; opacity: 0.9; align-self: center; }
+
+/* Header-Linie ausblenden (alle Templates nutzen jetzt .no-line) */
+.gk-header.no-line::after { display: none; }
+.gk-header.no-line { padding-bottom: 0.5%; margin-bottom: 2.5%; }
 
 /* ── BODY ── */
 .gk-body { flex: 1; overflow: hidden; }
@@ -359,6 +363,11 @@
   margin-bottom: 0.45em;
   padding-bottom: 0 !important;
   border-bottom: none !important;
+}
+
+/* Erste Kategorie: kein margin-top → Spalten starten auf gleicher Höhe */
+.std-category:first-child .std-cat-title {
+  margin-top: 0;
 }
 
 .std-cat-title::after {

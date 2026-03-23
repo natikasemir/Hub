@@ -236,6 +236,12 @@ main { display: flex; align-items: center; justify-content: center; padding: 28p
     </div>
   </div>
 
+  <!-- Überschrift -->
+  <div>
+    <div class="section-label">Überschrift</div>
+    <input type="text" id="titleInput" value="Getränke" placeholder="z.B. Getränke, Barkarte, Speisen…" style="width:100%; border:1.5px solid var(--gray-200); border-radius:var(--radius-ui); padding:7px 10px; font-size:12px; font-family:inherit; color:#222; outline:none;" oninput="setTitle(this.value)">
+  </div>
+
   <!-- Format -->
   <div>
     <div class="section-label">Format</div>
@@ -362,6 +368,7 @@ const state = {
   showPrices: true,
   format: 'A4P',
   allergen: 'none',  // 'none' | 'general' | 'detailed'
+  title: 'Getränke',
   data: [],
   categoryOrder: { first: [], last: [] }  // wird aus config.json geladen
 };
@@ -387,6 +394,10 @@ function setPrices(v, btn) {
 function setAllergen(v, btn) {
   state.allergen = v;
   clearActive('.toggle-btn[onclick^="setAllergen"]'); btn.classList.add('active');
+  renderCard();
+}
+function setTitle(v) {
+  state.title = v.trim() || 'Getränke';
   renderCard();
 }
 function setFormat(f, btn) {
@@ -576,6 +587,14 @@ function downloadTemplate() {
 }
 
 // ── RENDER ──
+
+// Feste Standard-Sortierung: Diese Kategorien haben eine feste Position.
+// config.json kann diese Defaults überschreiben.
+const DEFAULT_CATEGORY_ORDER = {
+  first: ['Alkoholfreie Getränke', 'Heißgetränke'],
+  last:  ['Specials', 'Snacks'],
+};
+
 function getFilteredData() {
   if (!state.data.length) return {};
 
@@ -592,8 +611,11 @@ function getFilteredData() {
     cats[cat].push(row);
   });
 
-  // Sortierung: first → mitte (nach Größe desc) → last
-  const { first, last } = state.categoryOrder;
+  // Sortierung: config.json überschreibt Defaults, wenn vorhanden
+  const hasConfigOrder = state.categoryOrder.first.length > 0 || state.categoryOrder.last.length > 0;
+  const first = hasConfigOrder ? state.categoryOrder.first : DEFAULT_CATEGORY_ORDER.first;
+  const last  = hasConfigOrder ? state.categoryOrder.last  : DEFAULT_CATEGORY_ORDER.last;
+
   const allKeys = Object.keys(cats);
 
   const firstKeys  = first.filter(k => cats[k]);
@@ -650,7 +672,7 @@ function calcSizes_A4P(W) {
     catTitleSz:  clamp(W * 0.022, 11),
     itemSz:      clamp(W * 0.016, 9.5),
     descSz:      clamp(W * 0.013, 9.5),
-    headerLogoH: Math.round(W * 0.055),
+    headerLogoH: Math.round(W * 0.065),
   };
 }
 
@@ -661,7 +683,7 @@ function calcSizes_A4L(W) {
     catTitleSz:  clamp(W * 0.017, 11),
     itemSz:      clamp(W * 0.013, 9.5),
     descSz:      clamp(W * 0.011, 8.5),
-    headerLogoH: Math.round(W * 0.04),
+    headerLogoH: Math.round(W * 0.05),
   };
 }
 
@@ -752,6 +774,7 @@ function buildCardShell(fmt, sizes, columnsHTML, { showSubtitle = true } = {}) {
   const label   = VARIANT_LABELS[state.variant];
   const subtitle = label.includes('·') ? label.split('·')[1].trim() : '';
   const W = fmt.w;
+  const title = state.title || 'Getränke';
 
   const subtitleEl = (showSubtitle && subtitle)
     ? `<span class="gk-subtitle" style="font-size:${Math.round(sizes.titleSz*0.4)}px;">${subtitle}</span>`
@@ -759,12 +782,12 @@ function buildCardShell(fmt, sizes, columnsHTML, { showSubtitle = true } = {}) {
 
   return `
     <div class="gk-inner gk-inner-std">
-      <div class="gk-header">
+      <div class="gk-header no-line">
         <div>
           ${subtitleEl}
-          <div class="gk-title" style="font-size:${sizes.titleSz}px;">Getränke</div>
+          <div class="gk-title" style="font-size:${sizes.titleSz}px;">${title}</div>
         </div>
-        <img class="gk-logo" src="${logoSrc}" alt="Logo" style="height:${sizes.headerLogoH}px;max-width:${Math.round(W*0.2)}px;">
+        <img class="gk-logo" src="${logoSrc}" alt="Logo" style="height:${sizes.headerLogoH}px;max-width:${Math.round(W*0.25)}px;">
       </div>
       <div class="gk-body">${columnsHTML}</div>
       ${getAllergenText() ? `<div class="gk-allergen">${getAllergenText()}</div>` : ""}
@@ -836,15 +859,16 @@ function buildCard_SCREEN() {
   const logoSrc = LOGOS[state.schema];
   const label   = VARIANT_LABELS[state.variant];
   const subtitle = label.includes('·') ? label.split('·')[1].trim() : '';
+  const title = state.title || 'Getränke';
 
-  // Schriftgrößen SCREEN: größer für 4K-Auflösung
+  // Schriftgrößen SCREEN: deutlich größer für 4K-Auflösung
   const pt = 1.333;
   const sizes = {
-    titleSz:    Math.round(28 * pt),
-    catTitleSz: Math.round(16 * pt),
-    itemSz:     Math.round(14 * pt),
-    descSz:     Math.round(7.5 * pt),
-    headerLogoH: Math.round(W * 0.028),
+    titleSz:    Math.round(36 * pt),   // ~48px (vorher 28pt/~37px)
+    catTitleSz: Math.round(22 * pt),   // ~29px (vorher 16pt/~21px)
+    itemSz:     Math.round(19 * pt),   // ~25px (vorher 14pt/~19px)
+    descSz:     Math.round(14 * pt),   // ~19px (vorher 7.5pt/~10px)
+    headerLogoH: Math.round(W * 0.032),
   };
 
   const columnsHTML = buildColumnsHTML(cats, 3, sizes, state.showPrices);
@@ -852,10 +876,10 @@ function buildCard_SCREEN() {
 
   return `
     <div class="gk-inner gk-inner-std">
-      <div class="gk-header">
+      <div class="gk-header no-line">
         <div>
           <span class="gk-subtitle" style="font-size:${Math.round(sizes.titleSz*0.4)}px;">${subtitle}</span>
-          <div class="gk-title" style="font-size:${sizes.titleSz}px;">Getränke</div>
+          <div class="gk-title" style="font-size:${sizes.titleSz}px;">${title}</div>
         </div>
         <img class="gk-logo" src="${logoSrc}" alt="Logo" style="height:${sizes.headerLogoH}px;max-width:${Math.round(W*0.15)}px;">
       </div>
@@ -1023,7 +1047,7 @@ function hideHelp(e) {
 // Init — config.json laden, dann App starten
 (async () => {
   try {
-    const cfg = await fetch('Hub/config.json').then(r => r.json());
+    const cfg = await fetch('../config.json').then(r => r.json());
     if (cfg.categoryOrder) {
       state.categoryOrder = {
         first: cfg.categoryOrder.first || [],

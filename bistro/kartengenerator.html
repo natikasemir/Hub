@@ -67,6 +67,19 @@ aside { background: white; border-right: 1px solid var(--gray-200); padding: 18p
 /* Template-Link */
 .template-link { font-size: 11px; color: var(--accent); cursor: pointer; text-decoration: underline; background: none; border: none; font-family: inherit; padding: 0; }
 
+/* Kategorie- & Tag-Schalter */
+.cat-toggle, .tag-toggle {
+  display: flex; align-items: center; gap: 7px;
+  font-size: 11.5px; font-weight: 600; color: #333;
+  cursor: pointer; user-select: none;
+  padding: 5px 8px; border-radius: var(--radius-ui);
+  background: var(--gray-50); transition: all 0.15s;
+}
+.cat-toggle:hover, .tag-toggle:hover { background: var(--gray-100); }
+.cat-toggle input, .tag-toggle input { accent-color: var(--accent); width: 14px; height: 14px; cursor: pointer; }
+.cat-toggle .cat-count { font-size: 10px; color: var(--gray-400); font-weight: 400; margin-left: auto; }
+.tag-toggle .tag-label { font-style: italic; color: var(--gray-500); font-weight: 400; }
+
 /* Action-Buttons */
 .actions { display: flex; flex-direction: column; gap: 6px; margin-top: auto; padding-top: 4px; }
 .btn { display: flex; align-items: center; justify-content: center; gap: 7px; border: none; border-radius: var(--radius-ui); padding: 10px 14px; font-family: inherit; font-size: 12px; font-weight: 600; cursor: pointer; transition: all 0.15s; }
@@ -195,7 +208,7 @@ main { display: flex; align-items: center; justify-content: center; padding: 28p
   <a href="../index.html" style="background:white; color:var(--pe-blue); font-size:11px; font-weight:700; text-decoration:none; letter-spacing:0.05em; display:flex; align-items:center; gap:5px; flex-shrink:0; padding:5px 10px; border-radius:4px;">← Übersicht</a>
   <div class="accent-dot"></div>
   <h1>Getränkekarten-Generator</h1>
-  <span style="margin-left:auto; color:rgba(255,255,255,0.45); font-size:10px; font-weight:500; letter-spacing:0.08em;"><strong>Letztes Kartenupdate </strong>2026-03-15</span>
+  <span style="margin-left:auto; color:rgba(255,255,255,0.45); font-size:10px; font-weight:500; letter-spacing:0.08em;"><strong>Letztes Kartenupdate </strong>2026-03-23</span>
   <button onclick="showHelp()" style="background:rgba(255,255,255,0.15); border:none; color:white; width:22px; height:22px; border-radius:50%; font-size:12px; font-weight:700; cursor:pointer; flex-shrink:0; margin-left:8px;" title="Kurzanleitung">?</button>
 </header>
 
@@ -214,25 +227,13 @@ main { display: flex; align-items: center; justify-content: center; padding: 28p
     </div>
   </div>
 
-  <!-- Angebotsvariante -->
+  <!-- Preisebene -->
   <div>
-    <div class="section-label">Angebotsvariante</div>
-    <div class="toggle-group" style="flex-wrap:wrap; gap:3px;">
-      <button class="toggle-btn active" style="flex:none;padding:6px 8px;" onclick="setVariant('bistro-tag',this)">Bistro tägl.</button>
-      <button class="toggle-btn" style="flex:none;padding:6px 8px;" onclick="setVariant('tanztee',this)">Tanztee</button>
-      <button class="toggle-btn" style="flex:none;padding:6px 8px;" onclick="setVariant('kultur',this)">Kultur</button>
-      <button class="toggle-btn" style="flex:none;padding:6px 8px;" onclick="setVariant('party',this)">Party</button>
-      <button class="toggle-btn" style="flex:none;padding:6px 8px;" onclick="setVariant('snacks',this)">Snacks</button>
-      <button class="toggle-btn" style="flex:none;padding:6px 8px;" onclick="setVariant('vermietung',this)">Vermietung</button>
-    </div>
-  </div>
-
-  <!-- Preise -->
-  <div>
-    <div class="section-label">Preise</div>
+    <div class="section-label">Preisebene</div>
     <div class="toggle-group">
-      <button class="toggle-btn active" onclick="setPrices(true,this)">Mit Preisen</button>
-      <button class="toggle-btn" onclick="setPrices(false,this)">Ohne Preise</button>
+      <button class="toggle-btn" onclick="setPriceLevel('fobi',this)">FoBi</button>
+      <button class="toggle-btn active" onclick="setPriceLevel('kultur',this)">Kultur</button>
+      <button class="toggle-btn" onclick="setPriceLevel('none',this)">Ohne</button>
     </div>
   </div>
 
@@ -240,6 +241,20 @@ main { display: flex; align-items: center; justify-content: center; padding: 28p
   <div>
     <div class="section-label">Überschrift</div>
     <input type="text" id="titleInput" value="Getränke" placeholder="z.B. Getränke, Barkarte, Speisen…" style="width:100%; border:1.5px solid var(--gray-200); border-radius:var(--radius-ui); padding:7px 10px; font-size:12px; font-family:inherit; color:#222; outline:none;" oninput="setTitle(this.value)">
+  </div>
+
+  <!-- Kategorien (dynamisch befüllt nach Upload) -->
+  <div>
+    <div class="section-label">Kategorien</div>
+    <div id="categoryToggles" style="display:flex; flex-direction:column; gap:4px;">
+      <span style="font-size:11px; color:var(--gray-400); font-style:italic;">CSV hochladen…</span>
+    </div>
+  </div>
+
+  <!-- Tags (dynamisch befüllt nach Upload) -->
+  <div id="tagSection" style="display:none;">
+    <div class="section-label">Sonder-Tags</div>
+    <div id="tagToggles" style="display:flex; flex-direction:column; gap:4px;"></div>
   </div>
 
   <!-- Format -->
@@ -320,10 +335,10 @@ main { display: flex; align-items: center; justify-content: center; padding: 28p
       <li><span class="help-step-num">1</span><span><strong>Vorlage runterladen über „↓ Vorlage herunterladen"</strong><br>Die Vorlage entspricht immer der aktuell gültigen Karte (siehe Kartenversion oben rechts)</span></li>
       <li><span class="help-step-num">2</span><span>Angebot in der CSV-Datei prüfen, ggf. ändern und speichern.</span></li>
       <li><span class="help-step-num">3</span><span>Gespeicherte Vorlage <strong>wieder hochladen.</strong></span></li>
-      <li><span class="help-step-num">4</span><span><strong>Angebotsvariante</strong> (Inhalt der Karte) im Generator auswählen</span></li>
-      <li><span class="help-step-num">5</span><span><strong>Format/Größe</strong> wählen</span></li>
-      <li><span class="help-step-num">5</span><span><strong>Länge des Allergen-Hinweis</strong> wählen</span></li>
-      <li><span class="help-step-num">5</span><span><strong>PDF drucken</strong> — fertig!</span></li>
+      <li><span class="help-step-num">4</span><span><strong>Preisebene</strong> wählen: FoBi (intern) oder Kultur (VA-Betrieb)</span></li>
+      <li><span class="help-step-num">5</span><span><strong>Kategorien</strong> ein-/ausschalten und ggf. Sonder-Tags aktivieren</span></li>
+      <li><span class="help-step-num">6</span><span><strong>Format/Größe</strong> und <strong>Allergen-Hinweis</strong> wählen</span></li>
+      <li><span class="help-step-num">7</span><span><strong>PDF drucken</strong> — fertig!</span></li>
     </ol>
     <div class="help-footer">Happy Kartendrucken! 🎉</div>
     <button class="help-close" onclick="hideHelp()">Verstanden, los geht's!</button>
@@ -347,30 +362,22 @@ const FORMATS = {
   A3P:    { w: 842,  h: 1191, cols: 3, screen: false },
   A3L:    { w: 1191, h: 842,  cols: 3, screen: false },
   DINLANG:{ w: 297,  h: 630,  cols: 1, screen: false },
-  SCREEN: { w: 3840, h: 2160, cols: 3, screen: true  }  // 4K UHD 16:9
-};
-
-// ── VARIANTEN-KEYS (müssen mit der CSV-Spalte 'Angebotsvariante' übereinstimmen) ──
-const VARIANT_KEYS = ['bistro-tag', 'tanztee', 'kultur', 'party', 'snacks', 'vermietung'];
-
-const VARIANT_LABELS = {
-  'bistro-tag':  'Bistro tägl.',
-  'tanztee':     'Tanztee',
-  'kultur':      'Kultur',
-  'party':       'Party',
-  'snacks':      'Snacks',
-  'vermietung':  'Vermietung',
+  SCREEN: { w: 3840, h: 2160, cols: 3, screen: true  }
 };
 
 const state = {
   schema: 'pe',
-  variant: 'bistro-tag',
-  showPrices: true,
+  priceLevel: 'kultur',   // 'fobi' | 'kultur' | 'none'
   format: 'A4P',
-  allergen: 'none',  // 'none' | 'general' | 'detailed'
+  allergen: 'none',
   title: 'Getränke',
   data: [],
-  categoryOrder: { first: [], last: [] }  // wird aus config.json geladen
+  // Dynamisch nach Upload befüllt:
+  enabledCategories: new Set(),   // alle aktiven Kategorie-Namen
+  enabledTags: new Set(),         // aktive Sonder-Tags (z.B. 'tanztee')
+  availableCategories: [],        // alle Kategorien aus der CSV (sortiert)
+  availableTags: [],              // alle Tags aus der CSV (ohne nur-bistro/nur-kultur)
+  categoryOrder: { first: [], last: [] }
 };
 
 function clearActive(sel) { document.querySelectorAll(sel).forEach(b=>b.classList.remove('active')); }
@@ -381,14 +388,9 @@ function setSchema(s, btn) {
   clearActive('.schema-btn'); btn.classList.add('active');
   renderCard();
 }
-function setVariant(v, btn) {
-  state.variant = v;
-  clearActive('.toggle-btn[onclick^="setVariant"]'); btn.classList.add('active');
-  renderCard();
-}
-function setPrices(v, btn) {
-  state.showPrices = v;
-  clearActive('.toggle-btn[onclick^="setPrices"]'); btn.classList.add('active');
+function setPriceLevel(level, btn) {
+  state.priceLevel = level;
+  clearActive('.toggle-btn[onclick^="setPriceLevel"]'); btn.classList.add('active');
   renderCard();
 }
 function setAllergen(v, btn) {
@@ -404,18 +406,92 @@ function setFormat(f, btn) {
   state.format = f;
   clearActive('.format-btn'); btn.classList.add('active');
   applyDimensions();
-  renderCard(); // renderCard setzt jetzt alle Klassen korrekt
+  renderCard();
+}
+function toggleCategory(catName, checked) {
+  if (checked) state.enabledCategories.add(catName);
+  else state.enabledCategories.delete(catName);
+  renderCard();
+}
+function toggleTag(tag, checked) {
+  if (checked) state.enabledTags.add(tag);
+  else state.enabledTags.delete(tag);
+  renderCard();
 }
 
-// ── PFLICHTFELDER ──
-const REQUIRED_COLUMNS = ['Kategorie', 'Name', 'Angebotsvariante'];
-const EXPECTED_COLUMNS = ['Kategorie', 'Name', 'Variante', 'Beschreibung', 'Preis', 'Angebotsvariante'];
+// ── PFLICHTFELDER (neues Format) ──
+const REQUIRED_COLUMNS = ['Kategorie', 'Name'];
+const EXPECTED_COLUMNS = ['Kategorie', 'Name', 'Variante', 'Beschreibung', 'Preis FoBi', 'Preis Kultur', 'Allergene', 'Tag'];
 
 function showStatus(msg, isError = false) {
   const el = document.getElementById('uploadStatus');
   el.style.display = 'block';
   el.textContent = msg;
   el.className = isError ? 'upload-status error' : 'upload-status';
+}
+
+// ── UI-BUILDER: Kategorie-Schalter ──
+function buildCategoryToggles() {
+  const container = document.getElementById('categoryToggles');
+  const cats = [...new Set(state.data.map(r => r['Kategorie'] || 'Sonstiges'))];
+
+  // Sortieren nach DEFAULT_CATEGORY_ORDER
+  const hasConfigOrder = state.categoryOrder.first.length > 0 || state.categoryOrder.last.length > 0;
+  const first = hasConfigOrder ? state.categoryOrder.first : DEFAULT_CATEGORY_ORDER.first;
+  const last  = hasConfigOrder ? state.categoryOrder.last  : DEFAULT_CATEGORY_ORDER.last;
+  const firstSet = new Set(first);
+  const lastSet  = new Set(last);
+  const middle = cats.filter(c => !firstSet.has(c) && !lastSet.has(c));
+  const sorted = [...first.filter(c => cats.includes(c)), ...middle, ...last.filter(c => cats.includes(c))];
+
+  state.availableCategories = sorted;
+  state.enabledCategories = new Set(sorted);  // alle an
+
+  // Zähler pro Kategorie
+  const counts = {};
+  state.data.forEach(r => {
+    const c = r['Kategorie'] || 'Sonstiges';
+    counts[c] = (counts[c] || 0) + 1;
+  });
+
+  container.innerHTML = sorted.map(cat => `
+    <label class="cat-toggle">
+      <input type="checkbox" checked onchange="toggleCategory('${cat.replace(/'/g,"\\'")}', this.checked)">
+      ${cat}
+      <span class="cat-count">${counts[cat] || 0}</span>
+    </label>
+  `).join('');
+}
+
+// ── UI-BUILDER: Tag-Schalter ──
+function buildTagToggles() {
+  const container = document.getElementById('tagToggles');
+  const section   = document.getElementById('tagSection');
+
+  // Tags sammeln (ohne nur-bistro / nur-kultur — diese sind intern)
+  const tags = new Set();
+  state.data.forEach(r => {
+    const tag = (r['Tag'] || '').trim().toLowerCase();
+    if (tag && tag !== 'nur-bistro' && tag !== 'nur-kultur') tags.add(tag);
+  });
+
+  state.availableTags = [...tags].sort();
+  state.enabledTags = new Set(); // Sonder-Tags default aus
+
+  if (tags.size === 0) {
+    section.style.display = 'none';
+    return;
+  }
+
+  section.style.display = '';
+  const TAG_LABELS = { 'tanztee': 'Tanztee-Specials' };
+
+  container.innerHTML = state.availableTags.map(tag => `
+    <label class="tag-toggle">
+      <input type="checkbox" onchange="toggleTag('${tag}', this.checked)">
+      ${TAG_LABELS[tag] || tag}
+    </label>
+  `).join('');
 }
 
 // ── FILE HANDLING ──
@@ -433,7 +509,6 @@ function handleFile(e) {
         const wb = XLSX.read(ev.target.result, { type: 'binary' });
         const ws = wb.Sheets[wb.SheetNames[0]];
         rows = XLSX.utils.sheet_to_json(ws, { defval: '' });
-        // Leere Zeilen ohne Name entfernen
         rows = rows.filter(r => r['Name'] && r['Name'].toString().trim() !== '');
       }
 
@@ -446,14 +521,12 @@ function handleFile(e) {
         }
       }
 
-      // Warnungen für Zeilen ohne Angebotsvariante
-      const noVariant = rows.filter(r => !r['Angebotsvariante'] || r['Angebotsvariante'].trim() === '').length;
-
       state.data = rows;
+      showStatus(`✓ ${rows.length} Einträge geladen`);
 
-      let statusMsg = `✓ ${rows.length} Getränke geladen`;
-      if (noVariant > 0) statusMsg += ` · ⚠ ${noVariant} ohne Angebotsvariante`;
-      showStatus(statusMsg);
+      // Sidebar-Toggles aufbauen
+      buildCategoryToggles();
+      buildTagToggles();
 
       document.getElementById('btnPrint').disabled = false;
       document.getElementById('btnJPEG').disabled = false;
@@ -470,7 +543,6 @@ function parseCSV(text) {
   const lines = text.trim().split(/\r?\n/);
   if (lines.length < 2) throw new Error('Die Datei enthält keine Daten.');
 
-  // Trennzeichen erkennen: Tab, Semikolon oder Komma
   const firstLine = lines[0];
   let delim;
   if (firstLine.includes('\t'))      delim = '\t';
@@ -483,7 +555,6 @@ function parseCSV(text) {
 
   const headers = firstLine.split(delim).map(h => h.trim().replace(/^"|"$/g, '').replace(/^\uFEFF/, ''));
 
-  // Pflichtfelder direkt beim Parsen prüfen
   const missing = REQUIRED_COLUMNS.filter(col => !headers.includes(col));
   if (missing.length > 0) {
     throw new Error(
@@ -504,92 +575,99 @@ function parseCSV(text) {
     .filter(row => row['Name'] && row['Name'].trim() !== '');
 
   if (rows.length === 0) throw new Error('Keine gültigen Datenzeilen gefunden.');
-
   return rows;
 }
 
-// Expected CSV columns: Kategorie; Name; Variante; Beschreibung; Preis; Angebotsvariante
-// Angebotsvariante = kommagetrennte Liste: bistro-tag,tanztee,kultur
-
 function downloadTemplate() {
-  // Vorlage mit echten Getränkedaten — Karte 2026-03-15
-  // Format: Tab-getrennt, Spalten: Kategorie	Name	Variante	Beschreibung	Preis	Allergene	Angebotsvariante
   const rows = [
-        'Kategorie\tName\tVariante\tBeschreibung\tPreis\tAllergene\tAngebotsvariante',
-    'Alkoholfreie Getränke\tSpreequell Wasser\t0,33l\tClassic | Naturell\t3,00 €\t\ttanztee,kultur,party',
-    'Alkoholfreie Getränke\tfritz-kola\t0,33l\tORIGINAL | SUPER ZERO\t4,00 €\t\ttanztee,kultur,party',
-    'Alkoholfreie Getränke\tfritz-limo\t0,33l\tINGWER-LIMETTE | ORANGE | ZITRONE | APFEL-KIRSCH-HOLUNDER\t4,00 €\t\ttanztee,kultur,party',
-    'Alkoholfreie Getränke\tfritz-spritz\t0,33l\tBIO RHABARBERSCHORLE | BIO APFELSCHORLE\t4,00 €\t\ttanztee,kultur,party',
-    'Alkoholfreie Getränke\tClub Mate\t0,33l\t\t4,00 €\t\ttanztee,kultur,party',
-    'Alkoholfreie Getränke\tRed Bull\t0,25l\t\t4,50 €\t\ttanztee,kultur,party',
-    'Alkoholfreie Getränke\tFlaschenbier alkoholfrei\t0,33l\tLammsbräu Pils\t4,00 €\t\tkultur,party',
-    'Alkoholfreie Getränke\tSpritz alkoholfrei\t0,3l\tLaori Ruby No. 4, Vaux Bio Träublein, Wasser, Alkohol <0,3%\t7,50 €\t\tkultur,party',
-    'Alkoholfreie Getränke\tGin Tonic alkoholfrei\t0,3l\tMampe 00, Thomas Henry Tonic Water, Alkohol <0,3%\t7,50 €\t\tkultur,party',
-    'Wein & Sekt\tWeißwein trocken\t0,2l\tGrauer Burgunder\t7,00 €\t\ttanztee,kultur,party',
-    'Wein & Sekt\tRotwein trocken\t0,2l\tPrimitivo salento\t7,00 €\t\tkultur,party',
-    'Wein & Sekt\tRosé trocken\t0,2l\t50° Pinot Noir\t7,00 €\t\tkultur,party',
-    'Wein & Sekt\tWeiß- & Roséweinschorle trocken\t0,2l\t\t4,00 €\t\tkultur,party',
-    'Wein & Sekt\tSekt Piccolo trocken\t0,2l\tZekt\t7,00 €\t\tkultur,party',
-    'Wein & Sekt\tSekt trocken\t0,1l\tZekt\t3,50 €\t\tkultur,party',
-    'Bier\tBerliner Pilsner | Naturradler\t0,33l\t\t4,00 €\t\tkultur,party',
-    'Bier\tQ-Bier aus Pankow\t0,33l\tPils | Pale Ale | Red Lager\t4,50 €\t\tkultur,party',
-    'Bier\tSchöfferhofer Grapefruit\t0,33l\t\t4,50 €\t\tkultur,party',
-    "Bier\tHelles\t0,5l\tBrewer's Tribute\t5,00 €\t\tkultur,party",
-    'Longdrinks\tClub Mate Vodka\t0,3l\tMampe Vodka, Club Mate\t7,50 €\t\tkultur,party',
-    'Longdrinks\tVodka Lemon\t0,3l\tMampe Vodka, Thomas Henry Bitter Lemon\t7,50 €\t\tkultur,party',
-    'Longdrinks\tGin Tonic\t0,3l\tMampe Gin, Thomas Henry Tonic Water\t7,50 €\t\tkultur,party',
-    'Longdrinks\tAperol Spritz\t0,3l\tAperol, Sekt, Sodawasser\t7,50 €\t\tkultur,party',
-    'Longdrinks\tLimoncello Spritz\t0,3l\tLimoncello, Sekt, Sodawasser\t7,50 €\t\tkultur,party',
-    'Longdrinks\tLillet Vive | Lillet Berry\t0,3l\tLillet, Thomas Henry Tonic Water | Lillet, Thomas Henry Wild Berry\t7,50 €\t\tkultur,party',
-    'Longdrinks\tCuba Libre\t0,3l\tHavana Club Añejo 3 Años Rum,  Coca-Cola\t7,50 €\t\tkultur,party',
-    'Longdrinks\tWhiskey Cola\t0,3l\tJack Daniels, Coca Cola\t7,50 €\t\tkultur,party',
-    'Longdrinks\tVodka Red Bull\t0,3l\tMampe Vodka, Red Bull\t8,00 €\t\tkultur,party',
-    'Longdrinks\tMoscow Mule\t0,3l\tMampe Vodk, Thomas Henry Hinger Beer, Limette, Angostura Bitter\t8,50 €\t\tkultur,party',
-    'Shots\tKleiner Feigling\t\t\t3,00 €\t\tkultur,party',
-    'Shots\tBerliner Luft\t\t\t3,00 €\t\tkultur,party',
-    'Shots\tMampe Popcorn\t2cl\t\t3,00 €\t\tkultur,party',
-    'Heißgetränke\tKaffee Créme\t\t\t3,50 €\t\tbistro-tag',
-    'Heißgetränke\tAmericano\t\t\t3,00 €\t\tbistro-tag',
-    'Heißgetränke\tEspresso\t\t\t2,50 €\t\tbistro-tag',
-    'Heißgetränke\tEspresso doppelt\t\t\t4,00 €\t\tbistro-tag',
-    'Heißgetränke\tEspresso Macchiato\t\t\t2,80 €\t\tbistro-tag',
-    'Heißgetränke\tCappuccino\t\t\t3,50 €\t\tbistro-tag',
-    'Heißgetränke\tLatte Macchiato\t\t\t3,50 €\t\tbistro-tag',
-    'Heißgetränke\tMilchkaffee\t\t\t3,50 €\t\tbistro-tag',
-    'Heißgetränke\tTee\t\t\t3,00 €\t\tbistro-tag',
-    'Heißgetränke\tEspresso Shot\t\t\t1,00 €\t\tbistro-tag',
-    'Heißgetränke\tFlavour Shot\t\tVanille | Weiße Schokolade | Karamell\t0,50 €\t1\tbistro-tag',
-    'Alkoholfreie Getränke\tBauer Apfelsaft\t0,2l\t\t2,50 €\t\tbistro-tag',
-    'Alkoholfreie Getränke\tBauer Orangensaft\t0,2l\t\t2,50 €\t\tbistro-tag',
-    'Alkoholfreie Getränke\tSpreequell Wasser\t0,33l\tClassic | Naturell\t3,00 €\t\tbistro-tag',
-    'Alkoholfreie Getränke\tSpreequell Wasser\t0,75l\tClassic | Naturell\t4,50 €\t\tbistro-tag',
-    'Alkoholfreie Getränke\tfritz-kola\t0,33l\t\t2,80 €\t1,11\tbistro-tag',
-    'Alkoholfreie Getränke\tfritz-kola SUPER ZERO\t0,33l\t\t2,80 €\t1,9,10,11\tbistro-tag',
-    'Alkoholfreie Getränke\tfritz-limo HONIGMELONE\t0,33l\t\t2,80 €\t\tbistro-tag',
-    'Alkoholfreie Getränke\tfritz-limo APFEL-KIRSCH-HOLUNDER\t0,33l\t\t2,80 €\t\tbistro-tag',
-    'Alkoholfreie Getränke\tfritz-limo ZITRONE\t0,33l\t\t2,80 €\t\tbistro-tag',
-    'Alkoholfreie Getränke\tfritz-limo ORANGE\t0,33l\t\t2,80 €\t\tbistro-tag',
-    'Alkoholfreie Getränke\tfritz-spritz RHABARBER\t0,33l\t\t2,80 €\t\tbistro-tag',
-    'Alkoholfreie Getränke\tfritz-spritz APFELSCHORLE\t0,33l\t\t2,80 €\t\tbistro-tag',
-    'Alkoholfreie Getränke\tfritz-spritz TRAUBENSCHORLE\t0,33l\t\t2,80 €\t\tbistro-tag',
-    'Alkoholfreie Getränke\tELEPHANT BAY EISTEE Peach\t0,33l\t\t3,40 €\t3\tbistro-tag',
-    'Alkoholfreie Getränke\tELEPHANT BAY EISTEE Granat\t0,33l\t\t3,40 €\t3\tbistro-tag',
-    'Alkoholfreie Getränke\tClub Mate\t0,33l\t\t4,00 €\t11\tbistro-tag',
-    'Alkoholfreie Getränke\tRed Bull\t0,25l\t\t3,50 €\t1,2,11,13\tbistro-tag',
-    'Alkoholfreie Getränke\tLammsbräu Pils (alkoholfrei)\t0,33l\t\t3,20 €\t16,a\tkultur,party',
+    'Kategorie\tName\tVariante\tBeschreibung\tPreis FoBi\tPreis Kultur\tAllergene\tTag',
+    'Alkoholfreie Getränke\tBauer Apfelsaft\t0,2l\t\t2,50 €\t\t\tnur-bistro',
+    'Alkoholfreie Getränke\tBauer Orangensaft\t0,2l\t\t2,50 €\t\t\tnur-bistro',
+    'Alkoholfreie Getränke\tSpreequell Wasser\t0,33l\tClassic | Naturell\t3,00 €\t3,00 €\t\t',
+    'Alkoholfreie Getränke\tSpreequell Wasser\t0,75l\tClassic | Naturell\t4,50 €\t\t\tnur-bistro',
+    'Alkoholfreie Getränke\tfritz-kola\t0,33l\tORIGINAL | SUPER ZERO\t2,80 €\t4,00 €\t1,11\t',
+    'Alkoholfreie Getränke\tfritz-kola SUPER ZERO\t0,33l\t\t2,80 €\t\t1,9,10,11\tnur-bistro',
+    'Alkoholfreie Getränke\tfritz-limo\t0,33l\tINGWER-LIMETTE | ORANGE | ZITRONE | APFEL-KIRSCH-HOLUNDER\t\t4,00 €\t\tnur-kultur',
+    'Alkoholfreie Getränke\tfritz-limo HONIGMELONE\t0,33l\t\t2,80 €\t\t\tnur-bistro',
+    'Alkoholfreie Getränke\tfritz-limo APFEL-KIRSCH-HOLUNDER\t0,33l\t\t2,80 €\t\t\tnur-bistro',
+    'Alkoholfreie Getränke\tfritz-limo ZITRONE\t0,33l\t\t2,80 €\t\t\tnur-bistro',
+    'Alkoholfreie Getränke\tfritz-limo ORANGE\t0,33l\t\t2,80 €\t\t\tnur-bistro',
+    'Alkoholfreie Getränke\tfritz-spritz\t0,33l\tBIO RHABARBERSCHORLE | BIO APFELSCHORLE\t\t4,00 €\t\tnur-kultur',
+    'Alkoholfreie Getränke\tfritz-spritz RHABARBER\t0,33l\t\t2,80 €\t\t\tnur-bistro',
+    'Alkoholfreie Getränke\tfritz-spritz APFELSCHORLE\t0,33l\t\t2,80 €\t\t\tnur-bistro',
+    'Alkoholfreie Getränke\tfritz-spritz TRAUBENSCHORLE\t0,33l\t\t2,80 €\t\t\tnur-bistro',
+    'Alkoholfreie Getränke\tELEPHANT BAY EISTEE Peach\t0,33l\t\t3,40 €\t\t3\tnur-bistro',
+    'Alkoholfreie Getränke\tELEPHANT BAY EISTEE Granat\t0,33l\t\t3,40 €\t\t3\tnur-bistro',
+    'Alkoholfreie Getränke\tClub Mate\t0,33l\t\t4,00 €\t4,00 €\t11\t',
+    'Alkoholfreie Getränke\tRed Bull\t0,25l\t\t3,50 €\t4,50 €\t1,2,11,13\t',
+    'Alkoholfreie Getränke\tLammsbräu Pils (alkoholfrei)\t0,33l\t\t3,20 €\t4,00 €\t16,a\t',
+    'Alkoholfreie Getränke\tSpritz alkoholfrei\t0,3l\tLaori Ruby No. 4, Vaux Bio Träublein, Wasser, Alkohol <0,3%\t\t7,50 €\t\tnur-kultur',
+    'Alkoholfreie Getränke\tGin Tonic alkoholfrei\t0,3l\tMampe 00, Thomas Henry Tonic Water, Alkohol <0,3%\t\t7,50 €\t\tnur-kultur',
+    'Heißgetränke\tKaffee Créme\t\t\t3,50 €\t\t\t',
+    'Heißgetränke\tAmericano\t\t\t3,00 €\t\t\t',
+    'Heißgetränke\tEspresso\t\t\t2,50 €\t\t\t',
+    'Heißgetränke\tEspresso doppelt\t\t\t4,00 €\t\t\t',
+    'Heißgetränke\tEspresso Macchiato\t\t\t2,80 €\t\t\t',
+    'Heißgetränke\tCappuccino\t\t\t3,50 €\t\t\t',
+    'Heißgetränke\tLatte Macchiato\t\t\t3,50 €\t\t\t',
+    'Heißgetränke\tMilchkaffee\t\t\t3,50 €\t\t\t',
+    'Heißgetränke\tTee\t\t\t3,00 €\t\t\t',
+    'Heißgetränke\tEspresso Shot\t\t\t1,00 €\t\t\t',
+    'Heißgetränke\tFlavour Shot\t\tVanille | Weiße Schokolade | Karamell\t0,50 €\t\t1\t',
+    'Wein & Sekt\tWeißwein trocken\t0,2l\tGrauer Burgunder\t\t7,00 €\t\t',
+    'Wein & Sekt\tRotwein trocken\t0,2l\tPrimitivo salento\t\t7,00 €\t\t',
+    'Wein & Sekt\tRosé trocken\t0,2l\t50° Pinot Noir\t\t7,00 €\t\t',
+    'Wein & Sekt\tWeiß- & Roséweinschorle trocken\t0,2l\t\t\t4,00 €\t\t',
+    'Wein & Sekt\tSekt Piccolo trocken\t0,2l\tZekt\t\t7,00 €\t\t',
+    'Wein & Sekt\tSekt trocken\t0,1l\tZekt\t\t3,50 €\t\t',
+    'Bier\tBerliner Pilsner | Naturradler\t0,33l\t\t\t4,00 €\t\t',
+    'Bier\tQ-Bier aus Pankow\t0,33l\tPils | Pale Ale | Red Lager\t\t4,50 €\t\t',
+    'Bier\tSchöfferhofer Grapefruit\t0,33l\t\t\t4,50 €\t\t',
+    "Bier\tHelles\t0,5l\tBrewer's Tribute\t\t5,00 €\t\t",
+    'Longdrinks\tClub Mate Vodka\t0,3l\tMampe Vodka, Club Mate\t\t7,50 €\t\t',
+    'Longdrinks\tVodka Lemon\t0,3l\tMampe Vodka, Thomas Henry Bitter Lemon\t\t7,50 €\t\t',
+    'Longdrinks\tGin Tonic\t0,3l\tMampe Gin, Thomas Henry Tonic Water\t\t7,50 €\t\t',
+    'Longdrinks\tAperol Spritz\t0,3l\tAperol, Sekt, Sodawasser\t\t7,50 €\t\t',
+    'Longdrinks\tLimoncello Spritz\t0,3l\tLimoncello, Sekt, Sodawasser\t\t7,50 €\t\t',
+    'Longdrinks\tLillet Vive | Lillet Berry\t0,3l\tLillet, Thomas Henry Tonic Water | Lillet, Thomas Henry Wild Berry\t\t7,50 €\t\t',
+    'Longdrinks\tCuba Libre\t0,3l\tHavana Club Añejo 3 Años Rum, Coca-Cola\t\t7,50 €\t\t',
+    'Longdrinks\tWhiskey Cola\t0,3l\tJack Daniels, Coca Cola\t\t7,50 €\t\t',
+    'Longdrinks\tVodka Red Bull\t0,3l\tMampe Vodka, Red Bull\t\t8,00 €\t\t',
+    'Longdrinks\tMoscow Mule\t0,3l\tMampe Vodka, Thomas Henry Ginger Beer, Limette, Angostura Bitter\t\t8,50 €\t\t',
+    'Longdrinks\tGrapefruit Royal\t0,3l\tMampe Fliegercocktail, Thomas Henry Pink Grapefruit, Sekt\t\t8,50 €\t\t',
+    'Shots\tKleiner Feigling\t\t\t\t3,00 €\t\t',
+    'Shots\tBerliner Luft\t\t\t\t3,00 €\t\t',
+    'Shots\tMampe Popcorn\t2cl\t\t\t3,00 €\t\t',
+    'Snacks\tHalbes Brötchen\t\tverschieden belegt\t1,80 €\t\t\t',
+    'Snacks\tHalbes Brötchen\t\tmit Lachs\t2,80 €\t\t\t',
+    'Snacks\tGanzes Brötchen\t\tverschieden belegt\t2,50 €\t\t\t',
+    'Snacks\tGanzes Brötchen\t\tmit Lachs\t3,50 €\t\t\t',
+    'Snacks\tStulle\t\tverschieden belegt\t3,00 €\t\t\t',
+    'Snacks\tLaugenstange\t\tverschieden belegt\t3,00 €\t\t\t',
+    'Snacks\tHandobst\t\tverschiedene Sorten\t1,00 €\t\t\t',
+    'Snacks\tBircher Müsli\t\thausgemacht\t3,50 €\t\t\t',
+    'Snacks\tMilchreis\t\tlaktosefrei\t3,50 €\t\t\t',
+    'Snacks\tNachtisch\t\tverschiedene Sorten\t1,50 €\t\t\t',
+    'Snacks\tKuchen\t\tverschiedene Sorten\t2,50 €\t\t\t',
+    'Snacks\tTorte\t\tverschiedene Sorten\t3,50 €\t\t\t',
+    'Snacks\tKekse\t\tverschiedene Sorten\t1,80 €\t\t\t',
+    'Snacks\tPringles\t40g\t\t\t2,50 €\t\tnur-kultur',
+    'Snacks\tErdnüsse\t50g\t\t\t2,50 €\t\tnur-kultur',
+    'Snacks\tChips\t40g\t\t\t2,50 €\t\tnur-kultur',
+    "Snacks\tBrez'n\t\t\t\t3,00 €\t\tnur-kultur",
+    "Snacks\tKäsebrez'n\t\t\t\t3,00 €\t\tnur-kultur",
+    'Specials\tHerrengedeck\t\tBerliner Pils 0,33l und Glas Wein oder Sekt (je 0,2l)\t\t9,00 €\t\ttanztee',
   ];
   const csv = rows.join('\n');
   const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
-  a.download = 'getraenkekarte_vorlage_2026-03-15.csv';
+  a.download = 'getraenkekarte_vorlage_2026-03-23.csv';
   a.click();
 }
 
 // ── RENDER ──
 
-// Feste Standard-Sortierung: Diese Kategorien haben eine feste Position.
-// config.json kann diese Defaults überschreiben.
 const DEFAULT_CATEGORY_ORDER = {
   first: ['Alkoholfreie Getränke', 'Heißgetränke'],
   last:  ['Specials', 'Snacks'],
@@ -599,8 +677,28 @@ function getFilteredData() {
   if (!state.data.length) return {};
 
   const filtered = state.data.filter(row => {
-    const variantenDieserZeile = (row['Angebotsvariante'] || '').split(',').map(v => v.trim().toLowerCase());
-    return variantenDieserZeile.includes(state.variant);
+    const cat = row['Kategorie'] || 'Sonstiges';
+    const tag = (row['Tag'] || '').trim().toLowerCase();
+
+    // 1. Kategorie muss aktiviert sein
+    if (!state.enabledCategories.has(cat)) return false;
+
+    // 2. Tag-Logik:
+    //    - 'nur-bistro': nur sichtbar bei Preisebene FoBi
+    //    - 'nur-kultur': nur sichtbar bei Preisebene Kultur oder Ohne
+    //    - andere Tags (z.B. 'tanztee'): nur sichtbar, wenn der Tag in enabledTags aktiviert ist
+    //    - kein Tag: immer sichtbar
+    if (tag === 'nur-bistro') {
+      return state.priceLevel === 'fobi';
+    }
+    if (tag === 'nur-kultur') {
+      return state.priceLevel !== 'fobi';  // sichtbar bei 'kultur' und 'none'
+    }
+    if (tag) {
+      return state.enabledTags.has(tag);
+    }
+
+    return true;  // kein Tag → immer sichtbar
   });
 
   // Kategorien gruppieren
@@ -611,24 +709,21 @@ function getFilteredData() {
     cats[cat].push(row);
   });
 
-  // Sortierung: config.json überschreibt Defaults, wenn vorhanden
+  // Sortierung
   const hasConfigOrder = state.categoryOrder.first.length > 0 || state.categoryOrder.last.length > 0;
   const first = hasConfigOrder ? state.categoryOrder.first : DEFAULT_CATEGORY_ORDER.first;
   const last  = hasConfigOrder ? state.categoryOrder.last  : DEFAULT_CATEGORY_ORDER.last;
 
   const allKeys = Object.keys(cats);
-
   const firstKeys  = first.filter(k => cats[k]);
   const lastKeys   = last.filter(k => cats[k]);
   const firstSet   = new Set(firstKeys);
   const lastSet    = new Set(lastKeys);
   const middleKeys = allKeys
     .filter(k => !firstSet.has(k) && !lastSet.has(k))
-    .sort((a, b) => cats[b].length - cats[a].length); // absteigend nach Anzahl
+    .sort((a, b) => cats[b].length - cats[a].length);
 
   const sortedKeys = [...firstKeys, ...middleKeys, ...lastKeys];
-
-  // Sortiertes Objekt zurückgeben
   const sorted = {};
   sortedKeys.forEach(k => { sorted[k] = cats[k]; });
   return sorted;
@@ -645,7 +740,7 @@ function getAllergenText() { return ALLERGEN_TEXTS[state.allergen] || ''; }
 // ── GEMEINSAME HILFSFUNKTIONEN ──
 
 function buildEmptyState() {
-  return '<div class="empty-state"><div class="big-icon">🍹</div><p>Keine Einträge für diese Angebotsvariante gefunden.</p></div>';
+  return '<div class="empty-state"><div class="big-icon">🍹</div><p>Keine Einträge für diese Auswahl gefunden.</p></div>';
 }
 
 // ── ROUTER: Welches Template? ──
@@ -724,14 +819,23 @@ function calcSizes_DL(W) {
 }
 
 // ── GEMEINSAMER ITEM-HTML-BUILDER ──
-// Einheitlicher Stil für alle Druck-Formate (nicht SCREEN).
-// Basiert auf dem A4P-Design: kein Dots-Platzhalter, Trennlinien, Allergene als Superscripts.
 function buildItemHTML(row, sizes, showPrices) {
   const name    = row['Name']         || '';
   const variant = row['Variante']     || '';
   const desc    = row['Beschreibung'] || '';
-  const price   = row['Preis']        || '';
-  const priceEl    = showPrices ? `<span class="gk-item-price">${price}</span>` : '';
+
+  // Preis anhand der Preisebene ermitteln
+  let price = '';
+  if (showPrices) {
+    if (state.priceLevel === 'fobi') {
+      price = row['Preis FoBi'] || row['Preis Kultur'] || '';
+    } else if (state.priceLevel === 'kultur') {
+      price = row['Preis Kultur'] || row['Preis FoBi'] || '';
+    }
+    // 'none' → price bleibt leer
+  }
+
+  const priceEl    = price ? `<span class="gk-item-price">${price}</span>` : '';
   const descEl     = desc ? `<div class="gk-item-desc std-desc" style="font-size:${sizes.descSz}px">${desc}</div>` : '';
   const allergen   = row['Allergene'] || '';
   const allergenEl = allergen.trim()
@@ -771,20 +875,13 @@ function buildColumnsHTML(cats, colCount, sizes, showPrices) {
 // DINLANG bekommt keinen Subtitle (zu schmal).
 function buildCardShell(fmt, sizes, columnsHTML, { showSubtitle = true } = {}) {
   const logoSrc = LOGOS[state.schema];
-  const label   = VARIANT_LABELS[state.variant];
-  const subtitle = label.includes('·') ? label.split('·')[1].trim() : '';
   const W = fmt.w;
   const title = state.title || 'Getränke';
-
-  const subtitleEl = (showSubtitle && subtitle)
-    ? `<span class="gk-subtitle" style="font-size:${Math.round(sizes.titleSz*0.4)}px;">${subtitle}</span>`
-    : '';
 
   return `
     <div class="gk-inner gk-inner-std">
       <div class="gk-header no-line">
         <div>
-          ${subtitleEl}
           <div class="gk-title" style="font-size:${sizes.titleSz}px;">${title}</div>
         </div>
         <img class="gk-logo" src="${logoSrc}" alt="Logo" style="height:${sizes.headerLogoH}px;max-width:${Math.round(W*0.25)}px;">
@@ -801,7 +898,7 @@ function buildCard_A4P() {
   const fmt  = FORMATS['A4P'];
   const cats = getFilteredData();
   const s    = calcSizes_A4P(fmt.w);
-  const columnsHTML = buildColumnsHTML(cats, 2, s, state.showPrices);
+  const columnsHTML = buildColumnsHTML(cats, 2, s, state.priceLevel !== 'none');
   return buildCardShell(fmt, s, columnsHTML);
 }
 
@@ -812,7 +909,7 @@ function buildCard_A4L() {
   const fmt  = FORMATS['A4L'];
   const cats = getFilteredData();
   const s    = calcSizes_A4L(fmt.w);
-  const columnsHTML = buildColumnsHTML(cats, 3, s, state.showPrices);
+  const columnsHTML = buildColumnsHTML(cats, 3, s, state.priceLevel !== 'none');
   return buildCardShell(fmt, s, columnsHTML);
 }
 
@@ -823,7 +920,7 @@ function buildCard_A3P() {
   const fmt  = FORMATS['A3P'];
   const cats = getFilteredData();
   const s    = calcSizes_A3P(fmt.w);
-  const columnsHTML = buildColumnsHTML(cats, 2, s, state.showPrices);
+  const columnsHTML = buildColumnsHTML(cats, 2, s, state.priceLevel !== 'none');
   return buildCardShell(fmt, s, columnsHTML);
 }
 
@@ -834,7 +931,7 @@ function buildCard_A3L() {
   const fmt  = FORMATS['A3L'];
   const cats = getFilteredData();
   const s    = calcSizes_A3L(fmt.w);
-  const columnsHTML = buildColumnsHTML(cats, 3, s, state.showPrices);
+  const columnsHTML = buildColumnsHTML(cats, 3, s, state.priceLevel !== 'none');
   return buildCardShell(fmt, s, columnsHTML);
 }
 
@@ -845,7 +942,7 @@ function buildCard_DL() {
   const fmt  = FORMATS['DINLANG'];
   const cats = getFilteredData();
   const s    = calcSizes_DL(fmt.w);
-  const columnsHTML = buildColumnsHTML(cats, 1, s, state.showPrices);
+  const columnsHTML = buildColumnsHTML(cats, 1, s, state.priceLevel !== 'none');
   return buildCardShell(fmt, s, columnsHTML, { showSubtitle: false });
 }
 
@@ -857,28 +954,25 @@ function buildCard_SCREEN() {
   const cats = getFilteredData();
   const W    = fmt.w;
   const logoSrc = LOGOS[state.schema];
-  const label   = VARIANT_LABELS[state.variant];
-  const subtitle = label.includes('·') ? label.split('·')[1].trim() : '';
   const title = state.title || 'Getränke';
 
   // Schriftgrößen SCREEN: deutlich größer für 4K-Auflösung
   const pt = 1.333;
   const sizes = {
-    titleSz:    Math.round(36 * pt),   // ~48px (vorher 28pt/~37px)
-    catTitleSz: Math.round(22 * pt),   // ~29px (vorher 16pt/~21px)
-    itemSz:     Math.round(19 * pt),   // ~25px (vorher 14pt/~19px)
-    descSz:     Math.round(14 * pt),   // ~19px (vorher 7.5pt/~10px)
+    titleSz:    Math.round(36 * pt),
+    catTitleSz: Math.round(22 * pt),
+    itemSz:     Math.round(19 * pt),
+    descSz:     Math.round(14 * pt),
     headerLogoH: Math.round(W * 0.032),
   };
 
-  const columnsHTML = buildColumnsHTML(cats, 3, sizes, state.showPrices);
+  const columnsHTML = buildColumnsHTML(cats, 3, sizes, state.priceLevel !== 'none');
   const allergen = getAllergenText();
 
   return `
     <div class="gk-inner gk-inner-std">
       <div class="gk-header no-line">
         <div>
-          <span class="gk-subtitle" style="font-size:${Math.round(sizes.titleSz*0.4)}px;">${subtitle}</span>
           <div class="gk-title" style="font-size:${sizes.titleSz}px;">${title}</div>
         </div>
         <img class="gk-logo" src="${logoSrc}" alt="Logo" style="height:${sizes.headerLogoH}px;max-width:${Math.round(W*0.15)}px;">
@@ -958,7 +1052,7 @@ async function exportPDF() {
     if (isScreen) {
       // SCREEN: als JPEG exportieren (3840×2160)
       const link = document.createElement('a');
-      link.download = `Getraenkekarte_${state.variant}_SCREEN_4K.jpg`;
+      link.download = `Getraenkekarte_${state.priceLevel}_SCREEN_4K.jpg`;
       link.href = canvas.toDataURL('image/jpeg', 0.95);
       link.click();
     } else {
@@ -972,7 +1066,7 @@ async function exportPDF() {
         compress: true,
       });
       pdf.addImage(imgData, 'JPEG', 0, 0, page.w, page.h, '', 'FAST');
-      pdf.save(`Getraenkekarte_${state.variant}_${state.format}.pdf`);
+      pdf.save(`Getraenkekarte_${state.priceLevel}_${state.format}.pdf`);
     }
 
   } catch(err) {
@@ -1009,7 +1103,7 @@ async function doJPEG() {
 
     // Als JPEG herunterladen
     const link = document.createElement('a');
-    link.download = `Getraenkekarte_${state.variant}_${state.format}.jpg`;
+    link.download = `Getraenkekarte_${state.priceLevel}_${state.format}.jpg`;
     link.href = canvas.toDataURL('image/jpeg', 0.95);
     link.click();
   } catch(err) {

@@ -821,19 +821,54 @@ function buildItemHTML(row, sizes, showPrices) {
 }
 
 // ── GEMEINSAMER MASONRY-SPALTEN-BUILDER ──
+// JS-basierte Spaltenverteilung statt CSS columns.
+// Verteilt Kategorien per Greedy-Algorithmus auf Spalten,
+// sodass die Spalten möglichst gleichmäßig gefüllt sind.
 function buildColumnsHTML(cats, colCount, sizes, showPrices) {
   const catKeys = Object.keys(cats);
   if (catKeys.length === 0) return buildEmptyState();
   const cols = Math.min(colCount, catKeys.length);
-  let html = `<div class="gk-columns std-masonry" style="--col-count:${cols};">`;
-  catKeys.forEach(catName => {
-    let itemsHTML = '';
-    cats[catName].forEach(row => { itemsHTML += buildItemHTML(row, sizes, showPrices); });
-    itemsHTML += `<div class="a4p-cat-spacer"></div>`;
-    html += `<div class="gk-category std-category">
-      <div class="gk-cat-title std-cat-title" style="font-size:${sizes.catTitleSz}px;">${catName}</div>
-      ${itemsHTML}
-    </div>`;
+
+  // Gewicht pro Kategorie schätzen: Titel (1.5) + Items + Beschreibungen (0.5 extra)
+  const weights = {};
+  catKeys.forEach(name => {
+    let w = 1.5; // Kategorie-Titel + Abstand
+    cats[name].forEach(row => {
+      w += 1; // Item-Zeile
+      if (row['Beschreibung']) w += 0.5; // Beschreibung braucht extra Platz
+    });
+    weights[name] = w;
+  });
+
+  // Spalten initialisieren
+  const columns = Array.from({ length: cols }, () => ({ keys: [], weight: 0 }));
+
+  // Greedy: Jede Kategorie in die Reihenfolge aus getFilteredData()
+  // kommt in die aktuell kürzeste (leichteste) Spalte
+  catKeys.forEach(name => {
+    // Finde die Spalte mit dem geringsten Gewicht
+    let minIdx = 0;
+    for (let i = 1; i < cols; i++) {
+      if (columns[i].weight < columns[minIdx].weight) minIdx = i;
+    }
+    columns[minIdx].keys.push(name);
+    columns[minIdx].weight += weights[name];
+  });
+
+  // HTML für jede Spalte bauen
+  let html = `<div class="gk-columns gk-grid-cols" style="--col-count:${cols};">`;
+  columns.forEach(col => {
+    html += `<div class="gk-grid-col">`;
+    col.keys.forEach(catName => {
+      let itemsHTML = '';
+      cats[catName].forEach(row => { itemsHTML += buildItemHTML(row, sizes, showPrices); });
+      itemsHTML += `<div class="a4p-cat-spacer"></div>`;
+      html += `<div class="gk-category std-category">
+        <div class="gk-cat-title std-cat-title" style="font-size:${sizes.catTitleSz}px;">${catName}</div>
+        ${itemsHTML}
+      </div>`;
+    });
+    html += `</div>`;
   });
   return html + '</div>';
 }

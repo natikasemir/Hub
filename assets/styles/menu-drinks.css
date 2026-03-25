@@ -269,7 +269,19 @@
   display: block;
 }
 
-/* ── Masonry-Layout: CSS columns für alle Standard-Formate ── */
+/* ── Spalten-Layout: CSS Grid (JS-gesteuerte Verteilung) ── */
+.gk-grid-cols {
+  display: grid;
+  grid-template-columns: repeat(var(--col-count, 2), 1fr);
+  column-gap: 5%;
+}
+
+.gk-grid-col {
+  display: flex;
+  flex-direction: column;
+}
+
+/* Legacy-Klasse beibehalten falls noch referenziert */
 .std-masonry {
   columns: var(--col-count, 2);
   column-gap: 5%;

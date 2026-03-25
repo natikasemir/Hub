@@ -83,16 +83,24 @@ aside { background: white; border-right: 1px solid var(--gray-200); padding: 18p
 /* Action-Buttons */
 .actions { display: flex; flex-direction: column; gap: 6px; margin-top: auto; padding-top: 4px; }
 
-/* Overflow-Warnung */
+/* Overflow-Warnung (über der Canvas zentriert) */
 .overflow-warning {
   background: #fff3cd;
   color: #856404;
   border: 1px solid #ffc107;
   border-radius: var(--radius-ui);
-  padding: 8px 10px;
+  padding: 8px 14px;
   font-size: 11px;
   font-weight: 600;
   line-height: 1.4;
+  position: absolute;
+  top: 8px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 10;
+  max-width: 90%;
+  text-align: center;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
 }
 .btn { display: flex; align-items: center; justify-content: center; gap: 7px; border: none; border-radius: var(--radius-ui); padding: 10px 14px; font-family: inherit; font-size: 12px; font-weight: 600; cursor: pointer; transition: all 0.15s; }
 .btn-primary { background: var(--accent); color: white; }
@@ -102,7 +110,28 @@ aside { background: white; border-right: 1px solid var(--gray-200); padding: 18p
 .btn:disabled { opacity: 0.4; cursor: not-allowed; }
 
 /* Preview-Bereich */
-main { display: flex; align-items: center; justify-content: center; padding: 28px; overflow: hidden; background: repeating-conic-gradient(#ddd 0% 25%, #e8e8e8 0% 50%) 0 0/18px 18px; }
+main { display: flex; align-items: center; justify-content: center; padding: 28px; overflow: hidden; background: repeating-conic-gradient(#ddd 0% 25%, #e8e8e8 0% 50%) 0 0/18px 18px; position: relative; }
+
+/* FAB Mailto-Button */
+.fab-mail {
+  position: absolute;
+  bottom: 20px;
+  right: 20px;
+  width: 44px;
+  height: 44px;
+  background: var(--accent);
+  color: white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  text-decoration: none;
+  box-shadow: 0 3px 12px rgba(0,0,0,0.2);
+  transition: background 0.15s, transform 0.15s;
+  z-index: 10;
+}
+.fab-mail:hover { background: var(--accent-hover); transform: scale(1.08); }
 
 /* ── HILFE-POPUP ── */
 .help-overlay {
@@ -182,6 +211,7 @@ main { display: flex; align-items: center; justify-content: center; padding: 28p
   html, body { margin: 0 !important; padding: 0 !important; }
   body, .app { height: auto !important; overflow: visible !important; }
   aside, header { display: none !important; }
+  .fab-mail, .overflow-warning { display: none !important; }
   main {
     display: block !important;
     padding: 0 !important;
@@ -220,7 +250,7 @@ main { display: flex; align-items: center; justify-content: center; padding: 28p
   <a href="../index.html" style="background:white; color:var(--pe-blue); font-size:11px; font-weight:700; text-decoration:none; letter-spacing:0.05em; display:flex; align-items:center; gap:5px; flex-shrink:0; padding:5px 10px; border-radius:4px;">← Übersicht</a>
   <div class="accent-dot"></div>
   <h1>Getränkekarten-Generator</h1>
-  <span style="margin-left:auto; color:rgba(255,255,255,0.45); font-size:10px; font-weight:500; letter-spacing:0.08em;"><strong>Letztes Kartenupdate </strong>2026-03-23</span>
+  <span style="margin-left:auto; color:rgba(255,255,255,0.45); font-size:10px; font-weight:500; letter-spacing:0.08em;"><strong>Letztes Kartenupdate </strong><span id="cardVersion">–</span></span>
   <button onclick="showHelp()" style="background:rgba(255,255,255,0.15); border:none; color:white; width:22px; height:22px; border-radius:50%; font-size:12px; font-weight:700; cursor:pointer; flex-shrink:0; margin-left:8px;" title="Kurzanleitung">?</button>
 </header>
 
@@ -310,8 +340,6 @@ main { display: flex; align-items: center; justify-content: center; padding: 28p
     <button class="template-link" onclick="downloadTemplate()">↓ Vorlage herunterladen (.xlsx)</button>
   </div>
 
-  <div class="overflow-warning" id="overflowWarning" style="display:none;"></div>
-
   <div class="actions">
     <button class="btn btn-primary" id="btnPrint" onclick="doPrint()" disabled>↓ Als PDF drucken</button>
     <button class="btn btn-secondary" id="btnJPEG" onclick="doJPEG()" disabled>↓ Als JPEG speichern</button>
@@ -320,6 +348,7 @@ main { display: flex; align-items: center; justify-content: center; padding: 28p
 </aside>
 
 <main id="mainArea">
+  <div class="overflow-warning" id="overflowWarning" style="display:none;"></div>
   <div class="card-wrap" id="cardWrap">
     <div class="getraenkekarte schema-pe" id="card">
       <div class="gk-inner">
@@ -330,6 +359,7 @@ main { display: flex; align-items: center; justify-content: center; padding: 28p
       </div>
     </div>
   </div>
+  <a class="fab-mail" id="fabMail" href="#" title="Frage oder Hinweis senden">✉</a>
 </main>
 
 </div>
@@ -833,13 +863,13 @@ function calcSizes_A3L(W) {
 }
 
 function calcSizes_DL(W) {
-  // DIN Lang: W=297px — sehr schmal, kompakt
+  // DIN Lang: W=297px — schmal, aber lesbar
   const clamp = (val, min) => Math.max(Math.round(val), min);
   return {
-    titleSz:     clamp(W * 0.058, 14),    // kompakt
-    catTitleSz:  clamp(W * 0.032, 8),
-    itemSz:      clamp(W * 0.026, 7),
-    descSz:      clamp(W * 0.022, 6.5),
+    titleSz:     clamp(W * 0.065, 16),
+    catTitleSz:  clamp(W * 0.040, 10),
+    itemSz:      clamp(W * 0.033, 9),
+    descSz:      clamp(W * 0.028, 8),
     headerLogoH: Math.round(W * 0.07),
   };
 }
@@ -1261,9 +1291,18 @@ function hideHelp(e) {
         last:  cfg.categoryOrder.last  || [],
       };
     }
+    // Kartenversion aus config.json
+    if (cfg.tools.kartengenerator.version) {
+      const versionEl = document.getElementById('cardVersion');
+      if (versionEl) versionEl.textContent = cfg.cardVersion;
+    }
+    // Kontakt-E-Mail aus config.json
+    if (cfg.contact.email) {
+      const fab = document.getElementById('fabMail');
+      if (fab) fab.href = `mailto:${cfg.contactEmail}?subject=${encodeURIComponent('Frage/Hinweis zu Getränkekartengenerator')}`;
+    }
   } catch(e) {
-    // config.json nicht erreichbar (z.B. lokal via file://) — Defaults bleiben
-    console.warn('config.json nicht geladen, Standard-Reihenfolge wird verwendet.', e);
+    console.warn('config.json nicht geladen, Defaults werden verwendet.', e);
   }
   applyDimensions();
   window.addEventListener('resize', applyDimensions);

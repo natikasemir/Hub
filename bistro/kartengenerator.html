@@ -214,9 +214,9 @@ main { display: flex; align-items: center; justify-content: center; padding: 28p
 
 <aside>
 
-  <!-- Schema -->
+  <!-- Schema = Angebotsfilter -->
   <div>
-    <div class="section-label">CI-Schema</div>
+    <div class="section-label">Angebot &amp; Design</div>
     <div class="schema-switcher">
       <button class="schema-btn active" onclick="setSchema('pe',this)">
         <div class="swatch" style="background:#173557"></div>PE
@@ -227,13 +227,12 @@ main { display: flex; align-items: center; justify-content: center; padding: 28p
     </div>
   </div>
 
-  <!-- Preisebene -->
+  <!-- Preise -->
   <div>
-    <div class="section-label">Preisebene</div>
+    <div class="section-label">Preise</div>
     <div class="toggle-group">
-      <button class="toggle-btn" onclick="setPriceLevel('fobi',this)">FoBi</button>
-      <button class="toggle-btn active" onclick="setPriceLevel('kultur',this)">Kultur</button>
-      <button class="toggle-btn" onclick="setPriceLevel('none',this)">Ohne</button>
+      <button class="toggle-btn active" onclick="setPrices(true,this)">Mit Preisen</button>
+      <button class="toggle-btn" onclick="setPrices(false,this)">Ohne Preise</button>
     </div>
   </div>
 
@@ -247,14 +246,8 @@ main { display: flex; align-items: center; justify-content: center; padding: 28p
   <div>
     <div class="section-label">Kategorien</div>
     <div id="categoryToggles" style="display:flex; flex-direction:column; gap:4px;">
-      <span style="font-size:11px; color:var(--gray-400); font-style:italic;">CSV hochladen…</span>
+      <span style="font-size:11px; color:var(--gray-400); font-style:italic;">Datei hochladen…</span>
     </div>
-  </div>
-
-  <!-- Tags (dynamisch befüllt nach Upload) -->
-  <div id="tagSection" style="display:none;">
-    <div class="section-label">Sonder-Tags</div>
-    <div id="tagToggles" style="display:flex; flex-direction:column; gap:4px;"></div>
   </div>
 
   <!-- Format -->
@@ -366,17 +359,14 @@ const FORMATS = {
 };
 
 const state = {
-  schema: 'pe',
-  priceLevel: 'kultur',   // 'fobi' | 'kultur' | 'none'
+  schema: 'pe',          // 'pe' | 'kbw' — steuert Design UND Angebotsfilter
+  showPrices: true,
   format: 'A4P',
   allergen: 'none',
   title: 'Getränke',
   data: [],
-  // Dynamisch nach Upload befüllt:
-  enabledCategories: new Set(),   // alle aktiven Kategorie-Namen
-  enabledTags: new Set(),         // aktive Sonder-Tags (z.B. 'tanztee')
-  availableCategories: [],        // alle Kategorien aus der CSV (sortiert)
-  availableTags: [],              // alle Tags aus der CSV (ohne nur-bistro/nur-kultur)
+  enabledCategories: new Set(),
+  availableCategories: [],
   categoryOrder: { first: [], last: [] }
 };
 
@@ -386,11 +376,12 @@ function clearActive(sel) { document.querySelectorAll(sel).forEach(b=>b.classLis
 function setSchema(s, btn) {
   state.schema = s;
   clearActive('.schema-btn'); btn.classList.add('active');
+  buildCategoryToggles();  // Kategorien neu aufbauen, da anderes Angebot
   renderCard();
 }
-function setPriceLevel(level, btn) {
-  state.priceLevel = level;
-  clearActive('.toggle-btn[onclick^="setPriceLevel"]'); btn.classList.add('active');
+function setPrices(v, btn) {
+  state.showPrices = v;
+  clearActive('.toggle-btn[onclick^="setPrices"]'); btn.classList.add('active');
   renderCard();
 }
 function setAllergen(v, btn) {
@@ -413,15 +404,10 @@ function toggleCategory(catName, checked) {
   else state.enabledCategories.delete(catName);
   renderCard();
 }
-function toggleTag(tag, checked) {
-  if (checked) state.enabledTags.add(tag);
-  else state.enabledTags.delete(tag);
-  renderCard();
-}
 
-// ── PFLICHTFELDER (neues Format) ──
+// ── PFLICHTFELDER ──
 const REQUIRED_COLUMNS = ['Kategorie', 'Name'];
-const EXPECTED_COLUMNS = ['Kategorie', 'Name', 'Variante', 'Beschreibung', 'Preis FoBi', 'Preis Kultur', 'Allergene', 'Tag'];
+const EXPECTED_COLUMNS = ['Kategorie', 'Name', 'Variante', 'Beschreibung', 'Preis', 'Allergene', 'Angebot'];
 
 function showStatus(msg, isError = false) {
   const el = document.getElementById('uploadStatus');
@@ -431,9 +417,20 @@ function showStatus(msg, isError = false) {
 }
 
 // ── UI-BUILDER: Kategorie-Schalter ──
+// Zeigt nur Kategorien, die im aktuellen Angebot (pe/kbw) vorkommen.
 function buildCategoryToggles() {
   const container = document.getElementById('categoryToggles');
-  const cats = [...new Set(state.data.map(r => r['Kategorie'] || 'Sonstiges'))];
+  if (!state.data.length) return;
+
+  // Schema → Angebot-Key: 'pe' → 'peter-edel', 'kbw' → 'kbw'
+  const angebotKey = state.schema === 'pe' ? 'peter-edel' : 'kbw';
+
+  // Nur Zeilen des aktuellen Angebots
+  const relevantRows = state.data.filter(r =>
+    (r['Angebot'] || '').trim().toLowerCase() === angebotKey
+  );
+
+  const cats = [...new Set(relevantRows.map(r => r['Kategorie'] || 'Sonstiges'))];
 
   // Sortieren nach DEFAULT_CATEGORY_ORDER
   const hasConfigOrder = state.categoryOrder.first.length > 0 || state.categoryOrder.last.length > 0;
@@ -447,9 +444,9 @@ function buildCategoryToggles() {
   state.availableCategories = sorted;
   state.enabledCategories = new Set(sorted);  // alle an
 
-  // Zähler pro Kategorie
+  // Zähler pro Kategorie (nur relevante Zeilen)
   const counts = {};
-  state.data.forEach(r => {
+  relevantRows.forEach(r => {
     const c = r['Kategorie'] || 'Sonstiges';
     counts[c] = (counts[c] || 0) + 1;
   });
@@ -459,37 +456,6 @@ function buildCategoryToggles() {
       <input type="checkbox" checked onchange="toggleCategory('${cat.replace(/'/g,"\\'")}', this.checked)">
       ${cat}
       <span class="cat-count">${counts[cat] || 0}</span>
-    </label>
-  `).join('');
-}
-
-// ── UI-BUILDER: Tag-Schalter ──
-function buildTagToggles() {
-  const container = document.getElementById('tagToggles');
-  const section   = document.getElementById('tagSection');
-
-  // Tags sammeln (ohne nur-bistro / nur-kultur — diese sind intern)
-  const tags = new Set();
-  state.data.forEach(r => {
-    const tag = (r['Tag'] || '').trim().toLowerCase();
-    if (tag && tag !== 'nur-bistro' && tag !== 'nur-kultur') tags.add(tag);
-  });
-
-  state.availableTags = [...tags].sort();
-  state.enabledTags = new Set(); // Sonder-Tags default aus
-
-  if (tags.size === 0) {
-    section.style.display = 'none';
-    return;
-  }
-
-  section.style.display = '';
-  const TAG_LABELS = { 'tanztee': 'Tanztee-Specials' };
-
-  container.innerHTML = state.availableTags.map(tag => `
-    <label class="tag-toggle">
-      <input type="checkbox" onchange="toggleTag('${tag}', this.checked)">
-      ${TAG_LABELS[tag] || tag}
     </label>
   `).join('');
 }
@@ -526,7 +492,6 @@ function handleFile(e) {
 
       // Sidebar-Toggles aufbauen
       buildCategoryToggles();
-      buildTagToggles();
 
       document.getElementById('btnPrint').disabled = false;
       document.getElementById('btnJPEG').disabled = false;
@@ -579,112 +544,107 @@ function parseCSV(text) {
 }
 
 function downloadTemplate() {
-  // Daten als Array-of-Arrays (Header + Rows)
   const data = [
-    ['Kategorie', 'Name', 'Variante', 'Beschreibung', 'Preis FoBi', 'Preis Kultur', 'Allergene', 'Tag'],
-    ['Alkoholfreie Getränke','Bauer Apfelsaft','0,2l','','2,50 €','','','nur-bistro'],
-    ['Alkoholfreie Getränke','Bauer Orangensaft','0,2l','','2,50 €','','','nur-bistro'],
-    ['Alkoholfreie Getränke','Spreequell Wasser','0,33l','Classic | Naturell','3,00 €','3,00 €','',''],
-    ['Alkoholfreie Getränke','Spreequell Wasser','0,75l','Classic | Naturell','4,50 €','','','nur-bistro'],
-    ['Alkoholfreie Getränke','fritz-kola','0,33l','ORIGINAL | SUPER ZERO','2,80 €','4,00 €','1,11',''],
-    ['Alkoholfreie Getränke','fritz-kola SUPER ZERO','0,33l','','2,80 €','','1,9,10,11','nur-bistro'],
-    ['Alkoholfreie Getränke','fritz-limo','0,33l','INGWER-LIMETTE | ORANGE | ZITRONE | APFEL-KIRSCH-HOLUNDER','','4,00 €','','nur-kultur'],
-    ['Alkoholfreie Getränke','fritz-limo HONIGMELONE','0,33l','','2,80 €','','','nur-bistro'],
-    ['Alkoholfreie Getränke','fritz-limo APFEL-KIRSCH-HOLUNDER','0,33l','','2,80 €','','','nur-bistro'],
-    ['Alkoholfreie Getränke','fritz-limo ZITRONE','0,33l','','2,80 €','','','nur-bistro'],
-    ['Alkoholfreie Getränke','fritz-limo ORANGE','0,33l','','2,80 €','','','nur-bistro'],
-    ['Alkoholfreie Getränke','fritz-spritz','0,33l','BIO RHABARBERSCHORLE | BIO APFELSCHORLE','','4,00 €','','nur-kultur'],
-    ['Alkoholfreie Getränke','fritz-spritz RHABARBER','0,33l','','2,80 €','','','nur-bistro'],
-    ['Alkoholfreie Getränke','fritz-spritz APFELSCHORLE','0,33l','','2,80 €','','','nur-bistro'],
-    ['Alkoholfreie Getränke','fritz-spritz TRAUBENSCHORLE','0,33l','','2,80 €','','','nur-bistro'],
-    ['Alkoholfreie Getränke','ELEPHANT BAY EISTEE Peach','0,33l','','3,40 €','','3','nur-bistro'],
-    ['Alkoholfreie Getränke','ELEPHANT BAY EISTEE Granat','0,33l','','3,40 €','','3','nur-bistro'],
-    ['Alkoholfreie Getränke','Club Mate','0,33l','','4,00 €','4,00 €','11',''],
-    ['Alkoholfreie Getränke','Red Bull','0,25l','','3,50 €','4,50 €','1,2,11,13',''],
-    ['Alkoholfreie Getränke','Lammsbräu Pils (alkoholfrei)','0,33l','','3,20 €','4,00 €','16,a',''],
-    ['Alkoholfreie Getränke','Spritz alkoholfrei','0,3l','Laori Ruby No. 4, Vaux Bio Träublein, Wasser, Alkohol <0,3%','','7,50 €','','nur-kultur'],
-    ['Alkoholfreie Getränke','Gin Tonic alkoholfrei','0,3l','Mampe 00, Thomas Henry Tonic Water, Alkohol <0,3%','','7,50 €','','nur-kultur'],
-    ['Heißgetränke','Kaffee Créme','','','3,50 €','','',''],
-    ['Heißgetränke','Americano','','','3,00 €','','',''],
-    ['Heißgetränke','Espresso','','','2,50 €','','',''],
-    ['Heißgetränke','Espresso doppelt','','','4,00 €','','',''],
-    ['Heißgetränke','Espresso Macchiato','','','2,80 €','','',''],
-    ['Heißgetränke','Cappuccino','','','3,50 €','','',''],
-    ['Heißgetränke','Latte Macchiato','','','3,50 €','','',''],
-    ['Heißgetränke','Milchkaffee','','','3,50 €','','',''],
-    ['Heißgetränke','Tee','','','3,00 €','','',''],
-    ['Heißgetränke','Espresso Shot','','','1,00 €','','',''],
-    ['Heißgetränke','Flavour Shot','','Vanille | Weiße Schokolade | Karamell','0,50 €','','1',''],
-    ['Wein & Sekt','Weißwein trocken','0,2l','Grauer Burgunder','','7,00 €','',''],
-    ['Wein & Sekt','Rotwein trocken','0,2l','Primitivo salento','','7,00 €','',''],
-    ['Wein & Sekt','Rosé trocken','0,2l','50° Pinot Noir','','7,00 €','',''],
-    ['Wein & Sekt','Weiß- & Roséweinschorle trocken','0,2l','','','4,00 €','',''],
-    ['Wein & Sekt','Sekt Piccolo trocken','0,2l','Zekt','','7,00 €','',''],
-    ['Wein & Sekt','Sekt trocken','0,1l','Zekt','','3,50 €','',''],
-    ['Bier','Berliner Pilsner | Naturradler','0,33l','','','4,00 €','',''],
-    ['Bier','Q-Bier aus Pankow','0,33l','Pils | Pale Ale | Red Lager','','4,50 €','',''],
-    ['Bier','Schöfferhofer Grapefruit','0,33l','','','4,50 €','',''],
-    ['Bier','Helles','0,5l',"Brewer's Tribute",'','5,00 €','',''],
-    ['Longdrinks','Club Mate Vodka','0,3l','Mampe Vodka, Club Mate','','7,50 €','',''],
-    ['Longdrinks','Vodka Lemon','0,3l','Mampe Vodka, Thomas Henry Bitter Lemon','','7,50 €','',''],
-    ['Longdrinks','Gin Tonic','0,3l','Mampe Gin, Thomas Henry Tonic Water','','7,50 €','',''],
-    ['Longdrinks','Aperol Spritz','0,3l','Aperol, Sekt, Sodawasser','','7,50 €','',''],
-    ['Longdrinks','Limoncello Spritz','0,3l','Limoncello, Sekt, Sodawasser','','7,50 €','',''],
-    ['Longdrinks','Lillet Vive | Lillet Berry','0,3l','Lillet, Thomas Henry Tonic Water | Lillet, Thomas Henry Wild Berry','','7,50 €','',''],
-    ['Longdrinks','Cuba Libre','0,3l','Havana Club Añejo 3 Años Rum, Coca-Cola','','7,50 €','',''],
-    ['Longdrinks','Whiskey Cola','0,3l','Jack Daniels, Coca Cola','','7,50 €','',''],
-    ['Longdrinks','Vodka Red Bull','0,3l','Mampe Vodka, Red Bull','','8,00 €','',''],
-    ['Longdrinks','Moscow Mule','0,3l','Mampe Vodka, Thomas Henry Ginger Beer, Limette, Angostura Bitter','','8,50 €','',''],
-    ['Longdrinks','Grapefruit Royal','0,3l','Mampe Fliegercocktail, Thomas Henry Pink Grapefruit, Sekt','','8,50 €','',''],
-    ['Shots','Kleiner Feigling','','','','3,00 €','',''],
-    ['Shots','Berliner Luft','','','','3,00 €','',''],
-    ['Shots','Mampe Popcorn','2cl','','','3,00 €','',''],
-    ['Snacks','Halbes Brötchen','','verschieden belegt','1,80 €','','',''],
-    ['Snacks','Halbes Brötchen','','mit Lachs','2,80 €','','',''],
-    ['Snacks','Ganzes Brötchen','','verschieden belegt','2,50 €','','',''],
-    ['Snacks','Ganzes Brötchen','','mit Lachs','3,50 €','','',''],
-    ['Snacks','Stulle','','verschieden belegt','3,00 €','','',''],
-    ['Snacks','Laugenstange','','verschieden belegt','3,00 €','','',''],
-    ['Snacks','Handobst','','verschiedene Sorten','1,00 €','','',''],
-    ['Snacks','Bircher Müsli','','hausgemacht','3,50 €','','',''],
-    ['Snacks','Milchreis','','laktosefrei','3,50 €','','',''],
-    ['Snacks','Nachtisch','','verschiedene Sorten','1,50 €','','',''],
-    ['Snacks','Kuchen','','verschiedene Sorten','2,50 €','','',''],
-    ['Snacks','Torte','','verschiedene Sorten','3,50 €','','',''],
-    ['Snacks','Kekse','','verschiedene Sorten','1,80 €','','',''],
-    ['Snacks','Pringles','40g','','','2,50 €','','nur-kultur'],
-    ['Snacks','Erdnüsse','50g','','','2,50 €','','nur-kultur'],
-    ['Snacks','Chips','40g','','','2,50 €','','nur-kultur'],
-    ['Snacks',"Brez'n",'','','','3,00 €','','nur-kultur'],
-    ['Snacks',"Käsebrez'n",'','','','3,00 €','','nur-kultur'],
-    ['Specials','Herrengedeck','','Berliner Pils 0,33l und Glas Wein oder Sekt (je 0,2l)','','9,00 €','','tanztee'],
+    ['Kategorie', 'Name', 'Variante', 'Beschreibung', 'Preis', 'Allergene', 'Angebot'],
+    ['Alkoholfreie Getränke','Bauer Apfelsaft','0,2l','','2,50 €','','peter-edel'],
+    ['Alkoholfreie Getränke','Bauer Orangensaft','0,2l','','2,50 €','','peter-edel'],
+    ['Alkoholfreie Getränke','Spreequell Wasser','0,33l','Classic | Naturell','3,00 €','','peter-edel'],
+    ['Alkoholfreie Getränke','Spreequell Wasser','0,75l','Classic | Naturell','4,50 €','','peter-edel'],
+    ['Alkoholfreie Getränke','fritz-kola','0,33l','','2,80 €','1,11','peter-edel'],
+    ['Alkoholfreie Getränke','fritz-kola SUPER ZERO','0,33l','','2,80 €','1,9,10,11','peter-edel'],
+    ['Alkoholfreie Getränke','fritz-limo HONIGMELONE','0,33l','','2,80 €','','peter-edel'],
+    ['Alkoholfreie Getränke','fritz-limo APFEL-KIRSCH-HOLUNDER','0,33l','','2,80 €','','peter-edel'],
+    ['Alkoholfreie Getränke','fritz-limo ZITRONE','0,33l','','2,80 €','','peter-edel'],
+    ['Alkoholfreie Getränke','fritz-limo ORANGE','0,33l','','2,80 €','','peter-edel'],
+    ['Alkoholfreie Getränke','fritz-spritz RHABARBER','0,33l','','2,80 €','','peter-edel'],
+    ['Alkoholfreie Getränke','fritz-spritz APFELSCHORLE','0,33l','','2,80 €','','peter-edel'],
+    ['Alkoholfreie Getränke','fritz-spritz TRAUBENSCHORLE','0,33l','','2,80 €','','peter-edel'],
+    ['Alkoholfreie Getränke','ELEPHANT BAY EISTEE Peach','0,33l','','3,40 €','3','peter-edel'],
+    ['Alkoholfreie Getränke','ELEPHANT BAY EISTEE Granat','0,33l','','3,40 €','3','peter-edel'],
+    ['Alkoholfreie Getränke','Club Mate','0,33l','','4,00 €','11','peter-edel'],
+    ['Alkoholfreie Getränke','Red Bull','0,25l','','3,50 €','1,2,11,13','peter-edel'],
+    ['Alkoholfreie Getränke','Lammsbräu Pils (alkoholfrei)','0,33l','','3,20 €','16,a','peter-edel'],
+    ['Heißgetränke','Kaffee Créme','','','3,50 €','','peter-edel'],
+    ['Heißgetränke','Americano','','','3,00 €','','peter-edel'],
+    ['Heißgetränke','Espresso','','','2,50 €','','peter-edel'],
+    ['Heißgetränke','Espresso doppelt','','','4,00 €','','peter-edel'],
+    ['Heißgetränke','Espresso Macchiato','','','2,80 €','','peter-edel'],
+    ['Heißgetränke','Cappuccino','','','3,50 €','','peter-edel'],
+    ['Heißgetränke','Latte Macchiato','','','3,50 €','','peter-edel'],
+    ['Heißgetränke','Milchkaffee','','','3,50 €','','peter-edel'],
+    ['Heißgetränke','Tee','','','3,00 €','','peter-edel'],
+    ['Heißgetränke','Espresso Shot','','','1,00 €','','peter-edel'],
+    ['Heißgetränke','Flavour Shot','','Vanille | Weiße Schokolade | Karamell','0,50 €','1','peter-edel'],
+    ['Snacks','Halbes Brötchen','','verschieden belegt','1,80 €','','peter-edel'],
+    ['Snacks','Halbes Brötchen','','mit Lachs','2,80 €','','peter-edel'],
+    ['Snacks','Ganzes Brötchen','','verschieden belegt','2,50 €','','peter-edel'],
+    ['Snacks','Ganzes Brötchen','','mit Lachs','3,50 €','','peter-edel'],
+    ['Snacks','Stulle','','verschieden belegt','3,00 €','','peter-edel'],
+    ['Snacks','Laugenstange','','verschieden belegt','3,00 €','','peter-edel'],
+    ['Snacks','Handobst','','verschiedene Sorten','1,00 €','','peter-edel'],
+    ['Snacks','Bircher Müsli','','hausgemacht','3,50 €','','peter-edel'],
+    ['Snacks','Milchreis','','laktosefrei','3,50 €','','peter-edel'],
+    ['Snacks','Nachtisch','','verschiedene Sorten','1,50 €','','peter-edel'],
+    ['Snacks','Kuchen','','verschiedene Sorten','2,50 €','','peter-edel'],
+    ['Snacks','Torte','','verschiedene Sorten','3,50 €','','peter-edel'],
+    ['Snacks','Kekse','','verschiedene Sorten','1,80 €','','peter-edel'],
+    ['Alkoholfreie Getränke','Spreequell Wasser','0,33l','Classic | Naturell','3,00 €','','kbw'],
+    ['Alkoholfreie Getränke','fritz-kola','0,33l','ORIGINAL | SUPER ZERO','4,00 €','','kbw'],
+    ['Alkoholfreie Getränke','fritz-limo','0,33l','INGWER-LIMETTE | ORANGE | ZITRONE | APFEL-KIRSCH-HOLUNDER','4,00 €','','kbw'],
+    ['Alkoholfreie Getränke','fritz-spritz','0,33l','BIO RHABARBERSCHORLE | BIO APFELSCHORLE','4,00 €','','kbw'],
+    ['Alkoholfreie Getränke','Club Mate','0,33l','','4,00 €','','kbw'],
+    ['Alkoholfreie Getränke','Red Bull','0,25l','','4,50 €','','kbw'],
+    ['Alkoholfreie Getränke','Lammsbräu Pils (alkoholfrei)','0,33l','','4,00 €','16,a','kbw'],
+    ['Alkoholfreie Getränke','Spritz alkoholfrei','0,3l','Laori Ruby No. 4, Vaux Bio Träublein, Wasser, Alkohol <0,3%','7,50 €','','kbw'],
+    ['Alkoholfreie Getränke','Gin Tonic alkoholfrei','0,3l','Mampe 00, Thomas Henry Tonic Water, Alkohol <0,3%','7,50 €','','kbw'],
+    ['Wein & Sekt','Weißwein trocken','0,2l','Grauer Burgunder','7,00 €','','kbw'],
+    ['Wein & Sekt','Rotwein trocken','0,2l','Primitivo salento','7,00 €','','kbw'],
+    ['Wein & Sekt','Rosé trocken','0,2l','50° Pinot Noir','7,00 €','','kbw'],
+    ['Wein & Sekt','Weiß- & Roséweinschorle trocken','0,2l','','4,00 €','','kbw'],
+    ['Wein & Sekt','Sekt Piccolo trocken','0,2l','Zekt','7,00 €','','kbw'],
+    ['Wein & Sekt','Sekt trocken','0,1l','Zekt','3,50 €','','kbw'],
+    ['Bier','Berliner Pilsner | Naturradler','0,33l','','4,00 €','','kbw'],
+    ['Bier','Q-Bier aus Pankow','0,33l','Pils | Pale Ale | Red Lager','4,50 €','','kbw'],
+    ['Bier','Schöfferhofer Grapefruit','0,33l','','4,50 €','','kbw'],
+    ['Bier','Helles','0,5l',"Brewer's Tribute",'5,00 €','','kbw'],
+    ['Longdrinks','Club Mate Vodka','0,3l','Mampe Vodka, Club Mate','7,50 €','','kbw'],
+    ['Longdrinks','Vodka Lemon','0,3l','Mampe Vodka, Thomas Henry Bitter Lemon','7,50 €','','kbw'],
+    ['Longdrinks','Gin Tonic','0,3l','Mampe Gin, Thomas Henry Tonic Water','7,50 €','','kbw'],
+    ['Longdrinks','Aperol Spritz','0,3l','Aperol, Sekt, Sodawasser','7,50 €','','kbw'],
+    ['Longdrinks','Limoncello Spritz','0,3l','Limoncello, Sekt, Sodawasser','7,50 €','','kbw'],
+    ['Longdrinks','Lillet Vive | Lillet Berry','0,3l','Lillet, Thomas Henry Tonic Water | Lillet, Thomas Henry Wild Berry','7,50 €','','kbw'],
+    ['Longdrinks','Cuba Libre','0,3l','Havana Club Añejo 3 Años Rum, Coca-Cola','7,50 €','','kbw'],
+    ['Longdrinks','Whiskey Cola','0,3l','Jack Daniels, Coca Cola','7,50 €','','kbw'],
+    ['Longdrinks','Vodka Red Bull','0,3l','Mampe Vodka, Red Bull','8,00 €','','kbw'],
+    ['Longdrinks','Moscow Mule','0,3l','Mampe Vodka, Thomas Henry Ginger Beer, Limette, Angostura Bitter','8,50 €','','kbw'],
+    ['Longdrinks','Grapefruit Royal','0,3l','Mampe Fliegercocktail, Thomas Henry Pink Grapefruit, Sekt','8,50 €','','kbw'],
+    ['Shots','Kleiner Feigling','','','3,00 €','','kbw'],
+    ['Shots','Berliner Luft','','','3,00 €','','kbw'],
+    ['Shots','Mampe Popcorn','2cl','','3,00 €','','kbw'],
+    ['Snacks','Pringles','40g','','2,50 €','','kbw'],
+    ['Snacks','Erdnüsse','50g','','2,50 €','','kbw'],
+    ['Snacks','Chips','40g','','2,50 €','','kbw'],
+    ['Snacks',"Brez'n",'','','3,00 €','','kbw'],
+    ['Snacks',"Käsebrez'n",'','','3,00 €','','kbw'],
+    ['Specials','Herrengedeck','','Berliner Pils 0,33l und Glas Wein oder Sekt (je 0,2l)','9,00 €','','kbw'],
   ];
 
-  // Worksheet erstellen
   const ws = XLSX.utils.aoa_to_sheet(data);
-
-  // Spaltenbreiten
   ws['!cols'] = [
-    { wch: 24 },  // Kategorie
-    { wch: 34 },  // Name
-    { wch: 8 },   // Variante
-    { wch: 50 },  // Beschreibung
-    { wch: 12 },  // Preis FoBi
-    { wch: 12 },  // Preis Kultur
-    { wch: 14 },  // Allergene
-    { wch: 14 },  // Tag
+    { wch: 24 },
+    { wch: 34 },
+    { wch: 8 },
+    { wch: 50 },
+    { wch: 10 },
+    { wch: 14 },
+    { wch: 14 },
   ];
-
-  // Zeile 1 fixieren (Freeze Pane)
   ws['!freeze'] = { xSplit: 0, ySplit: 1 };
+  ws['!autofilter'] = { ref: 'A1:G' + data.length };
 
-  // AutoFilter auf den gesamten Datenbereich
-  ws['!autofilter'] = { ref: `A1:H${data.length}` };
-
-  // Workbook erstellen und speichern
   const wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, ws, 'Getränkekarte');
-  XLSX.writeFile(wb, 'getraenkekarte_vorlage_2026-03-23.xlsx');
+  XLSX.writeFile(wb, 'getraenkekarte_vorlage_2026-03-25.xlsx');
 }
 
 // ── RENDER ──
@@ -697,29 +657,20 @@ const DEFAULT_CATEGORY_ORDER = {
 function getFilteredData() {
   if (!state.data.length) return {};
 
-  const filtered = state.data.filter(row => {
-    const cat = row['Kategorie'] || 'Sonstiges';
-    const tag = (row['Tag'] || '').trim().toLowerCase();
+  // Schema → Angebot-Key
+  const angebotKey = state.schema === 'pe' ? 'peter-edel' : 'kbw';
 
-    // 1. Kategorie muss aktiviert sein
+  const filtered = state.data.filter(row => {
+    const cat    = row['Kategorie'] || 'Sonstiges';
+    const angebot = (row['Angebot'] || '').trim().toLowerCase();
+
+    // 1. Angebot muss zum aktiven Schema passen
+    if (angebot !== angebotKey) return false;
+
+    // 2. Kategorie muss aktiviert sein
     if (!state.enabledCategories.has(cat)) return false;
 
-    // 2. Tag-Logik:
-    //    - 'nur-bistro': nur sichtbar bei Preisebene FoBi
-    //    - 'nur-kultur': nur sichtbar bei Preisebene Kultur oder Ohne
-    //    - andere Tags (z.B. 'tanztee'): nur sichtbar, wenn der Tag in enabledTags aktiviert ist
-    //    - kein Tag: immer sichtbar
-    if (tag === 'nur-bistro') {
-      return state.priceLevel === 'fobi';
-    }
-    if (tag === 'nur-kultur') {
-      return state.priceLevel !== 'fobi';  // sichtbar bei 'kultur' und 'none'
-    }
-    if (tag) {
-      return state.enabledTags.has(tag);
-    }
-
-    return true;  // kein Tag → immer sichtbar
+    return true;
   });
 
   // Kategorien gruppieren
@@ -844,19 +795,9 @@ function buildItemHTML(row, sizes, showPrices) {
   const name    = row['Name']         || '';
   const variant = row['Variante']     || '';
   const desc    = row['Beschreibung'] || '';
+  const price   = row['Preis']        || '';
 
-  // Preis anhand der Preisebene ermitteln
-  let price = '';
-  if (showPrices) {
-    if (state.priceLevel === 'fobi') {
-      price = row['Preis FoBi'] || row['Preis Kultur'] || '';
-    } else if (state.priceLevel === 'kultur') {
-      price = row['Preis Kultur'] || row['Preis FoBi'] || '';
-    }
-    // 'none' → price bleibt leer
-  }
-
-  const priceEl    = price ? `<span class="gk-item-price">${price}</span>` : '';
+  const priceEl    = (showPrices && price) ? `<span class="gk-item-price">${price}</span>` : '';
   const descEl     = desc ? `<div class="gk-item-desc std-desc" style="font-size:${sizes.descSz}px">${desc}</div>` : '';
   const allergen   = row['Allergene'] || '';
   const allergenEl = allergen.trim()
@@ -919,7 +860,7 @@ function buildCard_A4P() {
   const fmt  = FORMATS['A4P'];
   const cats = getFilteredData();
   const s    = calcSizes_A4P(fmt.w);
-  const columnsHTML = buildColumnsHTML(cats, 2, s, state.priceLevel !== 'none');
+  const columnsHTML = buildColumnsHTML(cats, 2, s, state.showPrices);
   return buildCardShell(fmt, s, columnsHTML);
 }
 
@@ -930,7 +871,7 @@ function buildCard_A4L() {
   const fmt  = FORMATS['A4L'];
   const cats = getFilteredData();
   const s    = calcSizes_A4L(fmt.w);
-  const columnsHTML = buildColumnsHTML(cats, 3, s, state.priceLevel !== 'none');
+  const columnsHTML = buildColumnsHTML(cats, 3, s, state.showPrices);
   return buildCardShell(fmt, s, columnsHTML);
 }
 
@@ -941,7 +882,7 @@ function buildCard_A3P() {
   const fmt  = FORMATS['A3P'];
   const cats = getFilteredData();
   const s    = calcSizes_A3P(fmt.w);
-  const columnsHTML = buildColumnsHTML(cats, 2, s, state.priceLevel !== 'none');
+  const columnsHTML = buildColumnsHTML(cats, 2, s, state.showPrices);
   return buildCardShell(fmt, s, columnsHTML);
 }
 
@@ -952,7 +893,7 @@ function buildCard_A3L() {
   const fmt  = FORMATS['A3L'];
   const cats = getFilteredData();
   const s    = calcSizes_A3L(fmt.w);
-  const columnsHTML = buildColumnsHTML(cats, 3, s, state.priceLevel !== 'none');
+  const columnsHTML = buildColumnsHTML(cats, 3, s, state.showPrices);
   return buildCardShell(fmt, s, columnsHTML);
 }
 
@@ -963,7 +904,7 @@ function buildCard_DL() {
   const fmt  = FORMATS['DINLANG'];
   const cats = getFilteredData();
   const s    = calcSizes_DL(fmt.w);
-  const columnsHTML = buildColumnsHTML(cats, 1, s, state.priceLevel !== 'none');
+  const columnsHTML = buildColumnsHTML(cats, 1, s, state.showPrices);
   return buildCardShell(fmt, s, columnsHTML, { showSubtitle: false });
 }
 
@@ -992,7 +933,7 @@ function buildCard_SCREEN() {
     headerLogoH: 0,
   };
 
-  const columnsHTML = buildColumnsHTML(cats, 3, sizes, state.priceLevel !== 'none');
+  const columnsHTML = buildColumnsHTML(cats, 3, sizes, state.showPrices);
   const allergen = getAllergenText();
 
   // Kein Header bei SCREEN — nur Body + Allergen
@@ -1073,7 +1014,7 @@ async function exportPDF() {
     if (isScreen) {
       // SCREEN: als JPEG exportieren (3840×2160)
       const link = document.createElement('a');
-      link.download = `Getraenkekarte_${state.priceLevel}_SCREEN_4K.jpg`;
+      link.download = `Getraenkekarte_${state.schema}_SCREEN_4K.jpg`;
       link.href = canvas.toDataURL('image/jpeg', 0.95);
       link.click();
     } else {
@@ -1087,7 +1028,7 @@ async function exportPDF() {
         compress: true,
       });
       pdf.addImage(imgData, 'JPEG', 0, 0, page.w, page.h, '', 'FAST');
-      pdf.save(`Getraenkekarte_${state.priceLevel}_${state.format}.pdf`);
+      pdf.save(`Getraenkekarte_${state.schema}_${state.format}.pdf`);
     }
 
   } catch(err) {
@@ -1123,7 +1064,7 @@ async function doJPEG() {
     });
 
     const link = document.createElement('a');
-    link.download = `Getraenkekarte_${state.priceLevel}_${state.format}.jpg`;
+    link.download = `Getraenkekarte_${state.schema}_${state.format}.jpg`;
     link.href = canvas.toDataURL('image/jpeg', 0.95);
     link.click();
   } catch(err) {

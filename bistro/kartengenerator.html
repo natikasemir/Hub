@@ -1294,12 +1294,12 @@ function hideHelp(e) {
     // Kartenversion aus config.json
     if (cfg.tools.kartengenerator.version) {
       const versionEl = document.getElementById('cardVersion');
-      if (versionEl) versionEl.textContent = cfg.cardVersion;
+      if (versionEl) versionEl.textContent = cfg.tools.kartengenerator.version;
     }
     // Kontakt-E-Mail aus config.json
     if (cfg.contact.email) {
       const fab = document.getElementById('fabMail');
-      if (fab) fab.href = `mailto:${cfg.contactEmail}?subject=${encodeURIComponent('Frage/Hinweis zu Getränkekartengenerator')}`;
+      if (fab) fab.href = `mailto:${cfg.contact.email}?subject=${encodeURIComponent('Frage/Hinweis zu Getränkekartengenerator')}`;
     }
   } catch(e) {
     console.warn('config.json nicht geladen, Defaults werden verwendet.', e);

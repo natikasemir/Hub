@@ -1009,24 +1009,35 @@ function renderCard() {
   card.className = `getraenkekarte schema-${state.schema} ${formatClass}`;
   card.innerHTML = buildCard();
   applyDimensions();
-  checkOverflow();
+  trimOverflowingCategories();
 }
 
-// ── OVERFLOW-WARNUNG ──
-function checkOverflow() {
+// ── OVERFLOW: Kategorien ausblenden die nicht passen ──
+function trimOverflowingCategories() {
   const warn = document.getElementById('overflowWarning');
   if (!state.data.length) { warn.style.display = 'none'; return; }
 
-  // Prüfe ob Spalteninhalte abgeschnitten werden
   const cols = document.querySelectorAll('#card .gk-grid-col');
-  let clipped = false;
+  const hidden = [];
+
   cols.forEach(col => {
-    if (col.scrollHeight > col.clientHeight + 2) clipped = true; // 2px Toleranz
+    const categories = col.querySelectorAll('.gk-category');
+    const colHeight = col.clientHeight;
+
+    // Von unten nach oben prüfen: letzte Kategorie zuerst entfernen
+    // Solange die Spalte überläuft, letzte Kategorie ausblenden
+    for (let i = categories.length - 1; i >= 0; i--) {
+      if (col.scrollHeight <= colHeight + 2) break; // passt, fertig
+      const cat = categories[i];
+      const catName = cat.querySelector('.gk-cat-title')?.textContent?.trim() || '';
+      cat.style.display = 'none';
+      hidden.push(catName);
+    }
   });
 
-  if (clipped) {
+  if (hidden.length > 0) {
     warn.style.display = 'block';
-    warn.textContent = '⚠ Nicht alle Einträge passen auf dieses Format. Kategorien deaktivieren oder größeres Format wählen.';
+    warn.textContent = `⚠ Passt nicht aufs Format: ${hidden.join(', ')}. Kategorien deaktivieren oder größeres Format wählen.`;
   } else {
     warn.style.display = 'none';
   }

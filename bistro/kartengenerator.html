@@ -835,56 +835,30 @@ function buildItemHTML(row, sizes, showPrices) {
 }
 
 // ── GEMEINSAMER MASONRY-SPALTEN-BUILDER ──
-// JS-basierte Spaltenverteilung statt CSS columns.
-// Verteilt Kategorien per Greedy-Algorithmus auf Spalten,
-// sodass die Spalten möglichst gleichmäßig gefüllt sind.
+// Baut zunächst nur die HTML-Blöcke pro Kategorie.
+// Die tatsächliche Spaltenverteilung passiert in renderCard() per Pixel-Messung.
+function buildCategoryHTML(catName, items, sizes, showPrices) {
+  let itemsHTML = '';
+  items.forEach(row => { itemsHTML += buildItemHTML(row, sizes, showPrices); });
+  itemsHTML += `<div class="a4p-cat-spacer"></div>`;
+  return `<div class="gk-category std-category" data-cat="${catName.replace(/"/g,'&quot;')}">
+    <div class="gk-cat-title std-cat-title" style="font-size:${sizes.catTitleSz}px;">${catName}</div>
+    ${itemsHTML}
+  </div>`;
+}
+
 function buildColumnsHTML(cats, colCount, sizes, showPrices) {
   const catKeys = Object.keys(cats);
   if (catKeys.length === 0) return buildEmptyState();
   const cols = Math.min(colCount, catKeys.length);
 
-  // Gewicht pro Kategorie schätzen: Titel (1.5) + Items + Beschreibungen (0.5 extra)
-  const weights = {};
-  catKeys.forEach(name => {
-    let w = 1.5; // Kategorie-Titel + Abstand
-    cats[name].forEach(row => {
-      w += 1; // Item-Zeile
-      if (row['Beschreibung']) w += 0.5; // Beschreibung braucht extra Platz
-    });
-    weights[name] = w;
-  });
+  // Alle Kategorie-HTML-Blöcke erzeugen (noch nicht auf Spalten verteilt)
+  // Die Verteilung passiert in renderCard() nach dem Messen
+  const allHTML = catKeys.map(name => buildCategoryHTML(name, cats[name], sizes, showPrices)).join('');
 
-  // Spalten initialisieren
-  const columns = Array.from({ length: cols }, () => ({ keys: [], weight: 0 }));
-
-  // Greedy: Jede Kategorie in die Reihenfolge aus getFilteredData()
-  // kommt in die aktuell kürzeste (leichteste) Spalte
-  catKeys.forEach(name => {
-    // Finde die Spalte mit dem geringsten Gewicht
-    let minIdx = 0;
-    for (let i = 1; i < cols; i++) {
-      if (columns[i].weight < columns[minIdx].weight) minIdx = i;
-    }
-    columns[minIdx].keys.push(name);
-    columns[minIdx].weight += weights[name];
-  });
-
-  // HTML für jede Spalte bauen
-  let html = `<div class="gk-columns gk-grid-cols" style="--col-count:${cols};">`;
-  columns.forEach(col => {
-    html += `<div class="gk-grid-col">`;
-    col.keys.forEach(catName => {
-      let itemsHTML = '';
-      cats[catName].forEach(row => { itemsHTML += buildItemHTML(row, sizes, showPrices); });
-      itemsHTML += `<div class="a4p-cat-spacer"></div>`;
-      html += `<div class="gk-category std-category">
-        <div class="gk-cat-title std-cat-title" style="font-size:${sizes.catTitleSz}px;">${catName}</div>
-        ${itemsHTML}
-      </div>`;
-    });
-    html += `</div>`;
-  });
-  return html + '</div>';
+  return `<div class="gk-columns gk-grid-cols" style="--col-count:${cols};">
+    <div class="gk-measure-zone">${allHTML}</div>
+  </div>`;
 }
 
 // ── GEMEINSAMER KARTEN-WRAPPER ──
@@ -1009,32 +983,66 @@ function renderCard() {
   card.className = `getraenkekarte schema-${state.schema} ${formatClass}`;
   card.innerHTML = buildCard();
   applyDimensions();
-  trimOverflowingCategories();
+
+  // Zwei-Pass-Verteilung: Messen, dann verteilen
+  distributeColumns();
 }
 
-// ── OVERFLOW: Kategorien ausblenden die nicht passen ──
-function trimOverflowingCategories() {
+// ── PASS 2: Kategorien messen und auf Spalten verteilen ──
+function distributeColumns() {
   const warn = document.getElementById('overflowWarning');
-  if (!state.data.length) { warn.style.display = 'none'; return; }
+  const measureZone = document.querySelector('#card .gk-measure-zone');
+  if (!measureZone) { warn.style.display = 'none'; return; }
 
-  const cols = document.querySelectorAll('#card .gk-grid-col');
+  const gridContainer = measureZone.parentElement; // .gk-grid-cols
+  const colCount = parseInt(getComputedStyle(gridContainer).getPropertyValue('--col-count')) || 2;
+
+  // Verfügbare Höhe = Höhe des .gk-body (flex:1 im gk-inner)
+  const gkBody = document.querySelector('#card .gk-body');
+  const availableHeight = gkBody.clientHeight;
+
+  // Jede Kategorie in der Messzone messen
+  const categories = measureZone.querySelectorAll('.gk-category');
+  const measured = [];
+  categories.forEach(cat => {
+    measured.push({
+      name: cat.dataset.cat,
+      height: cat.offsetHeight,
+      html: cat.outerHTML,
+    });
+  });
+
+  // Greedy-Verteilung mit echten Pixel-Höhen
+  const columns = Array.from({ length: colCount }, () => ({ items: [], usedHeight: 0 }));
   const hidden = [];
 
-  cols.forEach(col => {
-    const categories = col.querySelectorAll('.gk-category');
-    const colHeight = col.clientHeight;
+  measured.forEach(cat => {
+    // Finde die kürzeste Spalte
+    let minIdx = 0;
+    for (let i = 1; i < colCount; i++) {
+      if (columns[i].usedHeight < columns[minIdx].usedHeight) minIdx = i;
+    }
 
-    // Von unten nach oben prüfen: letzte Kategorie zuerst entfernen
-    // Solange die Spalte überläuft, letzte Kategorie ausblenden
-    for (let i = categories.length - 1; i >= 0; i--) {
-      if (col.scrollHeight <= colHeight + 2) break; // passt, fertig
-      const cat = categories[i];
-      const catName = cat.querySelector('.gk-cat-title')?.textContent?.trim() || '';
-      cat.style.display = 'none';
-      hidden.push(catName);
+    // Passt die Kategorie noch in diese Spalte?
+    if (columns[minIdx].usedHeight + cat.height <= availableHeight) {
+      columns[minIdx].items.push(cat);
+      columns[minIdx].usedHeight += cat.height;
+    } else {
+      // Passt in keine Spalte → ausblenden
+      hidden.push(cat.name);
     }
   });
 
+  // Grid neu aufbauen mit verteilten Spalten
+  let html = '';
+  columns.forEach(col => {
+    html += `<div class="gk-grid-col">`;
+    col.items.forEach(cat => { html += cat.html; });
+    html += `</div>`;
+  });
+  gridContainer.innerHTML = html;
+
+  // Warnung
   if (hidden.length > 0) {
     warn.style.display = 'block';
     warn.textContent = `⚠ Passt nicht aufs Format: ${hidden.join(', ')}. Kategorien deaktivieren oder größeres Format wählen.`;

@@ -280,7 +280,15 @@
 .gk-grid-col {
   display: flex;
   flex-direction: column;
-  overflow: hidden;
+}
+
+/* Messzone: Kategorien werden hier gemessen bevor sie auf Spalten verteilt werden.
+   Breite = eine Spalte (100% / col-count), damit Textumbrüche korrekt gemessen werden. */
+.gk-measure-zone {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-direction: column;
+  width: calc(100% / var(--col-count, 2));
 }
 
 /* Legacy-Klasse beibehalten falls noch referenziert */

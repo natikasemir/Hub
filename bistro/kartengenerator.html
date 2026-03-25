@@ -651,7 +651,7 @@ function downloadTemplate() {
 
 const DEFAULT_CATEGORY_ORDER = {
   first: ['Alkoholfreie Getränke', 'Heißgetränke'],
-  last:  ['Specials', 'Snacks'],
+  last:  ['Shots', 'Specials'],
 };
 
 function getFilteredData() {
@@ -681,7 +681,7 @@ function getFilteredData() {
     cats[cat].push(row);
   });
 
-  // Sortierung
+  // Sortierung: first → mitte (nach Itemanzahl absteigend, alphabetisch bei Gleichstand) → last
   const hasConfigOrder = state.categoryOrder.first.length > 0 || state.categoryOrder.last.length > 0;
   const first = hasConfigOrder ? state.categoryOrder.first : DEFAULT_CATEGORY_ORDER.first;
   const last  = hasConfigOrder ? state.categoryOrder.last  : DEFAULT_CATEGORY_ORDER.last;
@@ -693,7 +693,13 @@ function getFilteredData() {
   const lastSet    = new Set(lastKeys);
   const middleKeys = allKeys
     .filter(k => !firstSet.has(k) && !lastSet.has(k))
-    .sort((a, b) => cats[b].length - cats[a].length);
+    .sort((a, b) => {
+      // Primär: mehr Items zuerst (füllen Masonry-Spalten besser)
+      const diff = cats[b].length - cats[a].length;
+      if (diff !== 0) return diff;
+      // Sekundär: alphabetisch für stabile Reihenfolge
+      return a.localeCompare(b, 'de');
+    });
 
   const sortedKeys = [...firstKeys, ...middleKeys, ...lastKeys];
   const sorted = {};
@@ -1017,6 +1023,26 @@ async function exportPDF() {
       link.download = `Getraenkekarte_${state.schema}_SCREEN_4K.jpg`;
       link.href = canvas.toDataURL('image/jpeg', 0.95);
       link.click();
+    } else if (state.format === 'DINLANG') {
+      // DIN LANG: 3× nebeneinander auf A4 Querformat (297×210mm)
+      const imgData = canvas.toDataURL('image/jpeg', 0.95);
+      const { jsPDF } = window.jspdf;
+      const pdf = new jsPDF({
+        orientation: 'landscape',
+        unit: 'mm',
+        format: [297, 210],
+        compress: true,
+      });
+      // 3 Kopien nebeneinander (je 99×210mm)
+      pdf.addImage(imgData, 'JPEG', 0,   0, 99, 210, '', 'FAST');
+      pdf.addImage(imgData, 'JPEG', 99,  0, 99, 210, '', 'FAST');
+      pdf.addImage(imgData, 'JPEG', 198, 0, 99, 210, '', 'FAST');
+      // Dünne graue Schnittlinien
+      pdf.setDrawColor(200, 200, 200);
+      pdf.setLineWidth(0.3);
+      pdf.line(99,  0, 99,  210);
+      pdf.line(198, 0, 198, 210);
+      pdf.save(`Getraenkekarte_${state.schema}_DINLANG_3x.pdf`);
     } else {
       // Alle anderen Formate: als PDF
       const imgData = canvas.toDataURL('image/jpeg', 0.95);

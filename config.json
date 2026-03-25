@@ -1,6 +1,6 @@
 {
   "guenther": {
-    "version": "2026-03-15",
+    "version": "2026-03-23",
     "name": "GÜNTHER",
     "fullName": "Gesamtübersicht Nützlicher Tools für Hospitality, Events und Restaurantbetrieb"
   },
@@ -26,7 +26,7 @@
   "tools": {
     "kartengenerator": {
       "name": "Getränkekarten-Generator",
-      "version": "2026-03-15",
+      "version": "2026-03-26",
       "path": "Bistro/kartengenerator.html",
       "status": "live"
     },

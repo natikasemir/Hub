@@ -446,14 +446,19 @@ function buildCategoryToggles() {
 
   const cats = [...new Set(relevantRows.map(r => r['Kategorie'] || 'Sonstiges'))];
 
-  // Sortieren nach DEFAULT_CATEGORY_ORDER
-  const hasConfigOrder = state.categoryOrder.first.length > 0 || state.categoryOrder.last.length > 0;
-  const first = hasConfigOrder ? state.categoryOrder.first : DEFAULT_CATEGORY_ORDER.first;
-  const last  = hasConfigOrder ? state.categoryOrder.last  : DEFAULT_CATEGORY_ORDER.last;
-  const firstSet = new Set(first);
-  const lastSet  = new Set(last);
-  const middle = cats.filter(c => !firstSet.has(c) && !lastSet.has(c));
-  const sorted = [...first.filter(c => cats.includes(c)), ...middle, ...last.filter(c => cats.includes(c))];
+  // Sortieren nach DEFAULT_CATEGORY_ORDER (feste Liste)
+  const order = DEFAULT_CATEGORY_ORDER;
+  const knownSet = new Set(order);
+  const known = order.filter(c => cats.includes(c));
+  const unknown = cats.filter(c => !knownSet.has(c));
+  // Unbekannte vor 'Snacks' einfügen
+  const snacksIdx = known.indexOf('Snacks');
+  if (snacksIdx >= 0 && unknown.length > 0) {
+    known.splice(snacksIdx, 0, ...unknown);
+  } else {
+    known.push(...unknown);
+  }
+  const sorted = known;
 
   state.availableCategories = sorted;
   state.enabledCategories = new Set(sorted);  // alle an
@@ -663,10 +668,19 @@ function downloadTemplate() {
 
 // ── RENDER ──
 
-const DEFAULT_CATEGORY_ORDER = {
-  first: ['Alkoholfreie Getränke', 'Heißgetränke'],
-  last:  ['Shots', 'Specials'],
-};
+// Feste Kategoriereihenfolge. Kategorien die hier nicht vorkommen,
+// werden vor 'Snacks' eingefügt (sortiert nach Itemanzahl).
+// config.json kann diese Reihenfolge komplett überschreiben.
+const DEFAULT_CATEGORY_ORDER = [
+  'Alkoholfreie Getränke',
+  'Heißgetränke',
+  'Bier',
+  'Wein & Sekt',
+  'Longdrinks',
+  'Shots',
+  'Specials',
+  'Snacks',
+];
 
 function getFilteredData() {
   if (!state.data.length) return {};
@@ -695,27 +709,47 @@ function getFilteredData() {
     cats[cat].push(row);
   });
 
-  // Sortierung: first → mitte (nach Itemanzahl absteigend, alphabetisch bei Gleichstand) → last
+  // Sortierung: config.json überschreibt Defaults komplett
   const hasConfigOrder = state.categoryOrder.first.length > 0 || state.categoryOrder.last.length > 0;
-  const first = hasConfigOrder ? state.categoryOrder.first : DEFAULT_CATEGORY_ORDER.first;
-  const last  = hasConfigOrder ? state.categoryOrder.last  : DEFAULT_CATEGORY_ORDER.last;
 
-  const allKeys = Object.keys(cats);
-  const firstKeys  = first.filter(k => cats[k]);
-  const lastKeys   = last.filter(k => cats[k]);
-  const firstSet   = new Set(firstKeys);
-  const lastSet    = new Set(lastKeys);
-  const middleKeys = allKeys
-    .filter(k => !firstSet.has(k) && !lastSet.has(k))
-    .sort((a, b) => {
-      // Primär: mehr Items zuerst (füllen Masonry-Spalten besser)
-      const diff = cats[b].length - cats[a].length;
-      if (diff !== 0) return diff;
-      // Sekundär: alphabetisch für stabile Reihenfolge
-      return a.localeCompare(b, 'de');
-    });
+  let sortedKeys;
+  if (hasConfigOrder) {
+    // Legacy config.json-Logik: first → middle → last
+    const first = state.categoryOrder.first;
+    const last  = state.categoryOrder.last;
+    const allKeys = Object.keys(cats);
+    const firstKeys  = first.filter(k => cats[k]);
+    const lastKeys   = last.filter(k => cats[k]);
+    const firstSet   = new Set(firstKeys);
+    const lastSet    = new Set(lastKeys);
+    const middleKeys = allKeys
+      .filter(k => !firstSet.has(k) && !lastSet.has(k))
+      .sort((a, b) => cats[b].length - cats[a].length);
+    sortedKeys = [...firstKeys, ...middleKeys, ...lastKeys];
+  } else {
+    // Default: feste Reihenfolge, unbekannte Kategorien vor 'Snacks'
+    const order = DEFAULT_CATEGORY_ORDER;
+    const knownSet = new Set(order);
+    const allKeys = Object.keys(cats);
 
-  const sortedKeys = [...firstKeys, ...middleKeys, ...lastKeys];
+    // Bekannte Kategorien in Reihenfolge
+    const known = order.filter(k => cats[k]);
+
+    // Unbekannte Kategorien (nach Itemanzahl absteigend)
+    const unknown = allKeys
+      .filter(k => !knownSet.has(k))
+      .sort((a, b) => cats[b].length - cats[a].length);
+
+    // Unbekannte vor 'Snacks' einfügen (oder am Ende, wenn kein Snacks)
+    const snacksIdx = known.indexOf('Snacks');
+    if (snacksIdx >= 0 && unknown.length > 0) {
+      known.splice(snacksIdx, 0, ...unknown);
+    } else {
+      known.push(...unknown);
+    }
+    sortedKeys = known;
+  }
+
   const sorted = {};
   sortedKeys.forEach(k => { sorted[k] = cats[k]; });
   return sorted;

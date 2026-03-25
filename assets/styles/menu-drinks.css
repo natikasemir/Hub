@@ -273,7 +273,6 @@
 .std-masonry {
   columns: var(--col-count, 2);
   column-gap: 5%;
-  height: 100%;
   display: block;
 }
 

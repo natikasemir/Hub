@@ -82,6 +82,18 @@ aside { background: white; border-right: 1px solid var(--gray-200); padding: 18p
 
 /* Action-Buttons */
 .actions { display: flex; flex-direction: column; gap: 6px; margin-top: auto; padding-top: 4px; }
+
+/* Overflow-Warnung */
+.overflow-warning {
+  background: #fff3cd;
+  color: #856404;
+  border: 1px solid #ffc107;
+  border-radius: var(--radius-ui);
+  padding: 8px 10px;
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1.4;
+}
 .btn { display: flex; align-items: center; justify-content: center; gap: 7px; border: none; border-radius: var(--radius-ui); padding: 10px 14px; font-family: inherit; font-size: 12px; font-weight: 600; cursor: pointer; transition: all 0.15s; }
 .btn-primary { background: var(--accent); color: white; }
 .btn-primary:hover { background: var(--accent-hover); }
@@ -298,6 +310,8 @@ main { display: flex; align-items: center; justify-content: center; padding: 28p
     <button class="template-link" onclick="downloadTemplate()">↓ Vorlage herunterladen (.xlsx)</button>
   </div>
 
+  <div class="overflow-warning" id="overflowWarning" style="display:none;"></div>
+
   <div class="actions">
     <button class="btn btn-primary" id="btnPrint" onclick="doPrint()" disabled>↓ Als PDF drucken</button>
     <button class="btn btn-secondary" id="btnJPEG" onclick="doJPEG()" disabled>↓ Als JPEG speichern</button>
@@ -390,7 +404,7 @@ function setAllergen(v, btn) {
   renderCard();
 }
 function setTitle(v) {
-  state.title = v.trim() || 'Getränke';
+  state.title = v.trim();
   renderCard();
 }
 function setFormat(f, btn) {
@@ -879,16 +893,20 @@ function buildColumnsHTML(cats, colCount, sizes, showPrices) {
 function buildCardShell(fmt, sizes, columnsHTML, { showSubtitle = true } = {}) {
   const logoSrc = LOGOS[state.schema];
   const W = fmt.w;
-  const title = state.title || 'Getränke';
+  const title = state.title;  // leer = kein Titel
 
-  return `
-    <div class="gk-inner gk-inner-std">
+  // Header nur anzeigen wenn Titel vorhanden
+  const headerHTML = title ? `
       <div class="gk-header no-line">
         <div>
           <div class="gk-title" style="font-size:${sizes.titleSz}px;">${title}</div>
         </div>
         <img class="gk-logo" src="${logoSrc}" alt="Logo" style="height:${sizes.headerLogoH}px;max-width:${Math.round(W*0.25)}px;">
-      </div>
+      </div>` : '';
+
+  return `
+    <div class="gk-inner gk-inner-std">
+      ${headerHTML}
       <div class="gk-body">${columnsHTML}</div>
       ${getAllergenText() ? `<div class="gk-allergen">${getAllergenText()}</div>` : ""}
     </div>`;
@@ -991,6 +1009,27 @@ function renderCard() {
   card.className = `getraenkekarte schema-${state.schema} ${formatClass}`;
   card.innerHTML = buildCard();
   applyDimensions();
+  checkOverflow();
+}
+
+// ── OVERFLOW-WARNUNG ──
+function checkOverflow() {
+  const warn = document.getElementById('overflowWarning');
+  if (!state.data.length) { warn.style.display = 'none'; return; }
+
+  // Prüfe ob Spalteninhalte abgeschnitten werden
+  const cols = document.querySelectorAll('#card .gk-grid-col');
+  let clipped = false;
+  cols.forEach(col => {
+    if (col.scrollHeight > col.clientHeight + 2) clipped = true; // 2px Toleranz
+  });
+
+  if (clipped) {
+    warn.style.display = 'block';
+    warn.textContent = '⚠ Nicht alle Einträge passen auf dieses Format. Kategorien deaktivieren oder größeres Format wählen.';
+  } else {
+    warn.style.display = 'none';
+  }
 }
 
 function applyDimensions() {

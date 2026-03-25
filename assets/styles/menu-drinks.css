@@ -78,9 +78,9 @@
 .gk-header.no-line { padding-bottom: 0.5%; margin-bottom: 2.5%; }
 
 /* ── BODY ── */
-.gk-body { flex: 1; overflow: hidden; }
+.gk-body { flex: 1; overflow: hidden; min-height: 0; }
 
-.gk-columns { display: grid; gap: 5%; height: 100%; }
+.gk-columns { display: grid; gap: 5%; }
 
 /* ── KATEGORIE ── */
 .gk-category { overflow: hidden; }
@@ -274,11 +274,13 @@
   display: grid;
   grid-template-columns: repeat(var(--col-count, 2), 1fr);
   column-gap: 5%;
+  height: 100%;
 }
 
 .gk-grid-col {
   display: flex;
   flex-direction: column;
+  overflow: hidden;
 }
 
 /* Legacy-Klasse beibehalten falls noch referenziert */

@@ -562,8 +562,8 @@
 }
 
 /* Mehr Abstand zwischen Titel und Artikelliste */
-.getraenkekarte.format-dinlang .gk-title-bar {
-  margin-bottom: 5%;
+.getraenkekarte.format-dinlang .gk-body {
+  padding-top: 3%;
 }
 
 /* Kategorie-Titel enger */

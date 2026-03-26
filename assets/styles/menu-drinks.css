@@ -552,7 +552,7 @@
 
 /* DIN Lang: engerer inner padding wegen schmaler Breite */
 .getraenkekarte.format-dinlang .gk-inner-std {
-  top: 4%; left: 6%; right: 6%; bottom: 2%;
+  top: 7%; left: 6%; right: 6%; bottom: 2%;
 }
 
 /* Kompakterer Header */

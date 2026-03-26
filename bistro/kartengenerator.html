@@ -426,7 +426,7 @@ const state = {
   data: [],
   enabledCategories: new Set(),
   availableCategories: [],
-  categoryOrder: { first: [], last: [] }
+  categoryOrder: []   // wird aus config.json geladen, überschreibt DEFAULT_CATEGORY_ORDER
 };
 
 function clearActive(sel) { document.querySelectorAll(sel).forEach(b=>b.classList.remove('active')); }
@@ -491,8 +491,10 @@ function buildCategoryToggles() {
 
   const cats = [...new Set(relevantRows.map(r => r['Kategorie'] || 'Sonstiges'))];
 
-  // Sortieren nach DEFAULT_CATEGORY_ORDER (feste Liste)
-  const order = DEFAULT_CATEGORY_ORDER;
+  // Sortieren nach config.json oder DEFAULT_CATEGORY_ORDER
+  const order = state.categoryOrder.length > 0
+    ? state.categoryOrder
+    : DEFAULT_CATEGORY_ORDER;
   const knownSet = new Set(order);
   const known = order.filter(c => cats.includes(c));
   const unknown = cats.filter(c => !knownSet.has(c));
@@ -728,7 +730,7 @@ const DEFAULT_CATEGORY_ORDER = [
 ];
 
 function getFilteredData() {
-  if (!state.data.length) return {};
+  if (!state.data.length) return new Map();
 
   // Schema → Angebot-Key
   const angebotKey = state.schema === 'pe' ? 'peter-edel' : 'kbw';
@@ -754,49 +756,34 @@ function getFilteredData() {
     cats[cat].push(row);
   });
 
-  // Sortierung: config.json überschreibt Defaults komplett
-  const hasConfigOrder = state.categoryOrder.first.length > 0 || state.categoryOrder.last.length > 0;
+  // Sortierung: config.json-Array überschreibt Default-Array
+  const order = state.categoryOrder.length > 0
+    ? state.categoryOrder
+    : DEFAULT_CATEGORY_ORDER;
 
-  let sortedKeys;
-  if (hasConfigOrder) {
-    // Legacy config.json-Logik: first → middle → last
-    const first = state.categoryOrder.first;
-    const last  = state.categoryOrder.last;
-    const allKeys = Object.keys(cats);
-    const firstKeys  = first.filter(k => cats[k]);
-    const lastKeys   = last.filter(k => cats[k]);
-    const firstSet   = new Set(firstKeys);
-    const lastSet    = new Set(lastKeys);
-    const middleKeys = allKeys
-      .filter(k => !firstSet.has(k) && !lastSet.has(k))
-      .sort((a, b) => cats[b].length - cats[a].length);
-    sortedKeys = [...firstKeys, ...middleKeys, ...lastKeys];
+  const knownSet = new Set(order);
+  const allKeys = Object.keys(cats);
+
+  // Bekannte Kategorien in vorgegebener Reihenfolge
+  const known = order.filter(k => cats[k]);
+
+  // Unbekannte Kategorien (nach Itemanzahl absteigend)
+  const unknown = allKeys
+    .filter(k => !knownSet.has(k))
+    .sort((a, b) => cats[b].length - cats[a].length);
+
+  // Unbekannte vor 'Snacks' einfügen (oder am Ende)
+  const snacksIdx = known.indexOf('Snacks');
+  if (snacksIdx >= 0 && unknown.length > 0) {
+    known.splice(snacksIdx, 0, ...unknown);
   } else {
-    // Default: feste Reihenfolge, unbekannte Kategorien vor 'Snacks'
-    const order = DEFAULT_CATEGORY_ORDER;
-    const knownSet = new Set(order);
-    const allKeys = Object.keys(cats);
-
-    // Bekannte Kategorien in Reihenfolge
-    const known = order.filter(k => cats[k]);
-
-    // Unbekannte Kategorien (nach Itemanzahl absteigend)
-    const unknown = allKeys
-      .filter(k => !knownSet.has(k))
-      .sort((a, b) => cats[b].length - cats[a].length);
-
-    // Unbekannte vor 'Snacks' einfügen (oder am Ende, wenn kein Snacks)
-    const snacksIdx = known.indexOf('Snacks');
-    if (snacksIdx >= 0 && unknown.length > 0) {
-      known.splice(snacksIdx, 0, ...unknown);
-    } else {
-      known.push(...unknown);
-    }
-    sortedKeys = known;
+    known.push(...unknown);
   }
+  const sortedKeys = known;
 
-  const sorted = {};
-  sortedKeys.forEach(k => { sorted[k] = cats[k]; });
+  // Map statt Object — garantiert Reihenfolge
+  const sorted = new Map();
+  sortedKeys.forEach(k => { sorted.set(k, cats[k]); });
   return sorted;
 }
 
@@ -927,13 +914,14 @@ function buildCategoryHTML(catName, items, sizes, showPrices) {
 }
 
 function buildColumnsHTML(cats, colCount, sizes, showPrices) {
-  const catKeys = Object.keys(cats);
+  // cats ist eine Map (garantierte Reihenfolge aus getFilteredData)
+  const catKeys = [...cats.keys()];
   if (catKeys.length === 0) return buildEmptyState();
   const cols = Math.min(colCount, catKeys.length);
 
   // Alle Kategorie-HTML-Blöcke erzeugen (noch nicht auf Spalten verteilt)
   // Die Verteilung passiert in renderCard() nach dem Messen
-  const allHTML = catKeys.map(name => buildCategoryHTML(name, cats[name], sizes, showPrices)).join('');
+  const allHTML = catKeys.map(name => buildCategoryHTML(name, cats.get(name), sizes, showPrices)).join('');
 
   return `<div class="gk-columns gk-grid-cols" style="--col-count:${cols};">
     <div class="gk-measure-zone">${allHTML}</div>
@@ -1319,11 +1307,9 @@ function hideHelp(e) {
 (async () => {
   try {
     const cfg = await fetch('../config.json').then(r => r.json());
-    if (cfg.categoryOrder) {
-      state.categoryOrder = {
-        first: cfg.categoryOrder.first || [],
-        last:  cfg.categoryOrder.last  || [],
-      };
+    // Kategoriereihenfolge aus config.json (einfaches Array)
+    if (cfg.tools?.kartengenerator?.categoryOrder && Array.isArray(cfg.tools.kartengenerator.categoryOrder)) {
+      state.categoryOrder = cfg.tools.kartengenerator.categoryOrder;
     }
     // Kartenversion aus config.json
     if (cfg.tools?.kartengenerator?.version) {

@@ -386,11 +386,26 @@ main { display: flex; align-items: center; justify-content: center; padding: 28p
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script>
-// ── LOGOS (injected) ──
-const LOGOS = {
-  pe:  '../assets/logos/PE_Logo_v2_blau.svg',
-  kbw: '../assets/logos/kbw_logo_brombeere.svg'
+// ── HINTERGRUNDBILDER (pro Format × Schema) ──
+const BG_PATH = '../assets/images/backgrounds';
+const BACKGROUNDS = {
+  'A4P-pe':     `${BG_PATH}/Background_A4P--peter-edel.jpg`,
+  'A4L-pe':     `${BG_PATH}/Background_A4L--peter-edel.jpg`,
+  'A3P-pe':     `${BG_PATH}/Background_A3P--peter-edel.jpg`,
+  'A3L-pe':     `${BG_PATH}/Background_A3L--peter-edel.jpg`,
+  'DINLANG-pe': `${BG_PATH}/Background_DL--peter-edel.jpg`,
+  'SCREEN-pe':  `${BG_PATH}/Background_SCREEN--peter-edel.jpg`,
+  'A4P-kbw':     `${BG_PATH}/Background_A4P--kbw.jpg`,
+  'A4L-kbw':     `${BG_PATH}/Background_A4L--kbw.jpg`,
+  'A3P-kbw':     `${BG_PATH}/Background_A3P--kbw.jpg`,
+  'A3L-kbw':     `${BG_PATH}/Background_A3L--kbw.jpg`,
+  'DINLANG-kbw': `${BG_PATH}/Background_DL--kbw.jpg`,
+  'SCREEN-kbw':  `${BG_PATH}/Background_SCREEN--kbw.jpg`,
 };
+
+function getBackground() {
+  return BACKGROUNDS[`${state.format}-${state.schema}`] || '';
+}
 
 // ── FORMAT DIMENSIONS (px at 96dpi) ──
 const FORMATS = {
@@ -926,25 +941,18 @@ function buildColumnsHTML(cats, colCount, sizes, showPrices) {
 }
 
 // ── GEMEINSAMER KARTEN-WRAPPER ──
-// Erzeugt die Standard-Kartenstruktur (Header mit Titel + Logo, Body, Allergen-Footer).
-// DINLANG bekommt keinen Subtitle (zu schmal).
-function buildCardShell(fmt, sizes, columnsHTML, { showSubtitle = true } = {}) {
-  const logoSrc = LOGOS[state.schema];
-  const W = fmt.w;
-  const title = state.title;  // leer = kein Titel
+// Hintergrundbild enthält Logo + Design. Titel ist optional (nur Text, kein Logo).
+function buildCardShell(fmt, sizes, columnsHTML) {
+  const title = state.title;
 
-  // Header nur anzeigen wenn Titel vorhanden
-  const headerHTML = title ? `
-      <div class="gk-header no-line">
-        <div>
-          <div class="gk-title" style="font-size:${sizes.titleSz}px;">${title}</div>
-        </div>
-        <img class="gk-logo" src="${logoSrc}" alt="Logo" style="height:${sizes.headerLogoH}px;max-width:${Math.round(W*0.25)}px;">
+  const titleHTML = title ? `
+      <div class="gk-title-bar">
+        <div class="gk-title" style="font-size:${sizes.titleSz}px;">${title}</div>
       </div>` : '';
 
   return `
     <div class="gk-inner gk-inner-std">
-      ${headerHTML}
+      ${titleHTML}
       <div class="gk-body">${columnsHTML}</div>
       ${getAllergenText() ? `<div class="gk-allergen">${getAllergenText()}</div>` : ""}
     </div>`;
@@ -1002,7 +1010,7 @@ function buildCard_DL() {
   const cats = getFilteredData();
   const s    = calcSizes_DL(fmt.w);
   const columnsHTML = buildColumnsHTML(cats, 1, s, state.showPrices);
-  return buildCardShell(fmt, s, columnsHTML, { showSubtitle: false });
+  return buildCardShell(fmt, s, columnsHTML);
 }
 
 // ══════════════════════════════════════════════════
@@ -1011,19 +1019,17 @@ function buildCard_DL() {
 function buildCard_SCREEN() {
   const fmt  = FORMATS['SCREEN'];
   const cats = getFilteredData();
-  const W    = fmt.w;
-  const logoSrc = LOGOS[state.schema];
 
   // Schriftgrößen SCREEN (4K: 3840×2160)
   // Fibonacci-Verhältnis: catTitle = itemSz × 1.6
   const pt = 1.333;
-  const itemSz   = Math.round(28 * pt);   // ~37px
-  const catSz    = Math.round(itemSz * 1.6); // ~60px (Fibonacci)
-  const descSz   = Math.round(20 * pt);   // ~27px
-  const allergenSz = 32;                  // px
+  const itemSz   = Math.round(28 * pt);
+  const catSz    = Math.round(itemSz * 1.6);
+  const descSz   = Math.round(20 * pt);
+  const allergenSz = 32;
 
   const sizes = {
-    titleSz:    0, // nicht verwendet — kein Header bei SCREEN
+    titleSz:    0,
     catTitleSz: catSz,
     itemSz:     itemSz,
     descSz:     descSz,
@@ -1033,7 +1039,6 @@ function buildCard_SCREEN() {
   const columnsHTML = buildColumnsHTML(cats, 3, sizes, state.showPrices);
   const allergen = getAllergenText();
 
-  // Kein Header bei SCREEN — nur Body + Allergen
   return `
     <div class="gk-inner gk-inner-std">
       <div class="gk-body" style="height:100%;">${columnsHTML}</div>
@@ -1046,6 +1051,18 @@ function renderCard() {
   const formatClass = 'format-' + state.format.toLowerCase();
   card.className = `getraenkekarte schema-${state.schema} ${formatClass}`;
   card.innerHTML = buildCard();
+
+  // Hintergrundbild setzen (enthält Logo + Design)
+  const bgUrl = getBackground();
+  if (bgUrl) {
+    card.style.backgroundImage = `url('${bgUrl}')`;
+    card.style.backgroundSize = 'cover';
+    card.style.backgroundPosition = 'center';
+    card.style.backgroundRepeat = 'no-repeat';
+  } else {
+    card.style.backgroundImage = '';
+  }
+
   applyDimensions();
 
   // Zwei-Pass-Verteilung: Messen, dann verteilen
@@ -1292,12 +1309,12 @@ function hideHelp(e) {
       };
     }
     // Kartenversion aus config.json
-    if (cfg.tools.kartengenerator.version) {
+    if (cfg.tools?.kartengenerator?.version) {
       const versionEl = document.getElementById('cardVersion');
       if (versionEl) versionEl.textContent = cfg.tools.kartengenerator.version;
     }
     // Kontakt-E-Mail aus config.json
-    if (cfg.contact.email) {
+    if (cfg.contact?.email) {
       const fab = document.getElementById('fabMail');
       if (fab) fab.href = `mailto:${cfg.contact.email}?subject=${encodeURIComponent('Frage/Hinweis zu Getränkekartengenerator')}`;
     }

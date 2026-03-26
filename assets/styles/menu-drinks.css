@@ -77,6 +77,12 @@
 .gk-header.no-line::after { display: none; }
 .gk-header.no-line { padding-bottom: 0.5%; margin-bottom: 2.5%; }
 
+/* Titel-Leiste (ohne Logo — Hintergrundbild enthält das Logo) */
+.gk-title-bar {
+  flex-shrink: 0;
+  margin-bottom: 2%;
+}
+
 /* ── BODY ── */
 .gk-body { flex: 1; overflow: hidden; min-height: 0; }
 

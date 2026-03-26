@@ -89,8 +89,9 @@
 .schema-pe  { --ci: var(--pe-blue);     font-family: 'URW DIN', 'Source Sans 3', Arial, sans-serif; }
 .schema-kbw { --ci: var(--kbw-magenta); font-family: 'Source Sans 3', Arial, sans-serif; }
 
-/* PE-Schema: Kategorieüberschriften in Azo Sans Black */
-.schema-pe .gk-cat-title {
+/* PE-Schema: Kategorieüberschriften und Titel in Azo Sans Black */
+.schema-pe .gk-cat-title,
+.schema-pe .gk-title {
   font-family: 'Azo Sans', 'URW DIN', Arial, sans-serif;
   font-weight: 900;
 }

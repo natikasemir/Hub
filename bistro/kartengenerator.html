@@ -27,7 +27,7 @@
 body { font-family: 'Source Sans 3', Arial, sans-serif; background: var(--gray-100); color: #222; height: 100vh; overflow: hidden; }
 
 /* ── APP SHELL ── */
-.app { display: grid; grid-template-columns: 300px 1fr; grid-template-rows: 56px 1fr; height: 100vh; }
+.app { display: grid; grid-template-columns: 300px 1fr 320px; grid-template-rows: 56px 1fr; height: 100vh; }
 
 header { grid-column: 1/-1; background: var(--pe-blue); display: flex; align-items: center; padding: 0 24px; gap: 12px; }
 header h1 { color: white; font-size: 13px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; }
@@ -133,6 +133,85 @@ main { display: flex; align-items: center; justify-content: center; padding: 28p
 }
 .fab-mail:hover { background: var(--accent-hover); transform: scale(1.08); }
 
+/* ── RECHTE SIDEBAR: Artikelliste ── */
+.sidebar-right {
+  background: white;
+  border-left: 1px solid var(--gray-200);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.sidebar-right-header {
+  padding: 14px 16px 10px;
+  border-bottom: 1px solid var(--gray-200);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-shrink: 0;
+}
+.sidebar-right-header .section-label { margin-bottom: 0; }
+.sidebar-right-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 8px 0;
+}
+/* Kategorie-Gruppe in der Artikelliste */
+.article-group-title {
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--gray-500);
+  padding: 10px 16px 4px;
+  position: sticky;
+  top: 0;
+  background: white;
+  z-index: 1;
+}
+.article-row {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  padding: 5px 16px;
+  cursor: pointer;
+  transition: background 0.1s;
+  font-size: 12px;
+  line-height: 1.4;
+}
+.article-row:hover { background: var(--gray-50); }
+.article-row .art-name { font-weight: 600; color: #222; flex: 1; min-width: 0; }
+.article-row .art-variant { color: var(--gray-500); font-size: 11px; flex-shrink: 0; }
+.article-row .art-price { font-weight: 700; color: #222; flex-shrink: 0; white-space: nowrap; margin-left: auto; }
+.article-row .art-desc { font-size: 10px; color: var(--gray-500); display: block; margin-top: -2px; }
+/* Kompakt: Name + Variante auf einer Zeile, Preis rechts */
+.article-row-inner {
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+  width: 100%;
+}
+.btn-add-article {
+  background: var(--accent);
+  color: white;
+  border: none;
+  width: 26px; height: 26px;
+  border-radius: 50%;
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: background 0.15s;
+}
+.btn-add-article:hover { background: var(--accent-hover); }
+.sidebar-right-footer {
+  padding: 10px 16px;
+  border-top: 1px solid var(--gray-200);
+  flex-shrink: 0;
+}
+
 /* ── HILFE-POPUP ── */
 .help-overlay {
   display: none;
@@ -210,7 +289,7 @@ main { display: flex; align-items: center; justify-content: center; padding: 28p
   * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
   html, body { margin: 0 !important; padding: 0 !important; }
   body, .app { height: auto !important; overflow: visible !important; }
-  aside, header { display: none !important; }
+  aside, header, .sidebar-right { display: none !important; }
   .fab-mail, .overflow-warning { display: none !important; }
   main {
     display: block !important;
@@ -362,6 +441,22 @@ main { display: flex; align-items: center; justify-content: center; padding: 28p
   <a class="fab-mail" id="fabMail" href="#" title="Frage oder Hinweis senden">✉</a>
 </main>
 
+<!-- Rechte Sidebar: Artikelliste -->
+<div class="sidebar-right" id="sidebarRight">
+  <div class="sidebar-right-header">
+    <div class="section-label" style="margin-bottom:0;">Artikel</div>
+    <button class="btn-add-article" onclick="openNewArticle()" title="Neuen Artikel hinzufügen">+</button>
+  </div>
+  <div class="sidebar-right-list" id="articleList">
+    <div style="padding:24px 16px; text-align:center; color:var(--gray-400); font-size:12px;">
+      Artikel werden nach dem Laden angezeigt.
+    </div>
+  </div>
+  <div class="sidebar-right-footer">
+    <button class="btn btn-secondary" style="width:100%;" onclick="exportModifiedExcel()">↓ Geänderte Daten exportieren</button>
+  </div>
+</div>
+
 </div>
 
 <!-- Hilfe-Popup -->
@@ -435,7 +530,8 @@ function clearActive(sel) { document.querySelectorAll(sel).forEach(b=>b.classLis
 function setSchema(s, btn) {
   state.schema = s;
   clearActive('.schema-btn'); btn.classList.add('active');
-  buildCategoryToggles();  // Kategorien neu aufbauen, da anderes Angebot
+  buildCategoryToggles();
+  buildArticleList();
   renderCard();
 }
 function setPrices(v, btn) {
@@ -556,8 +652,9 @@ function handleFile(e) {
       state.data = rows;
       showStatus(`✓ ${rows.length} Einträge geladen`);
 
-      // Sidebar-Toggles aufbauen
+      // Sidebar-Toggles und Artikelliste aufbauen
       buildCategoryToggles();
+      buildArticleList();
 
       document.getElementById('btnPrint').disabled = false;
       document.getElementById('btnJPEG').disabled = false;
@@ -1293,6 +1390,172 @@ function hideHelp(e) {
   }
 }
 
+// ── EINGEBETTETE ARTIKELDATEN (Default-Vorlage) ──
+function getDefaultData() {
+  const headers = ['Kategorie','Name','Variante','Beschreibung','Preis','Allergene','Angebot'];
+  const rows = [
+    ['Alkoholfreie Getränke','Bauer Apfelsaft','0,2l','','2,50 €','','kbw'],
+    ['Alkoholfreie Getränke','Bauer Orangensaft','0,2l','','2,50 €','','kbw'],
+    ['Alkoholfreie Getränke','Spreequell Wasser','0,33l','Classic | Naturell','3,00 €','','kbw'],
+    ['Alkoholfreie Getränke','Spreequell Wasser','0,75l','Classic | Naturell','4,50 €','','kbw'],
+    ['Alkoholfreie Getränke','fritz-kola','0,33l','','2,80 €','1,11','kbw'],
+    ['Alkoholfreie Getränke','fritz-kola SUPER ZERO','0,33l','','2,80 €','1,9,10,11','kbw'],
+    ['Alkoholfreie Getränke','fritz-limo HONIGMELONE','0,33l','','2,80 €','','kbw'],
+    ['Alkoholfreie Getränke','fritz-limo APFEL-KIRSCH-HOLUNDER','0,33l','','2,80 €','','kbw'],
+    ['Alkoholfreie Getränke','fritz-limo ZITRONE','0,33l','','2,80 €','','kbw'],
+    ['Alkoholfreie Getränke','fritz-limo ORANGE','0,33l','','2,80 €','','kbw'],
+    ['Alkoholfreie Getränke','fritz-spritz RHABARBER','0,33l','','2,80 €','','kbw'],
+    ['Alkoholfreie Getränke','fritz-spritz APFELSCHORLE','0,33l','','2,80 €','','kbw'],
+    ['Alkoholfreie Getränke','fritz-spritz TRAUBENSCHORLE','0,33l','','2,80 €','','kbw'],
+    ['Alkoholfreie Getränke','Club Mate','0,33l','','4,00 €','11','kbw'],
+    ['Alkoholfreie Getränke','Red Bull','0,25l','','3,50 €','1,2,11,13','kbw'],
+    ['Alkoholfreie Getränke','Lammsbräu Pils (alkoholfrei)','0,33l','','3,20 €','16,a','kbw'],
+    ['Heißgetränke','Kaffee Créme','','','3,50 €','','kbw'],
+    ['Heißgetränke','Americano','','','3,00 €','','kbw'],
+    ['Heißgetränke','Espresso','','','2,50 €','','kbw'],
+    ['Heißgetränke','Espresso doppelt','','','4,00 €','','kbw'],
+    ['Heißgetränke','Espresso Macchiato','','','2,80 €','','kbw'],
+    ['Heißgetränke','Cappuccino','','','3,50 €','','kbw'],
+    ['Heißgetränke','Latte Macchiato','','','3,50 €','','kbw'],
+    ['Heißgetränke','Milchkaffee','','','3,50 €','','kbw'],
+    ['Heißgetränke','Tee','','','3,00 €','','kbw'],
+    ['Heißgetränke','Espresso Shot','','','1,00 €','','kbw'],
+    ['Heißgetränke','Flavour Shot','','Vanille | Weiße Schokolade | Karamell','0,50 €','1','kbw'],
+    ['Snacks','Halbes Brötchen','','verschieden belegt','1,80 €','','kbw'],
+    ['Snacks','Halbes Brötchen','','mit Lachs','2,80 €','','kbw'],
+    ['Snacks','Ganzes Brötchen','','verschieden belegt','2,50 €','','kbw'],
+    ['Snacks','Ganzes Brötchen','','mit Lachs','3,50 €','','kbw'],
+    ['Snacks','Stulle','','verschieden belegt','3,00 €','','kbw'],
+    ['Snacks','Laugenstange','','verschieden belegt','3,00 €','','kbw'],
+    ['Snacks','Handobst','','verschiedene Sorten','1,00 €','','kbw'],
+    ['Snacks','Bircher Müsli','','hausgemacht','3,50 €','','kbw'],
+    ['Snacks','Milchreis','','laktosefrei','3,50 €','','kbw'],
+    ['Snacks','Nachtisch','','verschiedene Sorten','1,50 €','','kbw'],
+    ['Snacks','Kuchen','','verschiedene Sorten','2,50 €','','kbw'],
+    ['Snacks','Torte','','verschiedene Sorten','3,50 €','','kbw'],
+    ['Snacks','Kekse','','verschiedene Sorten','1,80 €','','kbw'],
+    ['Alkoholfreie Getränke','Spreequell Wasser','0,33l','Classic | Naturell','3,00 €','','peter-edel'],
+    ['Alkoholfreie Getränke','fritz-kola','0,33l','ORIGINAL | SUPER ZERO','4,00 €','','peter-edel'],
+    ['Alkoholfreie Getränke','fritz-limo','0,33l','INGWER-LIMETTE | ORANGE | ZITRONE | APFEL-KIRSCH-HOLUNDER','4,00 €','','peter-edel'],
+    ['Alkoholfreie Getränke','fritz-spritz','0,33l','BIO RHABARBERSCHORLE | BIO APFELSCHORLE','4,00 €','','peter-edel'],
+    ['Alkoholfreie Getränke','Club Mate','0,33l','','4,00 €','','peter-edel'],
+    ['Alkoholfreie Getränke','Red Bull','0,25l','','4,50 €','','peter-edel'],
+    ['Alkoholfreie Getränke','Lammsbräu Pils (alkoholfrei)','0,33l','','4,00 €','16,a','peter-edel'],
+    ['Alkoholfreie Getränke','Spritz alkoholfrei','0,3l','Laori Ruby No. 4, Vaux Bio Träublein, Wasser, Alkohol <0,3%','7,50 €','','peter-edel'],
+    ['Alkoholfreie Getränke','Gin Tonic alkoholfrei','0,3l','Mampe 00, Thomas Henry Tonic Water, Alkohol <0,3%','7,50 €','','peter-edel'],
+    ['Wein & Sekt','Weißwein trocken','0,2l','Grauer Burgunder','7,00 €','','peter-edel'],
+    ['Wein & Sekt','Rotwein trocken','0,2l','Primitivo Salento','7,00 €','','peter-edel'],
+    ['Wein & Sekt','Rosé trocken','0,2l','50° Pinot Noir','7,00 €','','peter-edel'],
+    ['Wein & Sekt','Weiß- & Roséweinschorle trocken','0,2l','','4,00 €','','peter-edel'],
+    ['Wein & Sekt','Sekt Piccolo trocken','0,2l','Zekt','7,00 €','','peter-edel'],
+    ['Wein & Sekt','Sekt trocken','0,1l','Zekt','3,50 €','','peter-edel'],
+    ['Bier','Berliner Pilsner | Naturradler','0,33l','','4,00 €','','peter-edel'],
+    ['Bier','Q-Bier aus Pankow','0,33l','Pils | Pale Ale','4,50 €','','peter-edel'],
+    ['Bier','Schöfferhofer Grapefruit','0,33l','','4,50 €','','peter-edel'],
+    ['Bier','Helles','0,5l',"Brewer's Tribute",'5,00 €','','peter-edel'],
+    ['Longdrinks','Club Mate Vodka','0,3l','Mampe Vodka, Club Mate','7,50 €','','peter-edel'],
+    ['Longdrinks','Vodka Lemon','0,3l','Mampe Vodka, Thomas Henry Bitter Lemon','7,50 €','','peter-edel'],
+    ['Longdrinks','Gin Tonic','0,3l','Mampe Gin, Thomas Henry Tonic Water','7,50 €','','peter-edel'],
+    ['Longdrinks','Aperol Spritz','0,3l','Aperol, Sekt, Sodawasser','7,50 €','','peter-edel'],
+    ['Longdrinks','Limoncello Spritz','0,3l','Limoncello, Sekt, Sodawasser','7,50 €','','peter-edel'],
+    ['Longdrinks','Lillet Vive | Lillet Berry','0,3l','Lillet, Thomas Henry Tonic Water | Lillet, Thomas Henry Wild Berry','7,50 €','','peter-edel'],
+    ['Longdrinks','Cuba Libre','0,3l','Havana Club Añejo 3 Años Rum, Coca-Cola','7,50 €','','peter-edel'],
+    ['Longdrinks','Whiskey Cola','0,3l','Jack Daniels, Coca Cola','7,50 €','','peter-edel'],
+    ['Longdrinks','Vodka Red Bull','0,3l','Mampe Vodka, Red Bull','8,00 €','','peter-edel'],
+    ['Longdrinks','Moscow Mule','0,3l','Mampe Vodka, Thomas Henry Ginger Beer, Limette, Angostura Bitter','8,50 €','','peter-edel'],
+    ['Longdrinks','Grapefruit Royal','0,3l','Mampe Fliegercocktail, Thomas Henry Pink Grapefruit, Sekt','8,50 €','','peter-edel'],
+    ['Shots','Kleiner Feigling','2cl','','3,00 €','','peter-edel'],
+    ['Shots','Berliner Luft','2cl','','3,00 €','','peter-edel'],
+    ['Shots','Mampe Popcorn','2cl','','3,00 €','','peter-edel'],
+    ['Snacks','Pringles','40g','','2,50 €','','peter-edel'],
+    ['Snacks','Erdnüsse','50g','','2,50 €','','peter-edel'],
+    ['Snacks','Chips','40g','','2,50 €','','peter-edel'],
+    ['Snacks',"Brez'n",'','','3,00 €','','peter-edel'],
+    ['Snacks',"Käsebrez'n",'','','3,00 €','','peter-edel'],
+    ['Specials','Herrengedeck','','Berliner Pils 0,33l und Glas Wein oder Sekt (je 0,2l)','9,00 €','','peter-edel'],
+  ];
+  return rows.map(r => {
+    const obj = {};
+    headers.forEach((h, i) => obj[h] = r[i] || '');
+    return obj;
+  });
+}
+
+// ── RECHTE SIDEBAR: Artikelliste ──
+function buildArticleList() {
+  const container = document.getElementById('articleList');
+  if (!state.data.length) {
+    container.innerHTML = '<div style="padding:24px 16px; text-align:center; color:var(--gray-400); font-size:12px;">Keine Artikel geladen.</div>';
+    return;
+  }
+
+  const angebotKey = state.schema === 'pe' ? 'peter-edel' : 'kbw';
+  const filtered = state.data.filter(r =>
+    (r['Angebot'] || '').trim().toLowerCase() === angebotKey
+  );
+
+  // Nach Kategoriereihenfolge gruppieren
+  const order = state.categoryOrder.length > 0 ? state.categoryOrder : DEFAULT_CATEGORY_ORDER;
+  const groups = new Map();
+  filtered.forEach((row, idx) => {
+    const cat = row['Kategorie'] || 'Sonstiges';
+    if (!groups.has(cat)) groups.set(cat, []);
+    // Originaler Index in state.data für späteres Editieren
+    const globalIdx = state.data.indexOf(row);
+    groups.get(cat).push({ row, globalIdx });
+  });
+
+  // Sortierte Reihenfolge
+  const knownSet = new Set(order);
+  const sortedCats = [...order.filter(c => groups.has(c)), ...[...groups.keys()].filter(c => !knownSet.has(c))];
+
+  let html = '';
+  sortedCats.forEach(cat => {
+    html += `<div class="article-group-title">${cat}</div>`;
+    groups.get(cat).forEach(({ row, globalIdx }) => {
+      const name = row['Name'] || '';
+      const variant = row['Variante'] || '';
+      const price = row['Preis'] || '';
+      html += `<div class="article-row" onclick="openEditArticle(${globalIdx})">
+        <div class="article-row-inner">
+          <span class="art-name">${name}</span>
+          ${variant ? `<span class="art-variant">${variant}</span>` : ''}
+          <span class="art-price">${price}</span>
+        </div>
+      </div>`;
+    });
+  });
+
+  container.innerHTML = html;
+}
+
+// ── PLACEHOLDER: Phase 2 & 3 (Edit, Add, Export) ──
+function openEditArticle(idx) {
+  // Phase 2: Modal mit Formular
+  alert(`Bearbeiten: ${state.data[idx]['Name']} (Phase 2)`);
+}
+
+function openNewArticle() {
+  // Phase 3: Neuer Artikel
+  alert('Neuen Artikel hinzufügen (Phase 2)');
+}
+
+function exportModifiedExcel() {
+  // Phase 3: Geänderte Daten als Excel exportieren
+  const headers = ['Kategorie','Name','Variante','Beschreibung','Preis','Allergene','Angebot'];
+  const data = [headers, ...state.data.map(r => headers.map(h => r[h] || ''))];
+  const ws = XLSX.utils.aoa_to_sheet(data);
+  ws['!cols'] = [
+    { wch: 24 }, { wch: 34 }, { wch: 8 }, { wch: 50 },
+    { wch: 10 }, { wch: 14 }, { wch: 14 },
+  ];
+  ws['!freeze'] = { xSplit: 0, ySplit: 1 };
+  ws['!autofilter'] = { ref: 'A1:G' + data.length };
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'Getränkekarte');
+  XLSX.writeFile(wb, 'getraenkekarte_geaendert.xlsx');
+}
+
 // Init — config.json laden, dann App starten
 (async () => {
   try {
@@ -1314,8 +1577,17 @@ function hideHelp(e) {
   } catch(e) {
     console.warn('config.json nicht geladen, Defaults werden verwendet.', e);
   }
+
+  // Default-Daten laden und sofort rendern
+  state.data = getDefaultData();
+  buildCategoryToggles();
+  buildArticleList();
+  document.getElementById('btnPrint').disabled = false;
+  document.getElementById('btnJPEG').disabled = false;
+
   applyDimensions();
   window.addEventListener('resize', applyDimensions);
+  renderCard();
   showHelp();
 })();
 </script>

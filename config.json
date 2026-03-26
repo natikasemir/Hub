@@ -28,7 +28,18 @@
       "name": "Getränkekarten-Generator",
       "version": "2026-03-26",
       "path": "Bistro/kartengenerator.html",
-      "status": "live"
+      "status": "live",
+      "categoryOrder": [
+        "Alkoholfreie Getränke",
+        "Heißgetränke",
+        "Bier",
+        "Wein & Sekt",
+        "Longdrinks",
+        "Shots",
+        "Specials",
+        "Snacks"
+        ]
+      }
     },
     "schildgenerator": {
       "name": "Schild-Generator",
@@ -53,8 +64,7 @@
       "version": null,
       "path": null,
       "status": "planned"
-    }
-  },
+    },
   "categoryOrder": {
     "_comment": "Kategorien die immer zuerst erscheinen (in dieser Reihenfolge), dann alle mittleren nach Größe, dann immer zuletzt.",
     "first": [

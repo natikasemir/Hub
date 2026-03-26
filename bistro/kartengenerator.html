@@ -212,6 +212,87 @@ main { display: flex; align-items: center; justify-content: center; padding: 28p
   flex-shrink: 0;
 }
 
+/* ── EDIT-DIALOG ── */
+.edit-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.45);
+  z-index: 300;
+  align-items: center;
+  justify-content: center;
+}
+.edit-overlay.show { display: flex; }
+.edit-card {
+  background: white;
+  border-radius: 8px;
+  padding: 28px 32px;
+  max-width: 440px;
+  width: 90%;
+  box-shadow: 0 16px 48px rgba(0,0,0,0.2);
+}
+.edit-card h2 {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--pe-blue);
+  margin-bottom: 18px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+.edit-field {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  margin-bottom: 12px;
+}
+.edit-field label {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--gray-500);
+}
+.edit-field input,
+.edit-field select,
+.edit-field textarea {
+  border: 1.5px solid var(--gray-200);
+  border-radius: var(--radius-ui);
+  padding: 7px 10px;
+  font-size: 13px;
+  font-family: inherit;
+  color: #222;
+  outline: none;
+  transition: border-color 0.15s;
+}
+.edit-field input:focus,
+.edit-field select:focus,
+.edit-field textarea:focus { border-color: var(--pe-blue); }
+.edit-field textarea { resize: vertical; min-height: 48px; }
+.edit-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+.edit-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 20px;
+}
+.edit-actions .btn { flex: 1; }
+.btn-danger {
+  background: none;
+  color: var(--accent);
+  border: 1.5px solid var(--accent);
+  border-radius: var(--radius-ui);
+  padding: 8px 12px;
+  font-family: inherit;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.btn-danger:hover { background: var(--accent); color: white; }
+
 /* ── HILFE-POPUP ── */
 .help-overlay {
   display: none;
@@ -474,6 +555,69 @@ main { display: flex; align-items: center; justify-content: center; padding: 28p
     </ol>
     <div class="help-footer">Happy Kartendrucken! 🎉</div>
     <button class="help-close" onclick="hideHelp()">Verstanden, los geht's!</button>
+  </div>
+</div>
+
+<!-- Edit-Dialog -->
+<div class="edit-overlay" id="editOverlay" onclick="closeEdit(event)">
+  <div class="edit-card" onclick="event.stopPropagation()">
+    <h2 id="editTitle">Artikel bearbeiten</h2>
+    <input type="hidden" id="editIdx" value="-1">
+
+    <div class="edit-field">
+      <label>Name</label>
+      <input type="text" id="editName" placeholder="z.B. fritz-kola">
+    </div>
+
+    <div class="edit-row">
+      <div class="edit-field">
+        <label>Variante</label>
+        <input type="text" id="editVariante" placeholder="z.B. 0,33l">
+      </div>
+      <div class="edit-field">
+        <label>Preis</label>
+        <input type="text" id="editPreis" placeholder="z.B. 4,00 €">
+      </div>
+    </div>
+
+    <div class="edit-field">
+      <label>Beschreibung</label>
+      <textarea id="editBeschreibung" placeholder="z.B. Classic | Naturell"></textarea>
+    </div>
+
+    <div class="edit-row">
+      <div class="edit-field">
+        <label>Allergene</label>
+        <input type="text" id="editAllergene" placeholder="z.B. 1,11">
+      </div>
+      <div class="edit-field">
+        <label>Kategorie</label>
+        <select id="editKategorie">
+          <option value="Alkoholfreie Getränke">Alkoholfreie Getränke</option>
+          <option value="Heißgetränke">Heißgetränke</option>
+          <option value="Bier">Bier</option>
+          <option value="Wein & Sekt">Wein & Sekt</option>
+          <option value="Longdrinks">Longdrinks</option>
+          <option value="Shots">Shots</option>
+          <option value="Specials">Specials</option>
+          <option value="Snacks">Snacks</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="edit-field">
+      <label>Angebot</label>
+      <select id="editAngebot">
+        <option value="peter-edel">PETER EDEL</option>
+        <option value="kbw">kbw.</option>
+      </select>
+    </div>
+
+    <div class="edit-actions">
+      <button class="btn-danger" id="editDeleteBtn" onclick="deleteArticle()">Löschen</button>
+      <button class="btn btn-secondary" onclick="closeEdit()">Abbrechen</button>
+      <button class="btn btn-primary" onclick="saveArticle()">Speichern</button>
+    </div>
   </div>
 </div>
 
@@ -1529,15 +1673,91 @@ function buildArticleList() {
   container.innerHTML = html;
 }
 
-// ── PLACEHOLDER: Phase 2 & 3 (Edit, Add, Export) ──
+// ── EDIT-DIALOG: Artikel bearbeiten / hinzufügen / löschen ──
+
 function openEditArticle(idx) {
-  // Phase 2: Modal mit Formular
-  alert(`Bearbeiten: ${state.data[idx]['Name']} (Phase 2)`);
+  document.getElementById('editTitle').textContent = 'Artikel bearbeiten';
+  document.getElementById('editIdx').value = idx;
+  document.getElementById('editDeleteBtn').style.display = '';
+
+  const row = state.data[idx];
+  document.getElementById('editName').value        = row['Name'] || '';
+  document.getElementById('editVariante').value     = row['Variante'] || '';
+  document.getElementById('editPreis').value        = row['Preis'] || '';
+  document.getElementById('editBeschreibung').value = row['Beschreibung'] || '';
+  document.getElementById('editAllergene').value    = row['Allergene'] || '';
+  document.getElementById('editKategorie').value    = row['Kategorie'] || 'Alkoholfreie Getränke';
+  document.getElementById('editAngebot').value      = (row['Angebot'] || '').trim().toLowerCase();
+
+  document.getElementById('editOverlay').classList.add('show');
 }
 
 function openNewArticle() {
-  // Phase 3: Neuer Artikel
-  alert('Neuen Artikel hinzufügen (Phase 2)');
+  document.getElementById('editTitle').textContent = 'Neuer Artikel';
+  document.getElementById('editIdx').value = -1;
+  document.getElementById('editDeleteBtn').style.display = 'none';
+
+  // Felder leeren, Angebot auf aktives Schema setzen
+  document.getElementById('editName').value        = '';
+  document.getElementById('editVariante').value     = '';
+  document.getElementById('editPreis').value        = '';
+  document.getElementById('editBeschreibung').value = '';
+  document.getElementById('editAllergene').value    = '';
+  document.getElementById('editKategorie').value    = 'Alkoholfreie Getränke';
+  document.getElementById('editAngebot').value      = state.schema === 'pe' ? 'peter-edel' : 'kbw';
+
+  document.getElementById('editOverlay').classList.add('show');
+}
+
+function closeEdit(e) {
+  if (!e || e.target === document.getElementById('editOverlay')) {
+    document.getElementById('editOverlay').classList.remove('show');
+  }
+}
+
+function saveArticle() {
+  const idx = parseInt(document.getElementById('editIdx').value);
+  const article = {
+    'Kategorie':    document.getElementById('editKategorie').value,
+    'Name':         document.getElementById('editName').value.trim(),
+    'Variante':     document.getElementById('editVariante').value.trim(),
+    'Beschreibung': document.getElementById('editBeschreibung').value.trim(),
+    'Preis':        document.getElementById('editPreis').value.trim(),
+    'Allergene':    document.getElementById('editAllergene').value.trim(),
+    'Angebot':      document.getElementById('editAngebot').value,
+  };
+
+  if (!article['Name']) {
+    alert('Bitte einen Namen eingeben.');
+    return;
+  }
+
+  if (idx >= 0 && idx < state.data.length) {
+    // Bestehenden Artikel aktualisieren
+    state.data[idx] = article;
+  } else {
+    // Neuen Artikel hinzufügen
+    state.data.push(article);
+  }
+
+  closeEdit();
+  buildCategoryToggles();
+  buildArticleList();
+  renderCard();
+}
+
+function deleteArticle() {
+  const idx = parseInt(document.getElementById('editIdx').value);
+  if (idx < 0 || idx >= state.data.length) return;
+
+  const name = state.data[idx]['Name'];
+  if (!confirm(`„${name}" wirklich löschen?`)) return;
+
+  state.data.splice(idx, 1);
+  closeEdit();
+  buildCategoryToggles();
+  buildArticleList();
+  renderCard();
 }
 
 function exportModifiedExcel() {

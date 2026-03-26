@@ -1066,51 +1066,72 @@ function renderCard() {
 }
 
 // ── PASS 2: Kategorien messen und auf Spalten verteilen ──
+// Hybrid-Algorithmus: Bevorzugt die kürzeste Spalte (wie Greedy),
+// aber stellt sicher, dass innerhalb jeder Spalte die logische
+// Reihenfolge erhalten bleibt (z.B. Bier kommt nie vor Alkoholfrei).
 function distributeColumns() {
   const warn = document.getElementById('overflowWarning');
   const measureZone = document.querySelector('#card .gk-measure-zone');
   if (!measureZone) { warn.style.display = 'none'; return; }
 
-  const gridContainer = measureZone.parentElement; // .gk-grid-cols
+  const gridContainer = measureZone.parentElement;
   const colCount = parseInt(getComputedStyle(gridContainer).getPropertyValue('--col-count')) || 2;
 
-  // Verfügbare Höhe = Höhe des .gk-body (flex:1 im gk-inner)
   const gkBody = document.querySelector('#card .gk-body');
   const availableHeight = gkBody.clientHeight;
 
-  // Jede Kategorie in der Messzone messen
+  // Jede Kategorie messen
   const categories = measureZone.querySelectorAll('.gk-category');
   const measured = [];
-  categories.forEach(cat => {
+  categories.forEach((cat, index) => {
     measured.push({
       name: cat.dataset.cat,
       height: cat.offsetHeight,
       html: cat.outerHTML,
+      order: index,  // logische Reihenfolge aus getFilteredData()
     });
   });
 
-  // Greedy-Verteilung mit echten Pixel-Höhen
-  const columns = Array.from({ length: colCount }, () => ({ items: [], usedHeight: 0 }));
+  // Spalten initialisieren — jede merkt sich das höchste order-Index
+  const columns = Array.from({ length: colCount }, () => ({
+    items: [],
+    usedHeight: 0,
+    lastOrder: -1,  // höchster order-Index in dieser Spalte
+  }));
   const hidden = [];
 
   measured.forEach(cat => {
-    // Finde die kürzeste Spalte
-    let minIdx = 0;
-    for (let i = 1; i < colCount; i++) {
-      if (columns[i].usedHeight < columns[minIdx].usedHeight) minIdx = i;
+    // Alle Spalten finden, in die diese Kategorie passt:
+    // 1. Genug Platz (Höhe)
+    // 2. Reihenfolge gewahrt (cat.order > lastOrder der Spalte)
+    const candidates = [];
+    for (let i = 0; i < colCount; i++) {
+      if (columns[i].usedHeight + cat.height <= availableHeight &&
+          cat.order > columns[i].lastOrder) {
+        candidates.push(i);
+      }
     }
 
-    // Passt die Kategorie noch in diese Spalte?
-    if (columns[minIdx].usedHeight + cat.height <= availableHeight) {
-      columns[minIdx].items.push(cat);
-      columns[minIdx].usedHeight += cat.height;
-    } else {
+    if (candidates.length === 0) {
       // Passt in keine Spalte → ausblenden
       hidden.push(cat.name);
+      return;
     }
+
+    // Aus den gültigen Kandidaten die kürzeste Spalte wählen
+    let bestIdx = candidates[0];
+    for (let i = 1; i < candidates.length; i++) {
+      if (columns[candidates[i]].usedHeight < columns[bestIdx].usedHeight) {
+        bestIdx = candidates[i];
+      }
+    }
+
+    columns[bestIdx].items.push(cat);
+    columns[bestIdx].usedHeight += cat.height;
+    columns[bestIdx].lastOrder = cat.order;
   });
 
-  // Grid neu aufbauen mit verteilten Spalten
+  // Grid neu aufbauen
   let html = '';
   columns.forEach(col => {
     html += `<div class="gk-grid-col">`;

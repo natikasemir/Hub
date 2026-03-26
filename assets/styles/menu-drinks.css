@@ -27,11 +27,23 @@
   overflow: hidden;
 }
 
+/* Hintergrundbild (als <img> für scharfes html2canvas-Rendering) */
+.gk-bg-img {
+  position: absolute;
+  top: 0; left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  z-index: 0;
+  pointer-events: none;
+}
+
 .gk-inner {
   position: absolute;
   top: 5%; left: 5%; right: 5%; bottom: 5%;
   display: flex;
   flex-direction: column;
+  z-index: 1;  /* über dem Hintergrundbild */
 }
 
 /* ── HEADER ── */
@@ -181,7 +193,7 @@
    ================================================================ */
 
 /* format-screen sitzt direkt auf .getraenkekarte (16:9 / 4K) */
-.getraenkekarte.format-screen { background: #000 !important; }
+.getraenkekarte.format-screen { background-color: #000 !important; }
 
 .getraenkekarte.format-screen .gk-header::after,
 .getraenkekarte.format-screen .gk-cat-title::after,

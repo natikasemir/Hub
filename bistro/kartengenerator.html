@@ -1050,18 +1050,14 @@ function renderCard() {
   const card = document.getElementById('card');
   const formatClass = 'format-' + state.format.toLowerCase();
   card.className = `getraenkekarte schema-${state.schema} ${formatClass}`;
-  card.innerHTML = buildCard();
 
-  // Hintergrundbild setzen (enthält Logo + Design)
+  // Hintergrundbild als <img> einsetzen (schärfer als CSS background-image bei html2canvas)
   const bgUrl = getBackground();
-  if (bgUrl) {
-    card.style.backgroundImage = `url('${bgUrl}')`;
-    card.style.backgroundSize = 'cover';
-    card.style.backgroundPosition = 'center';
-    card.style.backgroundRepeat = 'no-repeat';
-  } else {
-    card.style.backgroundImage = '';
-  }
+  const bgImgHTML = bgUrl
+    ? `<img class="gk-bg-img" src="${bgUrl}" alt="">`
+    : '';
+
+  card.innerHTML = bgImgHTML + buildCard();
 
   applyDimensions();
 

@@ -1054,9 +1054,8 @@ function renderCard() {
 }
 
 // ── PASS 2: Kategorien messen und auf Spalten verteilen ──
-// Hybrid-Algorithmus: Bevorzugt die kürzeste Spalte (wie Greedy),
-// aber stellt sicher, dass innerhalb jeder Spalte die logische
-// Reihenfolge erhalten bleibt (z.B. Bier kommt nie vor Alkoholfrei).
+// Sequentielles Befüllen: Spalte 1 füllen bis voll, dann Spalte 2, usw.
+// Die logische Reihenfolge bleibt komplett intakt.
 function distributeColumns() {
   const warn = document.getElementById('overflowWarning');
   const measureZone = document.querySelector('#card .gk-measure-zone');
@@ -1071,52 +1070,43 @@ function distributeColumns() {
   // Jede Kategorie messen
   const categories = measureZone.querySelectorAll('.gk-category');
   const measured = [];
-  categories.forEach((cat, index) => {
+  categories.forEach(cat => {
     measured.push({
       name: cat.dataset.cat,
       height: cat.offsetHeight,
       html: cat.outerHTML,
-      order: index,  // logische Reihenfolge aus getFilteredData()
     });
   });
 
-  // Spalten initialisieren — jede merkt sich das höchste order-Index
+  // Spalten initialisieren
   const columns = Array.from({ length: colCount }, () => ({
     items: [],
     usedHeight: 0,
-    lastOrder: -1,  // höchster order-Index in dieser Spalte
   }));
   const hidden = [];
+  let currentCol = 0;
 
   measured.forEach(cat => {
-    // Alle Spalten finden, in die diese Kategorie passt:
-    // 1. Genug Platz (Höhe)
-    // 2. Reihenfolge gewahrt (cat.order > lastOrder der Spalte)
-    const candidates = [];
-    for (let i = 0; i < colCount; i++) {
-      if (columns[i].usedHeight + cat.height <= availableHeight &&
-          cat.order > columns[i].lastOrder) {
-        candidates.push(i);
+    // Passt in aktuelle Spalte?
+    if (currentCol < colCount && columns[currentCol].usedHeight + cat.height <= availableHeight) {
+      columns[currentCol].items.push(cat);
+      columns[currentCol].usedHeight += cat.height;
+    }
+    // Aktuelle Spalte voll → nächste Spalte versuchen
+    else if (currentCol + 1 < colCount) {
+      currentCol++;
+      if (columns[currentCol].usedHeight + cat.height <= availableHeight) {
+        columns[currentCol].items.push(cat);
+        columns[currentCol].usedHeight += cat.height;
+      } else {
+        // Auch nächste Spalte voll → ausblenden
+        hidden.push(cat.name);
       }
     }
-
-    if (candidates.length === 0) {
-      // Passt in keine Spalte → ausblenden
+    // Alle Spalten voll
+    else {
       hidden.push(cat.name);
-      return;
     }
-
-    // Aus den gültigen Kandidaten die kürzeste Spalte wählen
-    let bestIdx = candidates[0];
-    for (let i = 1; i < candidates.length; i++) {
-      if (columns[candidates[i]].usedHeight < columns[bestIdx].usedHeight) {
-        bestIdx = candidates[i];
-      }
-    }
-
-    columns[bestIdx].items.push(cat);
-    columns[bestIdx].usedHeight += cat.height;
-    columns[bestIdx].lastOrder = cat.order;
   });
 
   // Grid neu aufbauen

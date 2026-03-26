@@ -561,6 +561,11 @@
   margin-bottom: 2.5%;
 }
 
+/* Mehr Abstand zwischen Titel und Artikelliste */
+.getraenkekarte.format-dinlang .gk-title-bar {
+  margin-bottom: 5%;
+}
+
 /* Kategorie-Titel enger */
 .getraenkekarte.format-dinlang .std-cat-title {
   margin-top: 0.5em;

@@ -207,6 +207,22 @@ main { display: flex; align-items: center; justify-content: center; padding: 28p
 .article-row .art-variant { color: var(--gray-500); font-size: 11px; flex-shrink: 0; }
 .article-row .art-price { font-weight: 700; color: #222; flex-shrink: 0; white-space: nowrap; margin-left: auto; }
 .article-row .art-desc { font-size: 10px; color: var(--gray-500); display: block; margin-top: -2px; }
+.article-row.other-offer { opacity: 0.5; }
+.article-row.other-offer:hover { opacity: 0.8; }
+/* Angebots-Header in der Artikelliste */
+.article-offer-header {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--gray-400);
+  padding: 12px 16px 4px;
+  border-bottom: 1px solid var(--gray-100);
+}
+.article-offer-header.active {
+  color: var(--accent);
+  border-bottom-color: var(--accent);
+}
 /* Kompakt: Name + Variante auf einer Zeile, Preis rechts */
 .article-row-inner {
   display: flex;
@@ -569,13 +585,13 @@ main { display: flex; align-items: center; justify-content: center; padding: 28p
   <div class="help-card">
     <h2>🍸 Kurzanleitung</h2>
     <ol class="help-steps">
-      <li><span class="help-step-num">1</span><span><strong>Die Karte ist schon für Dich vorbereitet!</strong><br>Die geladene Vorlage entspricht immer der aktuell gültigen Karte (siehe letztes Kartenupdate oben rechts).</span></li>
-      <li><span class="help-step-num">2</span><span><strong>Linke Seitenleiste: Allgemeine Einstellungen</strong><br>Wähle hier das Design, ob Preise angezeigt werden sollen, trage eine Überschrift ein, wähle das Format, zu druckende Kategorien und Allergenhinweise aus oder lade einen neuen Kartendatensatz hoch. Ja, auch die Vorlage findest Du hier. ❤️<br></span></li>
-      <li><span class="help-step-num">3</span><span><strong>Design = Angebotsvariante!</strong><br>PE entspricht der Kulturkarte. KBW entspricht der täglichen Bistrokarte.</span></li>
-      <li><span class="help-step-num">4</span><span><strong>Rechte Seitenleiste: Alle aktuellen Artikel!</strong><br>Hier kannst Du alle Artikel ansehen und für den Druck nachbearbeiten.</span></li>
-      <li><span class="help-step-num">5</span><span><strong>Nichts ist verloren!</strong> Du kannst in der rechten Seitenleiste Deine geänderte Kartenvariante einfach runterladen und neu nutzen - oder Nati geben, damit sie die Änderungen fest einprogammiert.</span></li>
-      <li><span class="help-step-num">6</span><span><strong>Mail me, Baby!</strong> Schreib mir Deine Änderungswünsche per Klick auf den E-Mail-Button.</span></li>
-      <li><span class="help-step-num">7</span><span><strong>PDF oder JPEG drucken</strong> — fertig!</span></li>
+      <li><span class="help-step-num">1</span><span><strong>Vorlage runterladen über „↓ Vorlage herunterladen"</strong><br>Die Vorlage entspricht immer der aktuell gültigen Karte (siehe Kartenversion oben rechts)</span></li>
+      <li><span class="help-step-num">2</span><span>Angebot in der CSV-Datei prüfen, ggf. ändern und speichern.</span></li>
+      <li><span class="help-step-num">3</span><span>Gespeicherte Vorlage <strong>wieder hochladen.</strong></span></li>
+      <li><span class="help-step-num">4</span><span><strong>Preisebene</strong> wählen: FoBi (intern) oder Kultur (VA-Betrieb)</span></li>
+      <li><span class="help-step-num">5</span><span><strong>Kategorien</strong> ein-/ausschalten und ggf. Sonder-Tags aktivieren</span></li>
+      <li><span class="help-step-num">6</span><span><strong>Format/Größe</strong> und <strong>Allergen-Hinweis</strong> wählen</span></li>
+      <li><span class="help-step-num">7</span><span><strong>PDF drucken</strong> — fertig!</span></li>
     </ol>
     <div class="help-footer">Happy Kartendrucken! 🎉</div>
     <button class="help-close" onclick="hideHelp()">Verstanden, los geht's!</button>
@@ -984,8 +1000,8 @@ function downloadTemplate() {
 // werden vor 'Snacks' eingefügt (sortiert nach Itemanzahl).
 // config.json kann diese Reihenfolge komplett überschreiben.
 const DEFAULT_CATEGORY_ORDER = [
-  'Alkoholfreie Getränke',
   'Heißgetränke',
+  'Alkoholfreie Getränke',
   'Bier',
   'Wein & Sekt',
   'Longdrinks',
@@ -1332,46 +1348,54 @@ function distributeColumns() {
   const gkBody = document.querySelector('#card .gk-body');
   const availableHeight = gkBody.clientHeight;
 
-  // Jede Kategorie messen
+  // Jede Kategorie messen (Reihenfolge = logische Sortierung aus getFilteredData)
   const categories = measureZone.querySelectorAll('.gk-category');
   const measured = [];
-  categories.forEach(cat => {
+  categories.forEach((cat, index) => {
     measured.push({
       name: cat.dataset.cat,
       height: cat.offsetHeight,
       html: cat.outerHTML,
+      order: index,
     });
   });
 
-  // Spalten initialisieren
+  // Greedy mit Reihenfolge-Constraint:
+  // - Bevorzuge die kürzeste Spalte (weniger Freiflächen)
+  // - Innerhalb jeder Spalte muss die logische Reihenfolge gewahrt bleiben
   const columns = Array.from({ length: colCount }, () => ({
     items: [],
     usedHeight: 0,
+    lastOrder: -1,
   }));
   const hidden = [];
-  let currentCol = 0;
 
   measured.forEach(cat => {
-    // Passt in aktuelle Spalte?
-    if (currentCol < colCount && columns[currentCol].usedHeight + cat.height <= availableHeight) {
-      columns[currentCol].items.push(cat);
-      columns[currentCol].usedHeight += cat.height;
-    }
-    // Aktuelle Spalte voll → nächste Spalte versuchen
-    else if (currentCol + 1 < colCount) {
-      currentCol++;
-      if (columns[currentCol].usedHeight + cat.height <= availableHeight) {
-        columns[currentCol].items.push(cat);
-        columns[currentCol].usedHeight += cat.height;
-      } else {
-        // Auch nächste Spalte voll → ausblenden
-        hidden.push(cat.name);
+    // Gültige Spalten: genug Platz UND Reihenfolge passt
+    const candidates = [];
+    for (let i = 0; i < colCount; i++) {
+      if (columns[i].usedHeight + cat.height <= availableHeight &&
+          cat.order > columns[i].lastOrder) {
+        candidates.push(i);
       }
     }
-    // Alle Spalten voll
-    else {
+
+    if (candidates.length === 0) {
       hidden.push(cat.name);
+      return;
     }
+
+    // Kürzeste gültige Spalte wählen
+    let bestIdx = candidates[0];
+    for (let i = 1; i < candidates.length; i++) {
+      if (columns[candidates[i]].usedHeight < columns[bestIdx].usedHeight) {
+        bestIdx = candidates[i];
+      }
+    }
+
+    columns[bestIdx].items.push(cat);
+    columns[bestIdx].usedHeight += cat.height;
+    columns[bestIdx].lastOrder = cat.order;
   });
 
   // Grid neu aufbauen
@@ -1657,40 +1681,54 @@ function buildArticleList() {
     return;
   }
 
-  const angebotKey = state.schema === 'pe' ? 'peter-edel' : 'kbw';
-  const filtered = state.data.filter(r =>
-    (r['Angebot'] || '').trim().toLowerCase() === angebotKey
-  );
-
-  // Nach Kategoriereihenfolge gruppieren
   const order = state.categoryOrder.length > 0 ? state.categoryOrder : DEFAULT_CATEGORY_ORDER;
-  const groups = new Map();
-  filtered.forEach((row, idx) => {
-    const cat = row['Kategorie'] || 'Sonstiges';
-    if (!groups.has(cat)) groups.set(cat, []);
-    // Originaler Index in state.data für späteres Editieren
-    const globalIdx = state.data.indexOf(row);
-    groups.get(cat).push({ row, globalIdx });
-  });
-
-  // Sortierte Reihenfolge
   const knownSet = new Set(order);
-  const sortedCats = [...order.filter(c => groups.has(c)), ...[...groups.keys()].filter(c => !knownSet.has(c))];
+
+  // Beide Angebote rendern, aktives zuerst
+  const activeKey  = state.schema === 'pe' ? 'peter-edel' : 'kbw';
+  const otherKey   = state.schema === 'pe' ? 'kbw' : 'peter-edel';
+  const activeLabel = state.schema === 'pe' ? 'PETER EDEL' : 'kbw.';
+  const otherLabel  = state.schema === 'pe' ? 'kbw.' : 'PETER EDEL';
 
   let html = '';
-  sortedCats.forEach(cat => {
-    html += `<div class="article-group-title">${cat}</div>`;
-    groups.get(cat).forEach(({ row, globalIdx }) => {
-      const name = row['Name'] || '';
-      const variant = row['Variante'] || '';
-      const price = row['Preis'] || '';
-      html += `<div class="article-row" onclick="openEditArticle(${globalIdx})">
-        <div class="article-row-inner">
-          <span class="art-name">${name}</span>
-          ${variant ? `<span class="art-variant">${variant}</span>` : ''}
-          <span class="art-price">${price}</span>
-        </div>
-      </div>`;
+
+  [
+    { key: activeKey, label: activeLabel, active: true },
+    { key: otherKey,  label: otherLabel,  active: false },
+  ].forEach(({ key, label, active }) => {
+    const rows = state.data.filter(r =>
+      (r['Angebot'] || '').trim().toLowerCase() === key
+    );
+    if (rows.length === 0) return;
+
+    // Angebots-Header
+    html += `<div class="article-offer-header${active ? ' active' : ''}">${label}</div>`;
+
+    // Nach Kategorien gruppieren
+    const groups = new Map();
+    rows.forEach(row => {
+      const cat = row['Kategorie'] || 'Sonstiges';
+      if (!groups.has(cat)) groups.set(cat, []);
+      const globalIdx = state.data.indexOf(row);
+      groups.get(cat).push({ row, globalIdx });
+    });
+
+    const sortedCats = [...order.filter(c => groups.has(c)), ...[...groups.keys()].filter(c => !knownSet.has(c))];
+
+    sortedCats.forEach(cat => {
+      html += `<div class="article-group-title">${cat}</div>`;
+      groups.get(cat).forEach(({ row, globalIdx }) => {
+        const name = row['Name'] || '';
+        const variant = row['Variante'] || '';
+        const price = row['Preis'] || '';
+        html += `<div class="article-row${active ? '' : ' other-offer'}" onclick="openEditArticle(${globalIdx})">
+          <div class="article-row-inner">
+            <span class="art-name">${name}</span>
+            ${variant ? `<span class="art-variant">${variant}</span>` : ''}
+            <span class="art-price">${price}</span>
+          </div>
+        </div>`;
+      });
     });
   });
 

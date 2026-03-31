@@ -1372,30 +1372,22 @@ function distributeColumns() {
 
   measured.forEach(cat => {
     // Gültige Spalten: genug Platz UND Reihenfolge passt
-    const candidates = [];
+    // Bevorzuge die erste (linkeste) gültige Spalte — füllt Spalten von links nach rechts,
+    // vermeidet Freiflächen unter großen Kategorien
+    let placed = false;
     for (let i = 0; i < colCount; i++) {
       if (columns[i].usedHeight + cat.height <= availableHeight &&
           cat.order > columns[i].lastOrder) {
-        candidates.push(i);
+        columns[i].items.push(cat);
+        columns[i].usedHeight += cat.height;
+        columns[i].lastOrder = cat.order;
+        placed = true;
+        break;
       }
     }
-
-    if (candidates.length === 0) {
+    if (!placed) {
       hidden.push(cat.name);
-      return;
     }
-
-    // Kürzeste gültige Spalte wählen
-    let bestIdx = candidates[0];
-    for (let i = 1; i < candidates.length; i++) {
-      if (columns[candidates[i]].usedHeight < columns[bestIdx].usedHeight) {
-        bestIdx = candidates[i];
-      }
-    }
-
-    columns[bestIdx].items.push(cat);
-    columns[bestIdx].usedHeight += cat.height;
-    columns[bestIdx].lastOrder = cat.order;
   });
 
   // Grid neu aufbauen

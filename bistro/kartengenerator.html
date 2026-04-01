@@ -1310,8 +1310,8 @@ function buildCard_SCREEN() {
   return `
     <div class="gk-inner gk-inner-std">
       <div class="gk-body" style="height:100%;">${columnsHTML}</div>
-      ${allergen ? `<div class="gk-allergen gk-allergen-screen" style="font-size:${allergenSz}px;">${allergen}</div>` : ''}
-    </div>`;
+    </div>
+    ${allergen ? `<div class="gk-allergen gk-allergen-screen" style="font-size:${allergenSz}px;">${allergen}</div>` : ''}`;
 }
 
 function renderCard() {

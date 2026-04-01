@@ -520,8 +520,7 @@ main { display: flex; align-items: center; justify-content: center; padding: 28p
   <div>
     <div class="section-label">Allergen-Hinweis</div>
     <div class="toggle-group">
-      <button class="toggle-btn active" onclick="setAllergen('none',this)">Ohne</button>
-      <button class="toggle-btn" onclick="setAllergen('general',this)">Allgemein</button>
+      <button class="toggle-btn active" onclick="setAllergen('general',this)">Allgemein</button>
       <button class="toggle-btn" onclick="setAllergen('detailed',this)">Detailliert</button>
     </div>
   </div>
@@ -700,7 +699,7 @@ const state = {
   schema: 'pe',          // 'pe' | 'kbw' — steuert Design UND Angebotsfilter
   showPrices: true,
   format: 'A4P',
-  allergen: 'none',
+  allergen: 'general',
   title: 'Getränke',
   data: [],
   enabledCategories: new Set(),
@@ -1311,7 +1310,7 @@ function buildCard_SCREEN() {
   return `
     <div class="gk-inner gk-inner-std">
       <div class="gk-body" style="height:100%;">${columnsHTML}</div>
-      ${allergen ? `<div class="gk-allergen" style="font-size:${allergenSz}px;">${allergen}</div>` : ''}
+      ${allergen ? `<div class="gk-allergen gk-allergen-screen" style="font-size:${allergenSz}px;">${allergen}</div>` : ''}
     </div>`;
 }
 
@@ -1595,7 +1594,6 @@ function getDefaultData() {
     ['Alkoholfreie Getränke','Red Bull','0,25l','','3,50 €','1,2,11,13','kbw'],
     ['Alkoholfreie Getränke','Lammsbräu Pils (alkoholfrei)','0,33l','','3,20 €','16,a','kbw'],
     ['Heißgetränke','Kaffee Créme','','','3,50 €','','kbw'],
-    ['Heißgetränke','Americano','','','3,00 €','','kbw'],
     ['Heißgetränke','Espresso','','','2,50 €','','kbw'],
     ['Heißgetränke','Espresso doppelt','','','4,00 €','','kbw'],
     ['Heißgetränke','Espresso Macchiato','','','2,80 €','','kbw'],
@@ -1603,8 +1601,15 @@ function getDefaultData() {
     ['Heißgetränke','Latte Macchiato','','','3,50 €','','kbw'],
     ['Heißgetränke','Milchkaffee','','','3,50 €','','kbw'],
     ['Heißgetränke','Tee','','','3,00 €','','kbw'],
-    ['Heißgetränke','Espresso Shot','','','1,00 €','','kbw'],
-    ['Heißgetränke','Flavour Shot','','Vanille | Weiße Schokolade | Karamell','0,50 €','1','kbw'],
+    ['Heißgetränke','Pott Kaffee','','','2,50 €','','peter-edel'],
+    ['Heißgetränke','Kaffee Créme','','','3,50 €','','peter-edel'],
+    ['Heißgetränke','Espresso','','','2,50 €','','peter-edel'],
+    ['Heißgetränke','Espresso doppelt','','','4,00 €','','peter-edel'],
+    ['Heißgetränke','Espresso Macchiato','','','2,80 €','','peter-edel'],
+    ['Heißgetränke','Cappuccino','','','3,50 €','','peter-edel'],
+    ['Heißgetränke','Latte Macchiato','','','3,50 €','','peter-edel'],
+    ['Heißgetränke','Milchkaffee','','','3,50 €','','peter-edel'],
+    ['Heißgetränke','Tee','','','3,00 €','','peter-edel'],
     ['Snacks','Halbes Brötchen','','verschieden belegt','1,80 €','','kbw'],
     ['Snacks','Halbes Brötchen','','mit Lachs','2,80 €','','kbw'],
     ['Snacks','Ganzes Brötchen','','verschieden belegt','2,50 €','','kbw'],

@@ -474,6 +474,21 @@
   background: rgba(255,255,255,0.2);
 }
 
+/* SCREEN: Allergen unten links in der Ecke */
+.gk-allergen-screen {
+  position: absolute;
+  bottom: 2%;
+  left: 5%;
+  right: auto;
+  max-width: 60%;
+  margin-top: 0;
+  padding-top: 0;
+  text-align: left;
+}
+.gk-allergen-screen::before {
+  display: none;
+}
+
 
 /* ================================================================
    STANDARD-FORMATE — einheitlicher A4P-Stil

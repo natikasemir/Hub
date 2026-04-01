@@ -477,12 +477,12 @@
 /* SCREEN: Allergen unten links in der Ecke */
 .gk-allergen-screen {
   position: absolute;
-  bottom: 1%;
-  left: 2%;
+  bottom: 0;
+  left: 0;
   right: auto;
   max-width: 60%;
   margin-top: 0;
-  padding-top: 0;
+  padding: 8px 12px;
   text-align: left;
 }
 .gk-allergen-screen::before {

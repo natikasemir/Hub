@@ -30,8 +30,8 @@
       "path": "Bistro/kartengenerator.html",
       "status": "live",
       "categoryOrder": [
-        "Alkoholfreie Getränke",
         "Heißgetränke",
+        "Alkoholfreie Getränke",
         "Bier",
         "Wein & Sekt",
         "Longdrinks",

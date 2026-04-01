@@ -477,8 +477,8 @@
 /* SCREEN: Allergen unten links in der Ecke */
 .gk-allergen-screen {
   position: absolute;
-  bottom: 2%;
-  left: 5%;
+  bottom: 1%;
+  left: 2%;
   right: auto;
   max-width: 60%;
   margin-top: 0;

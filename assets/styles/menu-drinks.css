@@ -476,18 +476,19 @@
 
 /* SCREEN: Allergen unten links in der Ecke (positioniert sich relativ zur Karte) */
 .gk-allergen-screen {
-  position: absolute;
-  bottom: 4px;
-  left: 8px;
-  right: auto;
+  position: absolute !important;
+  bottom: 4px !important;
+  left: 4px !important;
+  top: auto !important;
+  right: auto !important;
   max-width: 60%;
-  margin-top: 0;
-  padding: 0;
+  margin: 0 !important;
+  padding: 0 !important;
   text-align: left;
   z-index: 2;
 }
 .gk-allergen-screen::before {
-  display: none;
+  display: none !important;
 }
 
 

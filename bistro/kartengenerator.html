@@ -1389,7 +1389,8 @@ function distributeColumns() {
     }
   });
 
-  // Grid neu aufbauen
+  // Grid neu aufbauen (Selection vorher leeren, um Range-Fehler zu vermeiden)
+  try { window.getSelection()?.removeAllRanges(); } catch(e) {}
   let html = '';
   columns.forEach(col => {
     html += `<div class="gk-grid-col">`;
@@ -1448,6 +1449,21 @@ async function exportPDF() {
   wrap.style.transformOrigin = 'top left';
 
   try {
+    // Selection leeren und Range-Fehler in html2canvas abfangen
+    try { window.getSelection()?.removeAllRanges(); } catch(e) {}
+
+    // Monkey-Patch: html2canvas 1.4.1 hat einen Bug mit Range.setEnd
+    // bei leeren oder kurzen Text-Nodes. Wir fangen den Fehler ab.
+    const origSetEnd = Range.prototype.setEnd;
+    Range.prototype.setEnd = function(node, offset) {
+      try {
+        const maxOffset = node.nodeType === 3 ? node.length : node.childNodes.length;
+        origSetEnd.call(this, node, Math.min(offset, maxOffset));
+      } catch(e) {
+        // Still — Fehler ignorieren
+      }
+    };
+
     // html2canvas width/height = tatsächliche DOM-Größe der Karte
     // scale-Faktor sorgt für höhere Auflösung des Canvas
     const renderW  = fmt.w;
@@ -1509,6 +1525,8 @@ async function exportPDF() {
   } catch(err) {
     alert('Export fehlgeschlagen: ' + err.message);
   } finally {
+    // Range-Patch zurücksetzen
+    if (typeof origSetEnd !== 'undefined') Range.prototype.setEnd = origSetEnd;
     wrap.style.transform = prevTransform;
     wrap.style.transformOrigin = 'center center';
     btns.forEach(id => document.getElementById(id).disabled = false);
@@ -1527,6 +1545,16 @@ async function doJPEG() {
   wrap.style.transformOrigin = 'top left';
 
   try {
+    // Selection leeren und Range-Fehler abfangen
+    try { window.getSelection()?.removeAllRanges(); } catch(e) {}
+    const origSetEnd = Range.prototype.setEnd;
+    Range.prototype.setEnd = function(node, offset) {
+      try {
+        const maxOffset = node.nodeType === 3 ? node.length : node.childNodes.length;
+        origSetEnd.call(this, node, Math.min(offset, maxOffset));
+      } catch(e) {}
+    };
+
     const isScreen = fmt.screen;
     const canvas = await html2canvas(card, {
       scale: isScreen ? 1 : 2,
@@ -1545,6 +1573,7 @@ async function doJPEG() {
   } catch(err) {
     alert('JPEG-Export fehlgeschlagen: ' + err.message);
   } finally {
+    if (typeof origSetEnd !== 'undefined') Range.prototype.setEnd = origSetEnd;
     wrap.style.transform = prevTransform;
     wrap.style.transformOrigin = 'center center';
   }

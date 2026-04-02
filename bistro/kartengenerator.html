@@ -1449,63 +1449,30 @@ async function exportPDF() {
   wrap.style.transformOrigin = 'top left';
 
   try {
-    // Selection leeren und Range-Fehler in html2canvas abfangen
     try { window.getSelection()?.removeAllRanges(); } catch(e) {}
 
-    // Monkey-Patch: html2canvas 1.4.1 hat einen Bug mit Range.setEnd
-    // bei leeren oder kurzen Text-Nodes. Wir fangen den Fehler ab.
-    const origSetEnd = Range.prototype.setEnd;
-    Range.prototype.setEnd = function(node, offset) {
-      try {
-        const maxOffset = node.nodeType === 3 ? node.length : node.childNodes.length;
-        origSetEnd.call(this, node, Math.min(offset, maxOffset));
-      } catch(e) {
-        // Still — Fehler ignorieren
-      }
-    };
+    const renderW = fmt.w;
+    const renderH = fmt.h;
+    // Scale=1 für SCREEN (nativ 4K) und große Formate (A3, A4L)
+    // Scale=2 nur für kleinere Formate wo der Canvas nicht zu groß wird
+    const scaleFactor = (isScreen || renderW > 800 || renderH > 1000) ? 1 : 2;
 
-    // html2canvas width/height = tatsächliche DOM-Größe der Karte
-    // scale-Faktor sorgt für höhere Auflösung des Canvas
-    const renderW  = fmt.w;
-    const renderH  = fmt.h;
-    let scaleFactor = isScreen ? 1 : 2;
-    // SCREEN: fmt.w=3840, fmt.h=2160 → bei scale=1 bereits 4K
-    // Druck: fmt.w/h sind 96dpi-Werte → scale=2 für scharfe PDFs
-
-    let canvas;
-    try {
-      canvas = await html2canvas(card, {
-        scale: scaleFactor,
-        useCORS: true,
-        allowTaint: true,
-        backgroundColor: isScreen ? '#000000' : '#ffffff',
-        width:  renderW,
-        height: renderH,
-        logging: false,
-      });
-    } catch(canvasErr) {
-      // Fallback: scale=1 wenn scale=2 fehlschlägt (Canvas zu groß)
-      console.warn('html2canvas mit scale=2 fehlgeschlagen, Fallback auf scale=1:', canvasErr);
-      scaleFactor = 1;
-      canvas = await html2canvas(card, {
-        scale: 1,
-        useCORS: true,
-        allowTaint: true,
-        backgroundColor: isScreen ? '#000000' : '#ffffff',
-        width:  renderW,
-        height: renderH,
-        logging: false,
-      });
-    }
+    const canvas = await html2canvas(card, {
+      scale: scaleFactor,
+      useCORS: true,
+      allowTaint: true,
+      backgroundColor: isScreen ? '#000000' : '#ffffff',
+      width:  renderW,
+      height: renderH,
+      logging: false,
+    });
 
     if (isScreen) {
-      // SCREEN: als JPEG exportieren (3840×2160)
       const link = document.createElement('a');
       link.download = `Getraenkekarte_${state.schema}_SCREEN_4K.jpg`;
       link.href = canvas.toDataURL('image/jpeg', 0.95);
       link.click();
     } else if (state.format === 'DINLANG') {
-      // DIN LANG: 3× nebeneinander auf A4 Querformat (297×210mm)
       const imgData = canvas.toDataURL('image/jpeg', 0.95);
       const { jsPDF } = window.jspdf;
       const pdf = new jsPDF({
@@ -1514,18 +1481,15 @@ async function exportPDF() {
         format: [297, 210],
         compress: true,
       });
-      // 3 Kopien nebeneinander (je 99×210mm)
       pdf.addImage(imgData, 'JPEG', 0,   0, 99, 210, '', 'FAST');
       pdf.addImage(imgData, 'JPEG', 99,  0, 99, 210, '', 'FAST');
       pdf.addImage(imgData, 'JPEG', 198, 0, 99, 210, '', 'FAST');
-      // Dünne graue Schnittlinien
       pdf.setDrawColor(200, 200, 200);
       pdf.setLineWidth(0.3);
       pdf.line(99,  0, 99,  210);
       pdf.line(198, 0, 198, 210);
       pdf.save(`Getraenkekarte_${state.schema}_DINLANG_3x.pdf`);
     } else {
-      // Alle anderen Formate: als PDF
       const imgData = canvas.toDataURL('image/jpeg', 0.95);
       const { jsPDF } = window.jspdf;
       const pdf = new jsPDF({
@@ -1541,8 +1505,6 @@ async function exportPDF() {
   } catch(err) {
     alert('Export fehlgeschlagen: ' + err.message);
   } finally {
-    // Range-Patch zurücksetzen
-    if (typeof origSetEnd !== 'undefined') Range.prototype.setEnd = origSetEnd;
     wrap.style.transform = prevTransform;
     wrap.style.transformOrigin = 'center center';
     btns.forEach(id => document.getElementById(id).disabled = false);
@@ -1561,40 +1523,20 @@ async function doJPEG() {
   wrap.style.transformOrigin = 'top left';
 
   try {
-    // Selection leeren und Range-Fehler abfangen
     try { window.getSelection()?.removeAllRanges(); } catch(e) {}
-    const origSetEnd = Range.prototype.setEnd;
-    Range.prototype.setEnd = function(node, offset) {
-      try {
-        const maxOffset = node.nodeType === 3 ? node.length : node.childNodes.length;
-        origSetEnd.call(this, node, Math.min(offset, maxOffset));
-      } catch(e) {}
-    };
 
     const isScreen = fmt.screen;
-    let canvas;
-    try {
-      canvas = await html2canvas(card, {
-        scale: isScreen ? 1 : 2,
-        useCORS: true,
-        allowTaint: true,
-        backgroundColor: isScreen ? '#000000' : '#ffffff',
-        width:  fmt.w,
-        height: fmt.h,
-        logging: false
-      });
-    } catch(canvasErr) {
-      console.warn('html2canvas mit scale=2 fehlgeschlagen, Fallback auf scale=1:', canvasErr);
-      canvas = await html2canvas(card, {
-        scale: 1,
-        useCORS: true,
-        allowTaint: true,
-        backgroundColor: isScreen ? '#000000' : '#ffffff',
-        width:  fmt.w,
-        height: fmt.h,
-        logging: false
-      });
-    }
+    const scaleFactor = (isScreen || fmt.w > 800 || fmt.h > 1000) ? 1 : 2;
+
+    const canvas = await html2canvas(card, {
+      scale: scaleFactor,
+      useCORS: true,
+      allowTaint: true,
+      backgroundColor: isScreen ? '#000000' : '#ffffff',
+      width:  fmt.w,
+      height: fmt.h,
+      logging: false
+    });
 
     const link = document.createElement('a');
     link.download = `Getraenkekarte_${state.schema}_${state.format}.jpg`;
@@ -1603,7 +1545,6 @@ async function doJPEG() {
   } catch(err) {
     alert('JPEG-Export fehlgeschlagen: ' + err.message);
   } finally {
-    if (typeof origSetEnd !== 'undefined') Range.prototype.setEnd = origSetEnd;
     wrap.style.transform = prevTransform;
     wrap.style.transformOrigin = 'center center';
   }

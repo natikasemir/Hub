@@ -1468,19 +1468,35 @@ async function exportPDF() {
     // scale-Faktor sorgt für höhere Auflösung des Canvas
     const renderW  = fmt.w;
     const renderH  = fmt.h;
-    const scaleFactor = isScreen ? 1 : 2;
+    let scaleFactor = isScreen ? 1 : 2;
     // SCREEN: fmt.w=3840, fmt.h=2160 → bei scale=1 bereits 4K
     // Druck: fmt.w/h sind 96dpi-Werte → scale=2 für scharfe PDFs
 
-    const canvas = await html2canvas(card, {
-      scale: scaleFactor,
-      useCORS: true,
-      allowTaint: true,
-      backgroundColor: isScreen ? '#000000' : '#ffffff',
-      width:  renderW,
-      height: renderH,
-      logging: false,
-    });
+    let canvas;
+    try {
+      canvas = await html2canvas(card, {
+        scale: scaleFactor,
+        useCORS: true,
+        allowTaint: true,
+        backgroundColor: isScreen ? '#000000' : '#ffffff',
+        width:  renderW,
+        height: renderH,
+        logging: false,
+      });
+    } catch(canvasErr) {
+      // Fallback: scale=1 wenn scale=2 fehlschlägt (Canvas zu groß)
+      console.warn('html2canvas mit scale=2 fehlgeschlagen, Fallback auf scale=1:', canvasErr);
+      scaleFactor = 1;
+      canvas = await html2canvas(card, {
+        scale: 1,
+        useCORS: true,
+        allowTaint: true,
+        backgroundColor: isScreen ? '#000000' : '#ffffff',
+        width:  renderW,
+        height: renderH,
+        logging: false,
+      });
+    }
 
     if (isScreen) {
       // SCREEN: als JPEG exportieren (3840×2160)
@@ -1556,15 +1572,29 @@ async function doJPEG() {
     };
 
     const isScreen = fmt.screen;
-    const canvas = await html2canvas(card, {
-      scale: isScreen ? 1 : 2,
-      useCORS: true,
-      allowTaint: true,
-      backgroundColor: isScreen ? '#000000' : '#ffffff',
-      width:  fmt.w,
-      height: fmt.h,
-      logging: false
-    });
+    let canvas;
+    try {
+      canvas = await html2canvas(card, {
+        scale: isScreen ? 1 : 2,
+        useCORS: true,
+        allowTaint: true,
+        backgroundColor: isScreen ? '#000000' : '#ffffff',
+        width:  fmt.w,
+        height: fmt.h,
+        logging: false
+      });
+    } catch(canvasErr) {
+      console.warn('html2canvas mit scale=2 fehlgeschlagen, Fallback auf scale=1:', canvasErr);
+      canvas = await html2canvas(card, {
+        scale: 1,
+        useCORS: true,
+        allowTaint: true,
+        backgroundColor: isScreen ? '#000000' : '#ffffff',
+        width:  fmt.w,
+        height: fmt.h,
+        logging: false
+      });
+    }
 
     const link = document.createElement('a');
     link.download = `Getraenkekarte_${state.schema}_${state.format}.jpg`;

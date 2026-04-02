@@ -1188,7 +1188,7 @@ function buildCategoryHTML(catName, items, sizes, showPrices) {
   items.forEach(row => { itemsHTML += buildItemHTML(row, sizes, showPrices); });
   itemsHTML += `<div class="a4p-cat-spacer"></div>`;
   return `<div class="gk-category std-category" data-cat="${catName.replace(/"/g,'&quot;')}">
-    <div class="gk-cat-title std-cat-title" style="font-size:${sizes.catTitleSz}px;">${catName}</div>
+    <div class="gk-cat-title std-cat-title" style="font-size:${sizes.catTitleSz}px;">${catName.toUpperCase()}</div>
     ${itemsHTML}
   </div>`;
 }
@@ -1215,7 +1215,7 @@ function buildCardShell(fmt, sizes, columnsHTML) {
 
   const titleHTML = title ? `
       <div class="gk-title-bar">
-        <div class="gk-title" style="font-size:${sizes.titleSz}px;">${title}</div>
+        <div class="gk-title" style="font-size:${sizes.titleSz}px;">${title.toUpperCase()}</div>
       </div>` : '';
 
   return `

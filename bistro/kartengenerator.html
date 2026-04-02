@@ -1455,7 +1455,7 @@ async function exportPDF() {
     const renderH = fmt.h;
     // Scale=1 für SCREEN (nativ 4K) und große Formate (A3, A4L)
     // Scale=2 nur für kleinere Formate wo der Canvas nicht zu groß wird
-    const scaleFactor = (isScreen || renderW > 800 || renderH > 1000) ? 1 : 2;
+    const scaleFactor = isScreen ? 1 : 2;
 
     const canvas = await html2canvas(card, {
       scale: scaleFactor,
@@ -1526,7 +1526,7 @@ async function doJPEG() {
     try { window.getSelection()?.removeAllRanges(); } catch(e) {}
 
     const isScreen = fmt.screen;
-    const scaleFactor = (isScreen || fmt.w > 800 || fmt.h > 1000) ? 1 : 2;
+    const scaleFactor = (isScreen) ? 1 : 2;
 
     const canvas = await html2canvas(card, {
       scale: scaleFactor,
